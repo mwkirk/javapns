@@ -123,7 +123,7 @@ public class PushNotificationManager {
 	 * @throws NullIdException
 	 */
 	public void removeDevice(String id) throws UnknownDeviceException, NullIdException{
-		DeviceFactory.getInstance().getDevice(id);
+		DeviceFactory.getInstance().removeDevice(id);
 	}
 	
 	/**
