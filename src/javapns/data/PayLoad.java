@@ -1,94 +1,120 @@
 package javapns.data;
 
+import java.util.List;
+
+import org.json.JSONException;
+import org.json.JSONObject;
+
 /**
  * This class is the JSON representation of the notification
  * See page 19 of Apple Push Notification Service Programming Guide
- * NB : Future improvement :
- * 		- add other features (body, action-loc-key, loc-key, loc-args...)
- * 		- use a library to help create JSON Object http://www.json.org/java/
  * @author Maxime Peron
  *
  */
 public class PayLoad {
 
-	/* The message that will be displayed in the popup */
-	private String alert;
-	/* The number displayed at top right side corner of the application icon */
-	private String badge;
-	/* The sound played when the notification is received */
-	private String sound;
+	/* The root Payload */
+	private JSONObject payload;
+	/* The application Dictionnary */
+	private JSONObject apsDictionary;
 
 	/**
-	 * Constructor
-	 * @param alert The displayed message (can be null if no alert has to be displayed)
-	 * @param badge The number (can be null if no badge has to be displayed)
-	 * @param sound The played sound (can be null if no sound has to be played)
+	 * Constructor, instantiate the two JSONObjects
 	 */
-	public PayLoad(String alert, String badge, String sound) {
+	public PayLoad(){
 		super();
-		this.alert = alert;
-		this.badge = badge;
-		this.sound = sound;
+		this.payload = new JSONObject();
+		this.apsDictionary = new JSONObject();
+		try {
+			this.payload.put("aps", this.apsDictionary);
+		} catch (JSONException e) {
+			e.printStackTrace();
+		}
 	}
 
 	/**
-	 * Getter
-	 * @return the alert
+	 * Add a badge
+	 * @param badge
+	 * @throws JSONException
 	 */
-	public String getAlert() {
-		return alert;
+	public void addBadge (int badge) throws JSONException{
+		this.apsDictionary.putOpt("badge", badge);
 	}
 
 	/**
-	 * Getter
-	 * @return the badge
+	 * Add a sound
+	 * @param sound
+	 * @throws JSONException
 	 */
-	public String getBadge() {
-		return badge;
+	public void addSound (String sound) throws JSONException{
+		this.apsDictionary.putOpt("sound", sound);
 	}
 
 	/**
-	 * Getter
-	 * @return the sound
+	 * Add an alert message
+	 * @param alert
+	 * @throws JSONException
 	 */
-	public String getSound() {
-		return sound;
+	public void addAlert (String alert) throws JSONException{
+		this.apsDictionary.put("alert", alert);
 	}
 
 	/**
-	 * String representation of the payload
+	 * Add a custom alert message
+	 * @param alert
+	 * @throws JSONException
+	 */
+	public void addCustomAlert (PayLoadCustomAlert alert) throws JSONException{
+		this.apsDictionary.put("alert", alert);
+	}
+
+	/**
+	 * Add a custom dictionnary with a string value
+	 * @param name
+	 * @param value
+	 * @throws JSONException
+	 */
+	public void addCustomDictionary (String name, String value) throws JSONException{
+		this.payload.put(name,value);
+	}
+
+	/**
+	 * Add a custom dictionnary with a int value
+	 * @param name
+	 * @param value
+	 * @throws JSONException
+	 */
+	public void addCustomDictionary (String name, int value) throws JSONException{
+		this.payload.put(name, value);
+	}
+
+	/**
+	 * Add a custom dictionnary with multiple values
+	 * @param name
+	 * @param values
+	 * @throws JSONException
+	 */
+	@SuppressWarnings("unchecked")
+	public void addCustomDictionary (String name, List values) throws JSONException{
+		this.payload.put(name, values);
+	}
+
+	/**
+	 * Get the string representation
 	 */
 	public String toString(){
-		StringBuffer sb = new StringBuffer();
-		sb.append("{\"aps\":{");
-		if (this.alert != null){
-			sb.append("\"alert\":\"").append(this.alert).append("\"");
-		}
-		if (this.badge != null){
-			if (this.alert != null){
-				sb.append(",");
-			}
-			sb.append("\"badge\":").append(this.badge);
-		}
-		if (this.sound != null){
-			if ((this.alert != null) || (this.sound != null)){
-				sb.append(",");
-			}
-			sb.append("\"sound\":\"").append(this.sound).append("\"");
-		}
-		sb.append("}}");
-		return sb.toString();
+		return this.payload.toString();
 	}
 
 	/**
-	 * Payload representation in bytes
-	 * @return a byte array
+	 * Get this payload as a byte array
+	 * @return
 	 */
 	public byte[] getPayloadAsBytes(){
 		try {
 			return toString().getBytes("UTF-8");
-		} catch (Exception e) {
-			return toString().getBytes();
+		} catch (Exception ex) {
+			return toString().getBytes()	;
 		}
 	}
 
