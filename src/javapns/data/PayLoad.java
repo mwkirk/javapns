@@ -17,7 +17,7 @@ public class PayLoad {
 	private String badge;
 	/* The sound played when the notification is received */
 	private String sound;
-		
+
 	/**
 	 * Constructor
 	 * @param alert The displayed message (can be null if no alert has to be displayed)
@@ -79,13 +79,17 @@ public class PayLoad {
 		sb.append("}}");
 		return sb.toString();
 	}
-	
+
 	/**
 	 * Payload representation in bytes
 	 * @return a byte array
 	 */
 	public byte[] getPayloadAsBytes(){
-		return toString().getBytes();
+		try {
+			return toString().getBytes("UTF-8");
+		} catch (Exception e) {
+			return toString().getBytes();
+		}
 	}
-	
+
 }
