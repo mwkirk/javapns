@@ -26,11 +26,18 @@ import javax.net.ssl.SSLSocket;
  */
 public class PushNotificationManager {
 
+	public static final int DEFAULT_RETRIES = 3;
+	
 	/* Singleton pattern */
 	private static PushNotificationManager instance;
+	
+	private SSLConnectionHelper connectionHelper;
+	
 	/* The always connected SSLSocket */
 	private SSLSocket socket;
 
+	private int retryAttempts = DEFAULT_RETRIES;
+	
 	/**
 	 * Singleton pattern implementation
 	 * @return the PushNotificationManager instance
@@ -63,7 +70,7 @@ public class PushNotificationManager {
 	 * @throws IOException
 	 */
 	public void initializeConnection(String appleHost, int applePort, String keyStorePath, String keyStorePass, String keyStoreType) throws UnrecoverableKeyException, KeyManagementException, KeyStoreException, NoSuchAlgorithmException, CertificateException, FileNotFoundException, IOException{
-		SSLConnectionHelper connectionHelper = new SSLConnectionHelper(appleHost, applePort, keyStorePath, keyStorePass, keyStoreType);
+		connectionHelper = new SSLConnectionHelper(appleHost, applePort, keyStorePath, keyStorePass, keyStoreType);
 		this.socket = connectionHelper.getSSLSocket();
 	}
 	
@@ -87,10 +94,30 @@ public class PushNotificationManager {
 	 * @throws FileNotFoundException
 	 * @throws IOException
 	 */
-	public void sendNotification(Device device, PayLoad payload) throws UnrecoverableKeyException, KeyManagementException, KeyStoreException, NoSuchAlgorithmException, CertificateException, FileNotFoundException, IOException{
+	public void sendNotification(Device device, PayLoad payload) throws UnrecoverableKeyException, KeyManagementException, KeyStoreException, NoSuchAlgorithmException, CertificateException, FileNotFoundException, IOException {
 		byte[] message = getMessage(device.getToken(), payload);
-		this.socket.getOutputStream().write(message);
-		this.socket.getOutputStream().flush();
+		boolean success = false;
+		int attempts = 0;
+		while(!success){
+			try {
+				attempts++;
+				this.socket.getOutputStream().write(message);
+				this.socket.getOutputStream().flush();
+				success = true;
+			} catch (IOException e) {
+				if(attempts >= retryAttempts){
+					throw e;
+				}else{
+					//Try again
+					try{
+						this.socket.close();
+					}catch(Exception e2){}
+					// TODO should the user be informed about the failure?
+					//e.printStackTrace();
+					this.socket = connectionHelper.getSSLSocket();
+				}
+			}
+		}
 	}
 
 	/**
@@ -139,6 +166,25 @@ public class PushNotificationManager {
 		System.setProperty("https.proxyPort", port);
 	}
 
+//	public List<Device> checkFeedback(String appleHost, int applePort, String keyStorePath, String keyStorePass, String keyStoreType) throws UnrecoverableKeyException, KeyManagementException, KeyStoreException, NoSuchAlgorithmException, CertificateException, FileNotFoundException, IOException{
+//		SSLConnectionHelper feedbackConnHelper = new SSLConnectionHelper(appleHost, applePort, keyStorePath, keyStorePass, keyStoreType);
+//		SSLSocket feedbackSocket = feedbackConnHelper.getSSLSocket();
+//		
+//		try{
+//			BufferedReader stdIn = new BufferedReader(new InputStreamReader(feedbackSocket.getInputStream()));
+//			String feedbackMessage;
+//			while ((feedbackMessage = stdIn.readLine()) != null) {
+//				System.out.println("echo: " + feedbackMessage);
+//				//TODO process message
+//			}
+//		}finally{
+//			feedbackSocket.close();	
+//		}
+//		
+//		//FIXME we also need to return the time of the failure	
+//		return new ArrayList<Device>();
+//	}
+	
 	/**
 	 * Compose the Raw Interface that will be sent through the SSLSocket
 	 * A notification message is
@@ -188,4 +234,11 @@ public class PushNotificationManager {
 		return bao.toByteArray();
 	}
 
+	public int getRetryAttempts() {
+		return retryAttempts;
+	}
+
+	public void setRetryAttempts(int retryAttempts) {
+		this.retryAttempts = retryAttempts;
+	}
 }
