@@ -26,16 +26,19 @@ import javax.net.ssl.SSLSocket;
  */
 public class PushNotificationManager {
 
+	/* Default retries for a connection */
 	public static final int DEFAULT_RETRIES = 3;
 	
 	/* Singleton pattern */
 	private static PushNotificationManager instance;
 	
+	/* Connection helper */
 	private SSLConnectionHelper connectionHelper;
 	
 	/* The always connected SSLSocket */
 	private SSLSocket socket;
 
+	/* Default retry attempts */
 	private int retryAttempts = DEFAULT_RETRIES;
 	
 	/**
@@ -70,7 +73,7 @@ public class PushNotificationManager {
 	 * @throws IOException
 	 */
 	public void initializeConnection(String appleHost, int applePort, String keyStorePath, String keyStorePass, String keyStoreType) throws UnrecoverableKeyException, KeyManagementException, KeyStoreException, NoSuchAlgorithmException, CertificateException, FileNotFoundException, IOException{
-		connectionHelper = new SSLConnectionHelper(appleHost, applePort, keyStorePath, keyStorePass, keyStoreType);
+		this.connectionHelper = new SSLConnectionHelper(appleHost, applePort, keyStorePath, keyStorePass, keyStoreType);
 		this.socket = connectionHelper.getSSLSocket();
 	}
 	
@@ -234,10 +237,18 @@ public class PushNotificationManager {
 		return bao.toByteArray();
 	}
 
+	/**
+	 * Get the number of retry attempts
+	 * @return
+	 */
 	public int getRetryAttempts() {
-		return retryAttempts;
+		return this.retryAttempts;
 	}
 
+	/**
+	 * Set the number of retry attempts
+	 * @param retryAttempts
+	 */
 	public void setRetryAttempts(int retryAttempts) {
 		this.retryAttempts = retryAttempts;
 	}

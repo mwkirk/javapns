@@ -1,5 +1,7 @@
 package javapns.back;
 
+import java.sql.Timestamp;
+import java.util.Calendar;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -17,6 +19,8 @@ import org.apache.commons.lang.StringUtils;
  * It implements the singleton pattern so only one class manages the devices,
  * avoiding problems with duplicate or lost devices
  * NB : Future Improvement :
+ * 		 - Add a method to find a device knowing his token
+ * 		 - Add a method to update a device (timestamp or token)
  *       - link with a database (JPA?) to store devices
  *       - method to compare two devices, and replace when the device token has changed
  * @author Maxime Peron
@@ -26,6 +30,7 @@ public class DeviceFactory {
 
 	/* A map containing all the devices, identified with their id */
 	private Map<String, Device> devices;
+	
 	/* Singleton pattern */
 	private static DeviceFactory instance;
 
@@ -63,7 +68,7 @@ public class DeviceFactory {
 		} else {
 			if (!this.devices.containsKey(id)){
 				token = StringUtils.deleteWhitespace(token);
-				this.devices.put(id, new Device(id, token));
+				this.devices.put(id, new Device(id, token, new Timestamp(Calendar.getInstance().getTime().getTime())));
 			} else {
 				throw new DuplicateDeviceException();
 			}
@@ -88,6 +93,7 @@ public class DeviceFactory {
 			}
 		}
 	}
+
 
 	/**
 	 * Remove a device
