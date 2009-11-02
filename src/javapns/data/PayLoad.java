@@ -32,6 +32,15 @@ public class PayLoad {
 		}
 	}
 
+	public PayLoad(String alert, int badge, String sound)  throws JSONException {
+		this();
+		addAlert(alert);
+		addBadge(badge);
+		if(sound != null){
+			addSound(sound);
+		}
+	}
+	
 	/**
 	 * Add a badge
 	 * @param badge
