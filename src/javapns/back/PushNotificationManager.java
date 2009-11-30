@@ -41,6 +41,9 @@ public class PushNotificationManager {
 	/* Default retry attempts */
 	private int retryAttempts = DEFAULT_RETRIES;
 	
+	/* Proxy set */
+	private boolean proxySet = false;
+	
 	/**
 	 * Singleton pattern implementation
 	 * @return the PushNotificationManager instance
@@ -73,7 +76,7 @@ public class PushNotificationManager {
 	 * @throws IOException
 	 */
 	public void initializeConnection(String appleHost, int applePort, String keyStorePath, String keyStorePass, String keyStoreType) throws UnrecoverableKeyException, KeyManagementException, KeyStoreException, NoSuchAlgorithmException, CertificateException, FileNotFoundException, IOException{
-		this.connectionHelper = new SSLConnectionHelper(appleHost, applePort, keyStorePath, keyStorePass, keyStoreType);
+		this.connectionHelper = new SSLConnectionHelper(appleHost, applePort, keyStorePath, keyStorePass, keyStoreType, this.proxySet);
 		this.socket = connectionHelper.getSSLSocket();
 	}
 	
@@ -162,6 +165,8 @@ public class PushNotificationManager {
 	 * @param port the proxyPort
 	 */
 	public void setProxy(String host, String port){
+		this.proxySet = true;
+		
 		System.setProperty("http.proxyHost", host);
 		System.setProperty("http.proxyPort", port);
 

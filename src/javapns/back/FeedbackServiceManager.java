@@ -64,7 +64,7 @@ public class FeedbackServiceManager {
 	 */
 	public LinkedList<Device> getDevices(String appleHost, int applePort, String keyStorePath, String keyStorePass, String keyStoreType) throws UnrecoverableKeyException, KeyManagementException, KeyStoreException, NoSuchAlgorithmException, CertificateException, FileNotFoundException, IOException{
 		// Create the connection and open a socket
-        SSLConnectionHelper connectionHelper = new SSLConnectionHelper(appleHost, applePort, keyStorePath, keyStorePass, keyStoreType);
+        SSLConnectionHelper connectionHelper = new SSLConnectionHelper(appleHost, applePort, keyStorePath, keyStorePass, keyStoreType, false);
         SSLSocket socket = connectionHelper.getSSLSocket();
         
         // Read bytes        
