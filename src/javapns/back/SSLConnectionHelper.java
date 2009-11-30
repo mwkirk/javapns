@@ -29,8 +29,8 @@ import javax.net.ssl.TrustManagerFactory;
  */
 public class SSLConnectionHelper {
 
-	/* The path to the keystore used to authenticate this server */
-	private String keyStorePath;
+    /* The stream of the keystore used to authenticate this server */
+	private InputStream keyStoreStream;
 	/* The password used to load the keystore */
 	private String keyStorePass;
 	/* The type of keystore used (JKS or PKCS12) */
@@ -59,16 +59,31 @@ public class SSLConnectionHelper {
 	 * @param keyStorePath the path to the keystore
 	 * @param keyStorePass the keystore password
 	 * @param keystoreType the keystore type
+	 * @throws FileNotFoundException 
 	 */
-	public SSLConnectionHelper(String appleHost, int applePort, String keyStorePath, String keyStorePass, String keystoreType, boolean proxySet) {
+	public SSLConnectionHelper(String appleHost, int applePort, String keyStorePath, String keyStorePass, String keystoreType, boolean proxySet) throws FileNotFoundException {
+        this(appleHost, applePort, new FileInputStream(keyStorePath),
+                keyStorePass, keystoreType, proxySet);
+
+	}
+
+	/**
+	 * Constructor
+	 * @param appleHost the Apple ServerSocket host
+	 * @param applePort the Apple ServerSocket port
+	 * @param keyStoreStream the stream of keystore
+	 * @param keyStorePass the keystore password
+	 * @param keystoreType the keystore type
+	 */
+	public SSLConnectionHelper(String appleHost, int applePort, InputStream keyStoreStream, String keyStorePass, String keystoreType, boolean proxySet) {
 		this.appleHost = appleHost;
 		this.applePort = applePort;
-		this.keyStorePath = keyStorePath;
+		this.keyStoreStream = keyStoreStream;
 		this.keyStorePass = keyStorePass;
 		this.keystoreType = keystoreType;
 		this.proxySet = proxySet;
 	}
-
+	
 	/**
 	 * Create a SSLSocket which will be used to send data to Apple
 	 * @return the SSLSocket
@@ -83,7 +98,7 @@ public class SSLConnectionHelper {
 	public SSLSocket getSSLSocket()throws KeyStoreException, NoSuchAlgorithmException, CertificateException, FileNotFoundException, IOException, UnrecoverableKeyException, KeyManagementException{
 		// Load the Keystore
 		KeyStore ks = KeyStore.getInstance(keystoreType);
-		ks.load(new FileInputStream(this.keyStorePath), this.keyStorePass.toCharArray());
+		ks.load(this.keyStoreStream, this.keyStorePass.toCharArray());
 
 		// Get a KeyManager and initialize it 
 		KeyManagerFactory kmf = KeyManagerFactory.getInstance(ALGORITHM);

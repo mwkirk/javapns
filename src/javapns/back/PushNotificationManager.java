@@ -3,6 +3,7 @@ package javapns.back;
 import java.io.ByteArrayOutputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
 import java.security.KeyManagementException;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
@@ -77,6 +78,26 @@ public class PushNotificationManager {
 	 */
 	public void initializeConnection(String appleHost, int applePort, String keyStorePath, String keyStorePass, String keyStoreType) throws UnrecoverableKeyException, KeyManagementException, KeyStoreException, NoSuchAlgorithmException, CertificateException, FileNotFoundException, IOException{
 		this.connectionHelper = new SSLConnectionHelper(appleHost, applePort, keyStorePath, keyStorePass, keyStoreType, this.proxySet);
+		this.socket = connectionHelper.getSSLSocket();
+	}
+	
+	/**
+	 * Initialize the connection and create a SSLSocket
+	 * @param appleHost the Apple ServerSocket host
+	 * @param applePort the Apple ServerSocket port
+	 * @param keyStoreStream the stream of the keystore
+	 * @param keyStorePass the keystore password
+	 * @param keyStoreType the keystore type
+	 * @throws UnrecoverableKeyException
+	 * @throws KeyManagementException
+	 * @throws KeyStoreException
+	 * @throws NoSuchAlgorithmException
+	 * @throws CertificateException
+	 * @throws FileNotFoundException
+	 * @throws IOException
+	 */
+	public void initializeConnection(String appleHost, int applePort, InputStream keyStoreStream, String keyStorePass, String keyStoreType) throws UnrecoverableKeyException, KeyManagementException, KeyStoreException, NoSuchAlgorithmException, CertificateException, FileNotFoundException, IOException{
+		this.connectionHelper = new SSLConnectionHelper(appleHost, applePort, keyStoreStream, keyStorePass, keyStoreType, proxySet);
 		this.socket = connectionHelper.getSSLSocket();
 	}
 	
