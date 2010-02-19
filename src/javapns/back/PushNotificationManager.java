@@ -97,7 +97,7 @@ public class PushNotificationManager {
 	 * @throws FileNotFoundException
 	 * @throws IOException
 	 */
-	public void sendNotification(Device device, PayLoad payload) throws UnrecoverableKeyException, KeyManagementException, KeyStoreException, NoSuchAlgorithmException, CertificateException, FileNotFoundException, IOException {
+	public void sendNotification(Device device, PayLoad payload) throws UnrecoverableKeyException, KeyManagementException, KeyStoreException, NoSuchAlgorithmException, CertificateException, FileNotFoundException, IOException, Exception {
 		byte[] message = getMessage(device.getToken(), payload);
 		boolean success = false;
 		int attempts = 0;
@@ -198,7 +198,7 @@ public class PushNotificationManager {
 	 * @return the byteArray to write to the SSLSocket OutputStream
 	 * @throws IOException
 	 */
-	private static byte[] getMessage(String deviceToken, PayLoad payload) throws IOException{
+	private static byte[] getMessage(String deviceToken, PayLoad payload) throws IOException, Exception {
 		// First convert the deviceToken (in hexa form) to a binary format
 		byte[] deviceTokenAsBytes = new byte[deviceToken.length() / 2];
 		deviceToken = deviceToken.toUpperCase();

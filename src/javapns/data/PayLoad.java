@@ -119,12 +119,19 @@ public class PayLoad {
 	 * Get this payload as a byte array
 	 * @return
 	 */
-	public byte[] getPayloadAsBytes(){
+	public byte[] getPayloadAsBytes() throws Exception {
+		byte[] payload = null;
 		try {
-			return toString().getBytes("UTF-8");
+			payload = toString().getBytes("UTF-8");
 		} catch (Exception ex) {
-			return toString().getBytes()	;
+			payload = toString().getBytes();
 		}
+		
+		if ( payload.length > 256 ) {
+			throw new Exception( "Payload too large...[256 Bytes is the limit]" );
+		}
+		
+		return payload;
 	}
 
 }
