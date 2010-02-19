@@ -3,9 +3,11 @@ package javapns.back;
 import java.io.ByteArrayOutputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
 import java.security.KeyManagementException;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
+import java.security.NoSuchProviderException;
 import java.security.UnrecoverableKeyException;
 import java.security.cert.CertificateException;
 import java.sql.Timestamp;
@@ -62,16 +64,19 @@ public class FeedbackServiceManager {
 	 * @throws KeyManagementException 
 	 * @throws UnrecoverableKeyException 
 	 */
-	public LinkedList<Device> getDevices(String appleHost, int applePort, String keyStorePath, String keyStorePass, String keyStoreType) throws UnrecoverableKeyException, KeyManagementException, KeyStoreException, NoSuchAlgorithmException, CertificateException, FileNotFoundException, IOException{
+	public LinkedList<Device> getDevices(String appleHost, int applePort, String keyStorePath, String keyStorePass, String keyStoreType) throws UnrecoverableKeyException, KeyManagementException, KeyStoreException, NoSuchAlgorithmException, CertificateException, FileNotFoundException, IOException, NoSuchProviderException {
 		// Create the connection and open a socket
-        SSLConnectionHelper connectionHelper = new SSLConnectionHelper(appleHost, applePort, keyStorePath, keyStorePass, keyStoreType, false);
-        SSLSocket socket = connectionHelper.getSSLSocket();
+        SSLConnectionHelper connectionHelper = new SSLConnectionHelper(appleHost, applePort, keyStorePath, keyStorePass, keyStoreType);
+        SSLSocket socket = connectionHelper.getFeedbackSSLSocket();
+        
+        InputStream socketStream = socket.getInputStream();
         
         // Read bytes        
         byte[] b = new byte[1024];
         ByteArrayOutputStream message = new ByteArrayOutputStream();
         int nbBytes = 0;
-        while ( (nbBytes = socket.getInputStream().read(b, 0, 1024))!= -1) {
+        while ( socketStream.available() > 0 ) {
+        	nbBytes = socketStream.read(b, 0, 1024);
             message.write(b, 0, nbBytes);
         }
         
