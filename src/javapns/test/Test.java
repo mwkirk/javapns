@@ -13,6 +13,12 @@ public class Test {
 	@SuppressWarnings("unchecked")
 	public static void main(String[] args) {
 		try { 
+			// Get PushNotification Instance
+			PushNotificationManager pushManager = PushNotificationManager.getInstance();
+			// Link iPhone's UDID (64-char device token) to a stringName 
+			pushManager.addDevice("my_iPhone", "2ed202ac08ea903...0567037dcc4");
+			System.out.println( "iPhone UDID taken." );
+			
 			// Create a simple PayLoad with a simple alert
 			PayLoad simplePayLoad = new PayLoad();
 			simplePayLoad.addAlert("My alert message");
