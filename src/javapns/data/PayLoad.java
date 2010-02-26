@@ -2,6 +2,9 @@ package javapns.data;
 
 import java.util.List;
 
+import javapns.back.DeviceFactory;
+
+import org.apache.log4j.Logger;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -13,7 +16,9 @@ import org.json.JSONObject;
  */
 public class PayLoad {
 
-	/* The root Payload */
+    protected static final Logger logger = Logger.getLogger( DeviceFactory.class );
+
+    /* The root Payload */
 	private JSONObject payload;
 	/* The application Dictionnary */
 	private JSONObject apsDictionary;
@@ -47,6 +52,7 @@ public class PayLoad {
 	 * @throws JSONException
 	 */
 	public void addBadge (int badge) throws JSONException{
+		logger.debug( "Adding badge [" + badge + "]" );
 		this.apsDictionary.putOpt("badge", badge);
 	}
 
@@ -56,6 +62,7 @@ public class PayLoad {
 	 * @throws JSONException
 	 */
 	public void addSound (String sound) throws JSONException{
+		logger.debug( "Adding sound [" + sound + "]" );
 		this.apsDictionary.putOpt("sound", sound);
 	}
 
@@ -65,6 +72,7 @@ public class PayLoad {
 	 * @throws JSONException
 	 */
 	public void addAlert (String alert) throws JSONException{
+		logger.debug( "Adding alert [" + alert + "]" );
 		this.apsDictionary.put("alert", alert);
 	}
 
@@ -74,6 +82,7 @@ public class PayLoad {
 	 * @throws JSONException
 	 */
 	public void addCustomAlert (PayLoadCustomAlert alert) throws JSONException{
+		logger.debug( "Adding custom Alert" );
 		this.apsDictionary.put("alert", alert);
 	}
 
@@ -84,6 +93,7 @@ public class PayLoad {
 	 * @throws JSONException
 	 */
 	public void addCustomDictionary (String name, String value) throws JSONException{
+		logger.debug( "Adding custom Dictionary [" + name + "] = [" + value + "]" );
 		this.payload.put(name,value);
 	}
 
@@ -94,6 +104,7 @@ public class PayLoad {
 	 * @throws JSONException
 	 */
 	public void addCustomDictionary (String name, int value) throws JSONException{
+		logger.debug( "Adding custom Dictionary [" + name + "] = [" + value + "]" );
 		this.payload.put(name, value);
 	}
 
@@ -105,6 +116,7 @@ public class PayLoad {
 	 */
 	@SuppressWarnings("unchecked")
 	public void addCustomDictionary (String name, List values) throws JSONException{
+		logger.debug( "Adding custom Dictionary [" + name + "] = (list)" );
 		this.payload.put(name, values);
 	}
 
