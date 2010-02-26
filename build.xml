@@ -16,6 +16,7 @@
     <pathelement path="commons-lang-2.4.jar"/>
     <pathelement path="commons-io-1.4.jar"/>
     <pathelement path="bcprov-jdk16-145.jar"/>
+    <pathelement path="log4j-1.2.15.jar"/>
   </path>
 
   <target name="clean"
