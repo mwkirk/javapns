@@ -12,6 +12,7 @@ import javapns.exceptions.NullIdException;
 import javapns.exceptions.UnknownDeviceException;
 
 import org.apache.commons.lang.StringUtils;
+import org.apache.log4j.Logger;
 
 
 /**
@@ -28,7 +29,9 @@ import org.apache.commons.lang.StringUtils;
  */
 public class DeviceFactory {
 
-	/* A map containing all the devices, identified with their id */
+    protected static final Logger logger = Logger.getLogger( DeviceFactory.class );
+
+    /* A map containing all the devices, identified with their id */
 	private Map<String, Device> devices;
 	
 	/* Singleton pattern */
@@ -42,6 +45,7 @@ public class DeviceFactory {
 		if (instance == null){
 			instance = new DeviceFactory();
 		}
+		logger.debug( "Get DeviceFactory Instance" );
 		return instance;
 	}
 
@@ -61,6 +65,7 @@ public class DeviceFactory {
 	 * @throws NullDeviceTokenException 
 	 */
 	public void addDevice(String id, String token) throws DuplicateDeviceException, NullIdException, NullDeviceTokenException{
+		logger.debug( "Adding Token [" + token + "] to Device [" + id + "]" );
 		if ((id == null) || (id.trim().equals(""))){
 			throw new NullIdException();
 		} else if ((token == null) || (token.trim().equals(""))){
@@ -83,6 +88,7 @@ public class DeviceFactory {
 	 * @throws NullIdException 
 	 */
 	public Device getDevice(String id) throws UnknownDeviceException, NullIdException{
+		logger.debug( "Getting Token from Device [" + id + "]" );
 		if ((id == null) || (id.trim().equals(""))){
 			throw new NullIdException();
 		} else {
@@ -94,7 +100,6 @@ public class DeviceFactory {
 		}
 	}
 
-
 	/**
 	 * Remove a device
 	 * @param id The device id
@@ -102,6 +107,7 @@ public class DeviceFactory {
 	 * @throws NullIdException 
 	 */
 	public void removeDevice(String id) throws UnknownDeviceException, NullIdException {
+		logger.debug( "Removing Token from Device [" + id + "]" );
 		if ((id == null) || (id.trim().equals(""))){
 			throw new NullIdException();
 		}

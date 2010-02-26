@@ -3,9 +3,11 @@ package javapns.back;
 import java.io.ByteArrayOutputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
 import java.security.KeyManagementException;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
+import java.security.NoSuchProviderException;
 import java.security.UnrecoverableKeyException;
 import java.security.cert.CertificateException;
 
@@ -18,6 +20,7 @@ import javapns.exceptions.UnknownDeviceException;
 
 import javax.net.ssl.SSLSocket;
 
+import org.apache.log4j.Logger;
 
 /**
  * The main class used to send notification and handle a connection to Apple SSLServerSocket
@@ -25,6 +28,8 @@ import javax.net.ssl.SSLSocket;
  *
  */
 public class PushNotificationManager {
+	
+    protected static final Logger logger = Logger.getLogger( PushNotificationManager.class );
 
 	/* Default retries for a connection */
 	public static final int DEFAULT_RETRIES = 3;
@@ -71,9 +76,33 @@ public class PushNotificationManager {
 	 * @throws CertificateException
 	 * @throws FileNotFoundException
 	 * @throws IOException
+	 * @throws NoSuchProviderException 
 	 */
-	public void initializeConnection(String appleHost, int applePort, String keyStorePath, String keyStorePass, String keyStoreType) throws UnrecoverableKeyException, KeyManagementException, KeyStoreException, NoSuchAlgorithmException, CertificateException, FileNotFoundException, IOException{
+	public void initializeConnection(String appleHost, int applePort, String keyStorePath, String keyStorePass, String keyStoreType) throws UnrecoverableKeyException, KeyManagementException, KeyStoreException, NoSuchAlgorithmException, CertificateException, FileNotFoundException, IOException, NoSuchProviderException{
+		logger.debug( "Initializing Connection to Host: [" + appleHost + "] Port: [" + applePort + "] with KeyStorePath [" + keyStorePath + "]/[" + keyStoreType + "]" );
 		this.connectionHelper = new SSLConnectionHelper(appleHost, applePort, keyStorePath, keyStorePass, keyStoreType);
+		this.socket = connectionHelper.getSSLSocket();
+	}
+	
+	/**
+	 * Initialize the connection and create a SSLSocket
+	 * @param appleHost the Apple ServerSocket host
+	 * @param applePort the Apple ServerSocket port
+	 * @param keyStoreStream the keystore stream
+	 * @param keyStorePass the keystore password
+	 * @param keyStoreType the keystore type
+	 * @throws UnrecoverableKeyException
+	 * @throws KeyManagementException
+	 * @throws KeyStoreException
+	 * @throws NoSuchAlgorithmException
+	 * @throws CertificateException
+	 * @throws FileNotFoundException
+	 * @throws IOException
+	 * @throws NoSuchProviderException 
+	 */
+	public void initializeConnection(String appleHost, int applePort, InputStream keyStoreStream, String keyStorePass, String keyStoreType) throws UnrecoverableKeyException, KeyManagementException, KeyStoreException, NoSuchAlgorithmException, CertificateException, FileNotFoundException, IOException, NoSuchProviderException{
+		logger.debug( "Initializing Connection to Host: [" + appleHost + "] Port: [" + applePort + "] with KeyStoreStream/[" + keyStoreType + "]" );
+		this.connectionHelper = new SSLConnectionHelper(appleHost, applePort, keyStoreStream, keyStorePass, keyStoreType);
 		this.socket = connectionHelper.getSSLSocket();
 	}
 	
@@ -82,6 +111,7 @@ public class PushNotificationManager {
 	 * @throws IOException
 	 */
 	public void stopConnection() throws IOException{
+		logger.debug( "Closing connection" );
 		this.socket.close();
 	}
 
@@ -100,22 +130,32 @@ public class PushNotificationManager {
 	public void sendNotification(Device device, PayLoad payload) throws UnrecoverableKeyException, KeyManagementException, KeyStoreException, NoSuchAlgorithmException, CertificateException, FileNotFoundException, IOException, Exception {
 		byte[] message = getMessage(device.getToken(), payload);
 		boolean success = false;
+		
 		int attempts = 0;
-		while(!success){
+		// Keep trying until we have a success
+		while( !success ){
 			try {
+				logger.debug( "Attempting to send Notification [" + payload.toString() + "]" );
 				attempts++;
 				this.socket.getOutputStream().write(message);
 				this.socket.getOutputStream().flush();
 				success = true;
+				logger.debug( "Notification sent" );
+				
 			} catch (IOException e) {
-				if(attempts >= retryAttempts){
+				// throw exception if we surpassed the valid number of retry attempts
+				if ( attempts >= retryAttempts ){
+					logger.error( "Attempt to send Notification failed and beyond the maximum number of attempts permitted" );
 					throw e;
-				}else{
+					
+				} else {
+					logger.info( "Attempt failed... trying again" );
 					//Try again
 					try{
 						this.socket.close();
-					}catch(Exception e2){}
-					// TODO should the user be informed about the failure?
+					} catch( Exception e2 ){
+						// do nothing
+					}
 					//e.printStackTrace();
 					this.socket = connectionHelper.getSSLSocket();
 				}
@@ -132,6 +172,7 @@ public class PushNotificationManager {
 	 * @throws NullIdException 
 	 */
 	public void addDevice(String id, String token) throws DuplicateDeviceException, NullIdException, NullDeviceTokenException{
+		logger.debug( "Adding Token [" + token + "] to Device [" + id + "]" );
 		DeviceFactory.getInstance().addDevice(id, token);
 	}
 
@@ -143,6 +184,7 @@ public class PushNotificationManager {
 	 * @throws NullIdException 
 	 */
 	public Device getDevice(String id) throws UnknownDeviceException, NullIdException{
+		logger.debug( "Getting Token from Device [" + id + "]" );
 		return DeviceFactory.getInstance().getDevice(id);
 	}
 
@@ -153,6 +195,7 @@ public class PushNotificationManager {
 	 * @throws NullIdException
 	 */
 	public void removeDevice(String id) throws UnknownDeviceException, NullIdException{
+		logger.debug( "Removing Token from Device [" + id + "]" );
 		DeviceFactory.getInstance().removeDevice(id);
 	}
 	
@@ -199,6 +242,7 @@ public class PushNotificationManager {
 	 * @throws IOException
 	 */
 	private static byte[] getMessage(String deviceToken, PayLoad payload) throws IOException, Exception {
+		logger.debug( "Building Raw message from deviceToken and payload" );
 		// First convert the deviceToken (in hexa form) to a binary format
 		byte[] deviceTokenAsBytes = new byte[deviceToken.length() / 2];
 		deviceToken = deviceToken.toUpperCase();

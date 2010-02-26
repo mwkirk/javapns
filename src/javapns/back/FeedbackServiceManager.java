@@ -13,11 +13,12 @@ import java.security.cert.CertificateException;
 import java.sql.Timestamp;
 import java.util.Date;
 import java.util.LinkedList;
-import java.util.logging.Logger;
 
 import javapns.data.Device;
 
 import javax.net.ssl.SSLSocket;
+
+import org.apache.log4j.Logger;
 
 /**
  * An implementation of the feedback service (beta version)
@@ -26,7 +27,9 @@ import javax.net.ssl.SSLSocket;
  */
 public class FeedbackServiceManager {
 
-	/* Singleton pattern */
+    protected static final Logger logger = Logger.getLogger( FeedbackServiceManager.class );
+
+    /* Singleton pattern */
 	private static FeedbackServiceManager instance;
 	
 	/* Length of the tuple sent by Apple */
@@ -45,11 +48,13 @@ public class FeedbackServiceManager {
 		if (instance == null){
 			instance = new FeedbackServiceManager();
 		}
+		logger.debug( "Get FeedbackServiceManager Instance" );
 		return instance;
 	}
 
 	/**
-	 * Retrieve all devices which uninstalled the application
+	 * Retrieve all devices which have un-installed the application
+	 * 
 	 * @param appleHost the Apple ServerSocket host
 	 * @param applePort the Apple ServerSocket port
 	 * @param keyStorePath the path to the keystore
@@ -65,6 +70,7 @@ public class FeedbackServiceManager {
 	 * @throws UnrecoverableKeyException 
 	 */
 	public LinkedList<Device> getDevices(String appleHost, int applePort, String keyStorePath, String keyStorePass, String keyStoreType) throws UnrecoverableKeyException, KeyManagementException, KeyStoreException, NoSuchAlgorithmException, CertificateException, FileNotFoundException, IOException, NoSuchProviderException {
+		logger.debug( "Retrieving Devices from Host: [" + appleHost + "] Port: [" + applePort + "] with KeyStorePath [" + keyStorePath + "]/[" + keyStoreType + "]" );
 		// Create the connection and open a socket
         SSLConnectionHelper connectionHelper = new SSLConnectionHelper(appleHost, applePort, keyStorePath, keyStorePass, keyStoreType);
         SSLSocket socket = connectionHelper.getFeedbackSSLSocket();
@@ -84,6 +90,7 @@ public class FeedbackServiceManager {
         LinkedList<Device> listDev = new LinkedList<Device>();
         byte[] listOfDevices = message.toByteArray();    
         int nbTuples = listOfDevices.length / FEEDBACK_TUPLE_SIZE;
+        logger.debug( "Found: [" + nbTuples + "]" );
         for(int i=0;i<nbTuples;i++) {
              int offset = i*FEEDBACK_TUPLE_SIZE;
 
@@ -120,7 +127,7 @@ public class FeedbackServiceManager {
              // Build device and add to list
              Device device = new Device(null, deviceToken, new Timestamp(anUnsignedInt*1000));
              listDev.add(device);
-             Logger.getAnonymousLogger().info("FeedbackManager retrieves one device :  "+new Date(anUnsignedInt*1000)+";"+deviceTokenLength+";"+deviceToken+".");
+             logger.info( "FeedbackManager retrieves one device :  "+new Date(anUnsignedInt*1000)+";"+deviceTokenLength+";"+deviceToken+".");
         }
         
         // Close the socket and return the list
