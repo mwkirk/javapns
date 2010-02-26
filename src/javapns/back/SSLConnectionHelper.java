@@ -175,10 +175,6 @@ public class SSLConnectionHelper {
 		KeyManagerFactory kmf = KeyManagerFactory.getInstance(ALGORITHM);
 		kmf.init(this.keyStore, this.keyStorePass.toCharArray());
 
-		// Get a TrustManagerFactory and init with KeyStore
-		TrustManagerFactory tmf = TrustManagerFactory.getInstance(ALGORITHM);			
-		tmf.init(this.keyStore);
-
 		// Get the SSLContext to help create SSLSocketFactory			
 		SSLContext sslc = SSLContext.getInstance(PROTOCOL);
         sslc.init(kmf.getKeyManagers(), trustManagers, null);
