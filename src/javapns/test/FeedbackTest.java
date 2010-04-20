@@ -14,8 +14,9 @@ public class FeedbackTest {
     private static final int PORT = 2196;
 
 	// Vars that will be set from system.properties
-	private static String certificate = "/path/to/cert";
-	private static String passwd = "cert_passwd";
+	//String certificate = Push.class.getResource( "hereme_dev_key.p12" ).getPath();
+	private static String certificate = "/Volumes/HereMe/projects/hereme-server/src/com/hereme/helper/HereMe_Development_Push_Cert_Jan_21.p12";
+	private static String passwd = "here123";
 
 	public static void main( String[] args ) throws Exception {
 		
