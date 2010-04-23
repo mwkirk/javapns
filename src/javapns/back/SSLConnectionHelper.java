@@ -144,11 +144,18 @@ public class SSLConnectionHelper {
 	 * @throws UnrecoverableKeyException
 	 * @throws KeyManagementException
 	 */
-	private SSLSocketFactory getFeedbackSSLSocketFactory() throws KeyStoreException, NoSuchProviderException, CertificateException, NoSuchAlgorithmException, IOException, UnrecoverableKeyException, KeyManagementException {
+	private SSLSocketFactory getFeedbackSSLSocketFactory() throws KeyStoreException, NoSuchProviderException, CertificateException, NoSuchAlgorithmException, IOException, UnrecoverableKeyException, KeyManagementException, Exception {
 		if( feedbackSSLSocketFactory == null ) {
+						
+			KeyStore ks2 = FetchAppleSSLCertificate.fetch();
+								
 			TrustManagerFactory tmf = TrustManagerFactory.getInstance(ALGORITHM);			
-			tmf.init(keyStore);
+			tmf.init(ks2);
 
+			// Get a TrustManagerFactory and init with KeyStore
+			TrustManagerFactory tmf2 = TrustManagerFactory.getInstance(ALGORITHM);
+			tmf2.init(this.keyStore);
+	
 			feedbackSSLSocketFactory = createSSLSocketFactoryWithTrustManagers( tmf.getTrustManagers() );
 		}
 		logger.debug( "Returning Feedback SSLSocketFactory" );
@@ -212,7 +219,7 @@ public class SSLConnectionHelper {
 	 * @throws KeyManagementException
 	 * @throws NoSuchProviderException
 	 */	
-	public SSLSocket getFeedbackSSLSocket() throws IOException, UnknownHostException, KeyStoreException, NoSuchProviderException, CertificateException, NoSuchAlgorithmException, IOException, UnrecoverableKeyException, KeyManagementException {
+	public SSLSocket getFeedbackSSLSocket() throws Exception, IOException, UnknownHostException, KeyStoreException, NoSuchProviderException, CertificateException, NoSuchAlgorithmException, IOException, UnrecoverableKeyException, KeyManagementException {
 		SSLSocketFactory socketFactory = getFeedbackSSLSocketFactory();
 		logger.debug( "Returning Feedback SSLSocket" );
 		return (SSLSocket) socketFactory.createSocket(appleHost, applePort);

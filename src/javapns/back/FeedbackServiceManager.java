@@ -69,7 +69,7 @@ public class FeedbackServiceManager {
 	 * @throws KeyManagementException 
 	 * @throws UnrecoverableKeyException 
 	 */
-	public LinkedList<Device> getDevices(String appleHost, int applePort, String keyStorePath, String keyStorePass, String keyStoreType) throws UnrecoverableKeyException, KeyManagementException, KeyStoreException, NoSuchAlgorithmException, CertificateException, FileNotFoundException, IOException, NoSuchProviderException {
+	public LinkedList<Device> getDevices(String appleHost, int applePort, String keyStorePath, String keyStorePass, String keyStoreType) throws UnrecoverableKeyException, KeyManagementException, KeyStoreException, NoSuchAlgorithmException, CertificateException, FileNotFoundException, IOException, NoSuchProviderException, Exception {
 		logger.debug( "Retrieving Devices from Host: [" + appleHost + "] Port: [" + applePort + "] with KeyStorePath [" + keyStorePath + "]/[" + keyStoreType + "]" );
 		// Create the connection and open a socket
         SSLConnectionHelper connectionHelper = new SSLConnectionHelper(appleHost, applePort, keyStorePath, keyStorePass, keyStoreType);
@@ -95,7 +95,7 @@ public class FeedbackServiceManager {
 	 * @throws KeyManagementException 
 	 * @throws UnrecoverableKeyException 
 	 */
-	public LinkedList<Device> getDevices(String appleHost, int applePort, InputStream keyStoreStream, String keyStorePass, String keyStoreType) throws UnrecoverableKeyException, KeyManagementException, KeyStoreException, NoSuchAlgorithmException, CertificateException, FileNotFoundException, IOException, NoSuchProviderException {
+	public LinkedList<Device> getDevices(String appleHost, int applePort, InputStream keyStoreStream, String keyStorePass, String keyStoreType) throws UnrecoverableKeyException, KeyManagementException, KeyStoreException, NoSuchAlgorithmException, CertificateException, FileNotFoundException, IOException, NoSuchProviderException, Exception {
 		logger.debug( "Retrieving Devices from Host: [" + appleHost + "] Port: [" + applePort + "] with KeyStoreStream/[" + keyStoreType + "]" );
 		// Create the connection and open a socket
         SSLConnectionHelper connectionHelper = new SSLConnectionHelper(appleHost, applePort, keyStoreStream, keyStorePass, keyStoreType);
@@ -119,11 +119,14 @@ public class FeedbackServiceManager {
 		byte[] b = new byte[1024];
 		ByteArrayOutputStream message = new ByteArrayOutputStream();
 		int nbBytes = 0;
-		while ( socketStream.available() > 0 ) {
-			nbBytes = socketStream.read(b, 0, 1024);
-			message.write(b, 0, nbBytes);
-		}
-
+//		while ( socketStream.available() > 0 ) {
+//			nbBytes = socketStream.read(b, 0, 1024);
+//			message.write(b, 0, nbBytes);
+//		}
+        while ( (nbBytes = socketStream.read(b, 0, 1024))!= -1) {
+            message.write(b, 0, nbBytes);
+        }
+        
 		// Compute
 		LinkedList<Device> listDev = new LinkedList<Device>();
 		byte[] listOfDevices = message.toByteArray();    
