@@ -283,7 +283,7 @@ public class PushNotificationManager {
 
 	/**
 	 * Get the number of retry attempts
-	 * @return
+	 * @return int
 	 */
 	public int getRetryAttempts() {
 		return this.retryAttempts;

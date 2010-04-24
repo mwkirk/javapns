@@ -46,12 +46,17 @@ public class FetchAppleSSLCertificate {
 	
     protected static final Logger logger = Logger.getLogger( FetchAppleSSLCertificate.class );
 	
-	private static String host = "feedback.push.apple.com";
-	private static int port = 2196;
+	/**
+	 * Fetch certificate from host/port
+	 * 
+	 * @param host
+	 * @param port
+	 * @return Keystore with the first cert added
+	 * @throws Exception
+	 */
+	public static KeyStore fetch( String host, int port ) throws Exception {
 
-	public static KeyStore fetch() throws Exception {
-
-		KeyStore ks = KeyStore.getInstance(KeyStore.getDefaultType());
+		KeyStore ks = KeyStore.getInstance( KeyStore.getDefaultType() );
 		ks.load( null );
 
 		SSLContext context = SSLContext.getInstance( "TLS" );
@@ -78,7 +83,7 @@ public class FetchAppleSSLCertificate {
 
 		X509Certificate[] chain = tm.chain;
 		if (chain == null) {
-			throw new Exception("Could not obtain server certificate chain");
+			throw new Exception("Could not obtain server certificate chain!");
 		}
 		logger.debug("Server sent " + chain.length + " certificate(s):");
 		MessageDigest sha1 = MessageDigest.getInstance("SHA1");

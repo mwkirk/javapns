@@ -129,7 +129,7 @@ public class PayLoad {
 
 	/**
 	 * Get this payload as a byte array
-	 * @return
+	 * @return byte[]
 	 */
 	public byte[] getPayloadAsBytes() throws Exception {
 		byte[] payload = null;

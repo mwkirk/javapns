@@ -42,7 +42,6 @@ public class FeedbackServiceManager {
 	
 	/**
 	 * Singleton pattern implementation
-	 * @return
 	 */
 	public static FeedbackServiceManager getInstance(){
 		if (instance == null){
@@ -51,7 +50,7 @@ public class FeedbackServiceManager {
 		logger.debug( "Get FeedbackServiceManager Instance" );
 		return instance;
 	}
-
+	
 	/**
 	 * Retrieve all devices which have un-installed the application w/Path to keystore
 	 * 
@@ -60,7 +59,7 @@ public class FeedbackServiceManager {
 	 * @param keyStorePath the path to the keystore
 	 * @param keyStorePass the keystore password
 	 * @param keyStoreType the keystore type
-	 * @return
+	 * @return List of Devices
 	 * @throws IOException 
 	 * @throws FileNotFoundException 
 	 * @throws CertificateException 
@@ -86,7 +85,7 @@ public class FeedbackServiceManager {
 	 * @param keyStoreStream the keystore Stream
 	 * @param keyStorePass the keystore password
 	 * @param keyStoreType the keystore type
-	 * @return
+	 * @return List of Devices
 	 * @throws IOException 
 	 * @throws FileNotFoundException 
 	 * @throws CertificateException 
@@ -119,14 +118,14 @@ public class FeedbackServiceManager {
 		byte[] b = new byte[1024];
 		ByteArrayOutputStream message = new ByteArrayOutputStream();
 		int nbBytes = 0;
-//		while ( socketStream.available() > 0 ) {
-//			nbBytes = socketStream.read(b, 0, 1024);
-//			message.write(b, 0, nbBytes);
-//		}
-        while ( (nbBytes = socketStream.read(b, 0, 1024))!= -1) {
-            message.write(b, 0, nbBytes);
-        }
-        
+		while ( socketStream.available() > 0 ) {
+			nbBytes = socketStream.read(b, 0, 1024);
+			message.write(b, 0, nbBytes);
+		}
+//        while ( (nbBytes = socketStream.read(b, 0, 1024))!= -1) {
+//            message.write(b, 0, nbBytes);
+//        }
+    
 		// Compute
 		LinkedList<Device> listDev = new LinkedList<Device>();
 		byte[] listOfDevices = message.toByteArray();    

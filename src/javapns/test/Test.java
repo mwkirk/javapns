@@ -50,7 +50,8 @@ public class Test {
 			Device client = PushNotificationManager.getInstance().getDevice("my_iPhone");
 //			PushNotificationManager.getInstance().setProxy("my_proxy_host", "my_proxy_port");
 			//PushNotificationManager.getInstance().initializeConnection("gateway.sandbox.push.apple.com", 2195, "my_cert_path", "my_cert_password", SSLConnectionHelper.KEYSTORE_TYPE_PKCS12);
-			PushNotificationManager.getInstance().initializeConnection("gateway.sandbox.push.apple.com", 2195, "/Volumes/HereMe/projects/hereme-server/src/com/hereme/helper/HereMe_Development_Push_Cert_Jan_21.p12", "here123", SSLConnectionHelper.KEYSTORE_TYPE_PKCS12);
+//			PushNotificationManager.getInstance().initializeConnection("gateway.sandbox.push.apple.com", 2195, "/Volumes/HereMe/projects/hereme-server/src/com/hereme/helper/HereMe_Development_Push_Cert_Jan_21.p12", "here123", SSLConnectionHelper.KEYSTORE_TYPE_PKCS12);
+			PushNotificationManager.getInstance().initializeConnection("gateway.push.apple.com", 2195, "/Volumes/HereMe/projects/hereme-server/src/com/hereme/helper/HereMePushProd.p12", "here123", SSLConnectionHelper.KEYSTORE_TYPE_PKCS12);
 			PushNotificationManager.getInstance().sendNotification(client, simplePayLoad);
 //			PushNotificationManager.getInstance().sendNotification(client, complexPayLoad);
 		} catch (Exception e) {
