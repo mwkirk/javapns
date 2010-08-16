@@ -118,13 +118,11 @@ public class FeedbackServiceManager {
 		byte[] b = new byte[1024];
 		ByteArrayOutputStream message = new ByteArrayOutputStream();
 		int nbBytes = 0;
-		while ( socketStream.available() > 0 ) {
-			nbBytes = socketStream.read(b, 0, 1024);
+		// socketStream.available can return 0
+		// http://forums.sun.com/thread.jspa?threadID=5428561
+		while ( (nbBytes = socketStream.read(b, 0, 1024))!= -1) {
 			message.write(b, 0, nbBytes);
 		}
-//        while ( (nbBytes = socketStream.read(b, 0, 1024))!= -1) {
-//            message.write(b, 0, nbBytes);
-//        }
     
 		// Compute
 		LinkedList<Device> listDev = new LinkedList<Device>();
