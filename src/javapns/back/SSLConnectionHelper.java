@@ -111,7 +111,7 @@ public class SSLConnectionHelper {
 		this.keyStorePass = keyStorePass;
 		
 		// Load the Keystore
-		this.keyStore = KeyStore.getInstance(keystoreType, "BC");
+		this.keyStore = KeyStore.getInstance(keystoreType);
 		this.keyStore.load( keyStoreInputStream, this.keyStorePass.toCharArray() );
 	}
 	
