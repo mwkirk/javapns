@@ -10,7 +10,7 @@
   <property name="src" location="src"/>
   <property name="build" location="build"/>
   <property name="doc" location="doc"/>
-  <property name="dist.jar" location="javapns1.6.jar"/>
+  <property name="dist.jar" location="javapns-jdk16-162.jar"/>
 
   <path id="libpath">
     <pathelement path="commons-lang-2.4.jar"/>
