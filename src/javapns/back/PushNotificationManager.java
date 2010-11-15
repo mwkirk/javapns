@@ -34,9 +34,6 @@ public class PushNotificationManager {
 	/* Default retries for a connection */
 	public static final int DEFAULT_RETRIES = 3;
 	
-	/* Singleton pattern */
-	private static PushNotificationManager instance;
-	
 	/* Connection helper */
 	private SSLConnectionHelper connectionHelper;
 	
@@ -46,21 +43,27 @@ public class PushNotificationManager {
 	/* Default retry attempts */
 	private int retryAttempts = DEFAULT_RETRIES;
 	
-	/**
-	 * Singleton pattern implementation
-	 * @return the PushNotificationManager instance
-	 */
-	public static PushNotificationManager getInstance(){
-		if (instance == null){
-			instance = new PushNotificationManager();
-		}
-		return instance;
-	}
+	/* The DeviceFactory to use with this PushNotificationManager */
+	private DeviceFactory deviceFactory;
 
 	/**
-	 * Private constructor
+	 * Constructs a PushNotificationManager with a default DeviceFactory;
 	 */
-	private PushNotificationManager(){}
+	public PushNotificationManager() {
+		deviceFactory = new VolatileDeviceFactory();
+	}
+	
+	
+	/**
+	 * Constructs a PushNotificationManager using a supplied DeviceFactory
+	 * @param deviceManager
+	 */
+	public PushNotificationManager(DeviceFactory deviceManager) {
+		this.deviceFactory = deviceManager;
+	}
+	
+	
+	
 	
 	/**
 	 * Initialize the connection and create a SSLSocket
@@ -173,7 +176,7 @@ public class PushNotificationManager {
 	 */
 	public void addDevice(String id, String token) throws DuplicateDeviceException, NullIdException, NullDeviceTokenException{
 		logger.debug( "Adding Token [" + token + "] to Device [" + id + "]" );
-		DeviceFactory.getInstance().addDevice(id, token);
+		deviceFactory.addDevice(id, token);
 	}
 
 	/**
@@ -185,7 +188,7 @@ public class PushNotificationManager {
 	 */
 	public Device getDevice(String id) throws UnknownDeviceException, NullIdException{
 		logger.debug( "Getting Token from Device [" + id + "]" );
-		return DeviceFactory.getInstance().getDevice(id);
+		return deviceFactory.getDevice(id);
 	}
 
 	/**
@@ -196,7 +199,7 @@ public class PushNotificationManager {
 	 */
 	public void removeDevice(String id) throws UnknownDeviceException, NullIdException{
 		logger.debug( "Removing Token from Device [" + id + "]" );
-		DeviceFactory.getInstance().removeDevice(id);
+		deviceFactory.removeDevice(id);
 	}
 	
 	/**
@@ -295,5 +298,24 @@ public class PushNotificationManager {
 	 */
 	public void setRetryAttempts(int retryAttempts) {
 		this.retryAttempts = retryAttempts;
+	}
+
+
+	/**
+	 * Sets the DeviceFactory used by this PushNotificationManager.
+	 * Usually useful for dependency injection.
+	 * @param deviceFactory an object implementing DeviceFactory
+	 */
+	public void setDeviceFactory(DeviceFactory deviceFactory) {
+		this.deviceFactory = deviceFactory;
+	}
+
+
+	/**
+	 * Returns the DeviceFactory used by this PushNotificationManager.
+	 * @return the DeviceFactory in use
+	 */
+	public DeviceFactory getDeviceFactory() {
+		return deviceFactory;
 	}
 }

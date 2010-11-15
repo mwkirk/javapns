@@ -1,60 +1,16 @@
 package javapns.back;
 
-import java.sql.Timestamp;
-import java.util.Calendar;
-import java.util.HashMap;
-import java.util.Map;
-
-import javapns.data.Device;
-import javapns.exceptions.DuplicateDeviceException;
-import javapns.exceptions.NullDeviceTokenException;
-import javapns.exceptions.NullIdException;
-import javapns.exceptions.UnknownDeviceException;
-
-import org.apache.commons.lang.StringUtils;
-import org.apache.log4j.Logger;
-
+import javapns.data.*;
+import javapns.exceptions.*;
 
 /**
- * This class help manage the devices
- * It implements the singleton pattern so only one class manages the devices,
- * avoiding problems with duplicate or lost devices
- * NB : Future Improvement :
- * 		 - Add a method to find a device knowing his token
- * 		 - Add a method to update a device (timestamp or token)
- *       - link with a database (JPA?) to store devices
- *       - method to compare two devices, and replace when the device token has changed
- * @author Maxime Peron
- *
+ * This is the common interface for all DeviceFactories.
+ * It allows the PushNotificationManager to support multiple
+ * implementations of DeviceFactory (in-memory, JPA-backed, etc.)
+ * 
+ * @author Sylvain Pedneault
  */
-public class DeviceFactory {
-
-    protected static final Logger logger = Logger.getLogger( DeviceFactory.class );
-
-    /* A map containing all the devices, identified with their id */
-	private Map<String, Device> devices;
-	
-	/* Singleton pattern */
-	private static DeviceFactory instance;
-
-	/**
-	 * Singleton pattern implementation
-	 * @return the instance of DeviceFactory
-	 */
-	public static DeviceFactory getInstance(){
-		if (instance == null){
-			instance = new DeviceFactory();
-		}
-		logger.debug( "Get DeviceFactory Instance" );
-		return instance;
-	}
-
-	/**
-	 * Private Constructor
-	 */
-	private DeviceFactory(){
-		this.devices = new HashMap<String, Device>();
-	}
+public interface DeviceFactory {
 
 	/**
 	 * Add a device to the map
@@ -64,21 +20,8 @@ public class DeviceFactory {
 	 * @throws NullIdException 
 	 * @throws NullDeviceTokenException 
 	 */
-	public void addDevice(String id, String token) throws DuplicateDeviceException, NullIdException, NullDeviceTokenException{
-		logger.debug( "Adding Token [" + token + "] to Device [" + id + "]" );
-		if ((id == null) || (id.trim().equals(""))){
-			throw new NullIdException();
-		} else if ((token == null) || (token.trim().equals(""))){
-			throw new NullDeviceTokenException();
-		} else {
-			if (!this.devices.containsKey(id)){
-				token = StringUtils.deleteWhitespace(token);
-				this.devices.put(id, new Device(id, token, new Timestamp(Calendar.getInstance().getTime().getTime())));
-			} else {
-				throw new DuplicateDeviceException();
-			}
-		}
-	}
+	public void addDevice(String id, String token) throws DuplicateDeviceException, NullIdException, NullDeviceTokenException;
+
 
 	/**
 	 * Get a device according to his id
@@ -87,18 +30,8 @@ public class DeviceFactory {
 	 * @throws UnknownDeviceException
 	 * @throws NullIdException 
 	 */
-	public Device getDevice(String id) throws UnknownDeviceException, NullIdException{
-		logger.debug( "Getting Token from Device [" + id + "]" );
-		if ((id == null) || (id.trim().equals(""))){
-			throw new NullIdException();
-		} else {
-			if (this.devices.containsKey(id)){
-				return this.devices.get(id);
-			} else {
-				throw new UnknownDeviceException();
-			}
-		}
-	}
+	public Device getDevice(String id) throws UnknownDeviceException, NullIdException;
+
 
 	/**
 	 * Remove a device
@@ -106,15 +39,6 @@ public class DeviceFactory {
 	 * @throws UnknownDeviceException
 	 * @throws NullIdException 
 	 */
-	public void removeDevice(String id) throws UnknownDeviceException, NullIdException {
-		logger.debug( "Removing Token from Device [" + id + "]" );
-		if ((id == null) || (id.trim().equals(""))){
-			throw new NullIdException();
-		}
-		if (this.devices.containsKey(id)){
-			this.devices.remove(id);
-		} else {
-			throw new UnknownDeviceException();
-		}
-	}
+	public void removeDevice(String id) throws UnknownDeviceException, NullIdException;
+
 }

@@ -14,7 +14,7 @@ public class Test {
 	public static void main(String[] args) {
 		try { 
 			// Get PushNotification Instance
-			PushNotificationManager pushManager = PushNotificationManager.getInstance();
+			PushNotificationManager pushManager = new PushNotificationManager();
 			// Link iPhone's UDID (64-char device token) to a stringName 
 			pushManager.addDevice("my_iPhone", "2ed202ac08ea9033665d853a3dc8bc4c5e78f7c6cf8d55910df290567037dcc4");
 			
@@ -47,12 +47,12 @@ public class Test {
 			values.add(2);
 			complexPayLoad.addCustomDictionary("acme3", values);
 			
-			Device client = PushNotificationManager.getInstance().getDevice("my_iPhone");
+			Device client = pushManager.getDevice("my_iPhone");
 //			PushNotificationManager.getInstance().setProxy("my_proxy_host", "my_proxy_port");
 			//PushNotificationManager.getInstance().initializeConnection("gateway.sandbox.push.apple.com", 2195, "my_cert_path", "my_cert_password", SSLConnectionHelper.KEYSTORE_TYPE_PKCS12);
 //			PushNotificationManager.getInstance().initializeConnection("gateway.sandbox.push.apple.com", 2195, "/Volumes/HereMe/projects/hereme-server/src/com/hereme/helper/HereMe_Development_Push_Cert_Jan_21.p12", "here123", SSLConnectionHelper.KEYSTORE_TYPE_PKCS12);
-			PushNotificationManager.getInstance().initializeConnection("gateway.push.apple.com", 2195, "/Volumes/HereMe/projects/hereme-server/src/com/hereme/helper/HereMePushProd.p12", "here123", SSLConnectionHelper.KEYSTORE_TYPE_PKCS12);
-			PushNotificationManager.getInstance().sendNotification(client, simplePayLoad);
+			pushManager.initializeConnection("gateway.push.apple.com", 2195, "/Volumes/HereMe/projects/hereme-server/src/com/hereme/helper/HereMePushProd.p12", "here123", SSLConnectionHelper.KEYSTORE_TYPE_PKCS12);
+			pushManager.sendNotification(client, simplePayLoad);
 //			PushNotificationManager.getInstance().sendNotification(client, complexPayLoad);
 		} catch (Exception e) {
 			// TODO Auto-generated catch block

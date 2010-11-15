@@ -2,7 +2,7 @@ package javapns.data;
 
 import java.util.List;
 
-import javapns.back.DeviceFactory;
+import javapns.back.VolatileDeviceFactory;
 
 import org.apache.log4j.Logger;
 import org.json.JSONException;
@@ -16,7 +16,7 @@ import org.json.JSONObject;
  */
 public class PayLoad {
 
-    protected static final Logger logger = Logger.getLogger( DeviceFactory.class );
+    protected static final Logger logger = Logger.getLogger( VolatileDeviceFactory.class );
 
     /* The root Payload */
 	private JSONObject payload;
