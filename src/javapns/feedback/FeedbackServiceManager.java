@@ -9,7 +9,7 @@ import java.util.*;
 import javapns.communication.*;
 import javapns.devices.*;
 import javapns.devices.exceptions.*;
-import javapns.devices.impl.basic.*;
+import javapns.devices.implementations.basic.*;
 
 import javax.net.ssl.*;
 
