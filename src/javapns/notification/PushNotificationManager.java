@@ -1,26 +1,16 @@
-package javapns.back;
+package javapns.notification;
 
-import java.io.ByteArrayOutputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStream;
-import java.security.KeyManagementException;
-import java.security.KeyStoreException;
-import java.security.NoSuchAlgorithmException;
-import java.security.NoSuchProviderException;
-import java.security.UnrecoverableKeyException;
-import java.security.cert.CertificateException;
+import java.io.*;
+import java.security.*;
+import java.security.cert.*;
 
-import javapns.data.Device;
-import javapns.data.PayLoad;
-import javapns.exceptions.DuplicateDeviceException;
-import javapns.exceptions.NullDeviceTokenException;
-import javapns.exceptions.NullIdException;
-import javapns.exceptions.UnknownDeviceException;
+import javapns.devices.*;
+import javapns.exceptions.*;
+import javapns.impl.basic.*;
 
-import javax.net.ssl.SSLSocket;
+import javax.net.ssl.*;
 
-import org.apache.log4j.Logger;
+import org.apache.log4j.*;
 
 /**
  * The main class used to send notification and handle a connection to Apple SSLServerSocket
@@ -50,7 +40,7 @@ public class PushNotificationManager {
 	 * Constructs a PushNotificationManager with a default DeviceFactory;
 	 */
 	public PushNotificationManager() {
-		deviceFactory = new VolatileDeviceFactory();
+		deviceFactory = new BasicDeviceFactory();
 	}
 	
 	

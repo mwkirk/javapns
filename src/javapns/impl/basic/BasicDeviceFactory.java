@@ -1,18 +1,13 @@
-package javapns.back;
+package javapns.impl.basic;
 
-import java.sql.Timestamp;
-import java.util.Calendar;
-import java.util.HashMap;
-import java.util.Map;
+import java.sql.*;
+import java.util.*;
 
-import javapns.data.Device;
-import javapns.exceptions.DuplicateDeviceException;
-import javapns.exceptions.NullDeviceTokenException;
-import javapns.exceptions.NullIdException;
-import javapns.exceptions.UnknownDeviceException;
+import javapns.devices.*;
+import javapns.exceptions.*;
 
-import org.apache.commons.lang.StringUtils;
-import org.apache.log4j.Logger;
+import org.apache.commons.lang.*;
+import org.apache.log4j.*;
 
 
 /**
@@ -27,19 +22,19 @@ import org.apache.log4j.Logger;
  * @author Maxime Peron
  *
  */
-public class VolatileDeviceFactory implements DeviceFactory {
+public class BasicDeviceFactory implements DeviceFactory {
 
-    protected static final Logger logger = Logger.getLogger( VolatileDeviceFactory.class );
+    protected static final Logger logger = Logger.getLogger( BasicDeviceFactory.class );
 
     /* A map containing all the devices, identified with their id */
-	private Map<String, Device> devices;
+	private Map<String, BasicDevice> devices;
 	
 
 	/**
 	 * Constructs a VolatileDeviceFactory
 	 */
-	public VolatileDeviceFactory(){
-		this.devices = new HashMap<String, Device>();
+	public BasicDeviceFactory(){
+		this.devices = new HashMap<String, BasicDevice>();
 	}
 
 	/**
@@ -50,7 +45,7 @@ public class VolatileDeviceFactory implements DeviceFactory {
 	 * @throws NullIdException 
 	 * @throws NullDeviceTokenException 
 	 */
-	public void addDevice(String id, String token) throws DuplicateDeviceException, NullIdException, NullDeviceTokenException{
+	public Device addDevice(String id, String token) throws DuplicateDeviceException, NullIdException, NullDeviceTokenException{
 		logger.debug( "Adding Token [" + token + "] to Device [" + id + "]" );
 		if ((id == null) || (id.trim().equals(""))){
 			throw new NullIdException();
@@ -59,7 +54,9 @@ public class VolatileDeviceFactory implements DeviceFactory {
 		} else {
 			if (!this.devices.containsKey(id)){
 				token = StringUtils.deleteWhitespace(token);
-				this.devices.put(id, new Device(id, token, new Timestamp(Calendar.getInstance().getTime().getTime())));
+				BasicDevice device = new BasicDevice(id, token, new Timestamp(Calendar.getInstance().getTime().getTime()));
+				this.devices.put(id, device);
+				return device;
 			} else {
 				throw new DuplicateDeviceException();
 			}

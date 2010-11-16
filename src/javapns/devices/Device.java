@@ -1,7 +1,14 @@
-package javapns.data;
+package javapns.devices;
 
 import java.sql.*;
 
+/**
+ * This is the common interface for all Devices.
+ * It allows the DeviceFactory to support multiple
+ * implementations of Device (in-memory, JPA-backed, etc.)
+ * 
+ * @author Sylvain Pedneault
+ */
 public interface Device {
 
 	/**

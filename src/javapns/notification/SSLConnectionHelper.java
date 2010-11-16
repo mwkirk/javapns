@@ -1,4 +1,4 @@
-package javapns.back;
+package javapns.notification;
 
 import java.io.File;
 import java.io.FileInputStream;

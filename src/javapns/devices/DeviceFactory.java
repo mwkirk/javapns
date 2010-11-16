@@ -1,6 +1,5 @@
-package javapns.back;
+package javapns.devices;
 
-import javapns.data.*;
 import javapns.exceptions.*;
 
 /**
@@ -16,11 +15,12 @@ public interface DeviceFactory {
 	 * Add a device to the map
 	 * @param id The device id
 	 * @param token The device token
+	 * @return The device created
 	 * @throws DuplicateDeviceException
 	 * @throws NullIdException 
 	 * @throws NullDeviceTokenException 
 	 */
-	public void addDevice(String id, String token) throws DuplicateDeviceException, NullIdException, NullDeviceTokenException;
+	public Device addDevice(String id, String token) throws DuplicateDeviceException, NullIdException, NullDeviceTokenException;
 
 
 	/**

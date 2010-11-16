@@ -1,11 +1,10 @@
 package javapns.test;
 
-import java.util.LinkedList;
-import java.util.ListIterator;
+import java.util.*;
 
-import javapns.back.FeedbackServiceManager;
-import javapns.back.SSLConnectionHelper;
-import javapns.data.Device;
+import javapns.devices.*;
+import javapns.feedback.*;
+import javapns.notification.*;
 
 public class FeedbackTest {
 
@@ -24,7 +23,7 @@ public class FeedbackTest {
 		try {	
 
 			// Get PushNotification Instance
-			FeedbackServiceManager feedbackManager = FeedbackServiceManager.getInstance();
+			FeedbackServiceManager feedbackManager = new FeedbackServiceManager();
 
 			// Initialize connection
 			LinkedList<Device> list = feedbackManager.getDevices( HOST, PORT, certificate, passwd, SSLConnectionHelper.KEYSTORE_TYPE_PKCS12 );

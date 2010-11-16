@@ -1,13 +1,15 @@
-package javapns.data;
+package javapns.impl.basic;
 
 import java.sql.Timestamp;
+
+import javapns.devices.*;
 
 /**
  * This class is used to represent a Device (iPhone)
  * @author Maxime Peron
  *
  */
-public class VolatileDevice implements Device {
+public class BasicDevice implements Device {
 
 	/* An id representing a particular device */
 	private String id;
@@ -24,7 +26,7 @@ public class VolatileDevice implements Device {
 	 * @param id The device id
 	 * @param token The device token
 	 */
-	public VolatileDevice(String id, String token, Timestamp register) {
+	public BasicDevice(String id, String token, Timestamp register) {
 		super();
 		this.id = id;
 		this.token = token;

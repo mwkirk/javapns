@@ -1,4 +1,4 @@
-package javapns.data;
+package javapns.notification;
 
 import java.util.List;
 
@@ -53,7 +53,6 @@ public class PayLoadCustomAlert extends JSONObject{
 	 * @param args
 	 * @throws JSONException
 	 */
-	@SuppressWarnings("unchecked")
 	public void addLocArgs (List args) throws JSONException{
 		this.put("loc-args", args);
 	}

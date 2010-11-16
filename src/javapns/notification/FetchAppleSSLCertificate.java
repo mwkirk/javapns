@@ -1,4 +1,4 @@
-package javapns.back;
+package javapns.notification;
 
 import java.security.*;
 import java.security.cert.*;

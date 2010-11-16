@@ -1,12 +1,9 @@
 package javapns.test;
 
-import java.util.ArrayList;
+import java.util.*;
 
-import javapns.back.PushNotificationManager;
-import javapns.back.SSLConnectionHelper;
-import javapns.data.Device;
-import javapns.data.PayLoad;
-import javapns.data.PayLoadCustomAlert;
+import javapns.devices.*;
+import javapns.notification.*;
 
 public class Test {
 

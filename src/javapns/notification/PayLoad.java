@@ -1,8 +1,8 @@
-package javapns.data;
+package javapns.notification;
 
 import java.util.List;
 
-import javapns.back.VolatileDeviceFactory;
+import javapns.impl.basic.*;
 
 import org.apache.log4j.Logger;
 import org.json.JSONException;
@@ -16,7 +16,7 @@ import org.json.JSONObject;
  */
 public class PayLoad {
 
-    protected static final Logger logger = Logger.getLogger( VolatileDeviceFactory.class );
+    protected static final Logger logger = Logger.getLogger( BasicDeviceFactory.class );
 
     /* The root Payload */
 	private JSONObject payload;
@@ -114,7 +114,6 @@ public class PayLoad {
 	 * @param values
 	 * @throws JSONException
 	 */
-	@SuppressWarnings("unchecked")
 	public void addCustomDictionary (String name, List values) throws JSONException{
 		logger.debug( "Adding custom Dictionary [" + name + "] = (list)" );
 		this.payload.put(name, values);

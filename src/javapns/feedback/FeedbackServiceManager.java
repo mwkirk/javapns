@@ -1,24 +1,19 @@
-package javapns.back;
+package javapns.feedback;
 
-import java.io.ByteArrayOutputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStream;
-import java.security.KeyManagementException;
-import java.security.KeyStoreException;
-import java.security.NoSuchAlgorithmException;
-import java.security.NoSuchProviderException;
-import java.security.UnrecoverableKeyException;
-import java.security.cert.CertificateException;
+import java.io.*;
+import java.security.*;
+import java.security.cert.*;
 import java.sql.Timestamp;
-import java.util.Date;
-import java.util.LinkedList;
+import java.util.*;
 
-import javapns.data.Device;
+import javapns.devices.*;
+import javapns.exceptions.*;
+import javapns.impl.basic.*;
+import javapns.notification.*;
 
-import javax.net.ssl.SSLSocket;
+import javax.net.ssl.*;
 
-import org.apache.log4j.Logger;
+import org.apache.log4j.*;
 
 /**
  * An implementation of the feedback service (beta version)
@@ -29,27 +24,27 @@ public class FeedbackServiceManager {
 
     protected static final Logger logger = Logger.getLogger( FeedbackServiceManager.class );
 
-    /* Singleton pattern */
-	private static FeedbackServiceManager instance;
 	
 	/* Length of the tuple sent by Apple */
 	private static final int FEEDBACK_TUPLE_SIZE = 38;
+
+
+	private DeviceFactory deviceFactory;
 	
 	/**
-	 * Private constructor
+	 * Constructs a FeedbackServiceManager with a supplied DeviceFactory.
 	 */
-	private FeedbackServiceManager(){}
-	
-	/**
-	 * Singleton pattern implementation
-	 */
-	public static FeedbackServiceManager getInstance(){
-		if (instance == null){
-			instance = new FeedbackServiceManager();
-		}
-		logger.debug( "Get FeedbackServiceManager Instance" );
-		return instance;
+	public FeedbackServiceManager(DeviceFactory deviceFactory) {
+		this.deviceFactory = deviceFactory;
 	}
+	
+	/**
+	 * Constructs a FeedbackServiceManager with a default basic DeviceFactory.
+	 */
+	public FeedbackServiceManager() {
+		this.deviceFactory = new BasicDeviceFactory();
+	}
+	
 	
 	/**
 	 * Retrieve all devices which have un-installed the application w/Path to keystore
@@ -109,8 +104,11 @@ public class FeedbackServiceManager {
 	 * @param socket
 	 * @return Devices
 	 * @throws IOException
+	 * @throws NullDeviceTokenException 
+	 * @throws NullIdException 
+	 * @throws DuplicateDeviceException 
 	 */
-	private LinkedList<Device> getDevices( SSLSocket socket ) throws IOException {
+	private LinkedList<Device> getDevices( SSLSocket socket ) throws IOException, DuplicateDeviceException, NullIdException, NullDeviceTokenException {
 
 		InputStream socketStream = socket.getInputStream();
 
@@ -163,7 +161,8 @@ public class FeedbackServiceManager {
 			}
 
 			// Build device and add to list
-			Device device = new Device(null, deviceToken, new Timestamp(anUnsignedInt*1000));
+			Device device = deviceFactory.addDevice(deviceToken, deviceToken);
+			device.setLastRegister(new Timestamp(anUnsignedInt*1000));
 			listDev.add(device);
 			logger.info( "FeedbackManager retrieves one device :  "+new Date(anUnsignedInt*1000)+";"+deviceTokenLength+";"+deviceToken+".");
 		}

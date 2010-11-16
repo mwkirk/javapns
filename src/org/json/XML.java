@@ -33,7 +33,6 @@ import java.util.Iterator;
  * @author JSON.org
  * @version 2008-10-14
  */
-@SuppressWarnings("unchecked")
 public class XML {
 
     /** The Character '&'. */
