@@ -2,6 +2,7 @@ package javapns.test;
 
 import java.util.*;
 
+import javapns.communication.*;
 import javapns.devices.*;
 import javapns.notification.*;
 

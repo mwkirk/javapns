@@ -1,12 +1,11 @@
-package javapns.exceptions;
+package javapns.devices.exceptions;
 
 /**
- * Thrown when we try to retrieve a device that doesn't exist
+ * Thrown when a Device already exist and we try to add it a second time
  * @author Maxime Peron
- *
  */
 @SuppressWarnings("serial")
-public class UnknownDeviceException extends Exception{
+public class DuplicateDeviceException extends Exception{
 	
 	/* Custom message for this exception */
 	private String message;
@@ -14,15 +13,15 @@ public class UnknownDeviceException extends Exception{
 	/**
 	 * Constructor
 	 */
-	public UnknownDeviceException(){
-		this.message = "Unknown client";
+	public DuplicateDeviceException(){
+		this.message = "Client already exists";
 	}
 	
 	/**
 	 * Constructor with custom message
 	 * @param message
 	 */
-	public UnknownDeviceException(String message){
+	public DuplicateDeviceException(String message){
 		this.message = message;
 	}
 	

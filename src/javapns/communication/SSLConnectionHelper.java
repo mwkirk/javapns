@@ -1,4 +1,4 @@
-package javapns.notification;
+package javapns.communication;
 
 import java.io.File;
 import java.io.FileInputStream;

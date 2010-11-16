@@ -1,12 +1,11 @@
-package javapns.exceptions;
+package javapns.devices.exceptions;
 
 /**
- * Thrown when the given token is null
+ * Thrown when the given id is null
  * @author Maxime Peron
- *
  */
 @SuppressWarnings("serial")
-public class NullDeviceTokenException extends Exception{
+public class NullIdException extends Exception{
 
 	/* Custom message for this exception */
 	private String message;
@@ -14,7 +13,7 @@ public class NullDeviceTokenException extends Exception{
 	/**
 	 * Constructor
 	 */
-	public NullDeviceTokenException(){
+	public NullIdException(){
 		this.message = "Client already exists";
 	}
 	
@@ -22,7 +21,7 @@ public class NullDeviceTokenException extends Exception{
 	 * Constructor with custom message
 	 * @param message
 	 */
-	public NullDeviceTokenException(String message){
+	public NullIdException(String message){
 		this.message = message;
 	}
 	

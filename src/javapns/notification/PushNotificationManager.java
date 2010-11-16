@@ -4,9 +4,10 @@ import java.io.*;
 import java.security.*;
 import java.security.cert.*;
 
+import javapns.communication.*;
 import javapns.devices.*;
+import javapns.devices.exceptions.*;
 import javapns.devices.impl.basic.*;
-import javapns.exceptions.*;
 
 import javax.net.ssl.*;
 

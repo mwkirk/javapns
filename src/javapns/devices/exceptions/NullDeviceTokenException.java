@@ -1,19 +1,20 @@
-package javapns.exceptions;
+package javapns.devices.exceptions;
 
 /**
- * Thrown when a Device already exist and we try to add it a second time
+ * Thrown when the given token is null
  * @author Maxime Peron
+ *
  */
 @SuppressWarnings("serial")
-public class DuplicateDeviceException extends Exception{
-	
+public class NullDeviceTokenException extends Exception{
+
 	/* Custom message for this exception */
 	private String message;
 	
 	/**
 	 * Constructor
 	 */
-	public DuplicateDeviceException(){
+	public NullDeviceTokenException(){
 		this.message = "Client already exists";
 	}
 	
@@ -21,7 +22,7 @@ public class DuplicateDeviceException extends Exception{
 	 * Constructor with custom message
 	 * @param message
 	 */
-	public DuplicateDeviceException(String message){
+	public NullDeviceTokenException(String message){
 		this.message = message;
 	}
 	

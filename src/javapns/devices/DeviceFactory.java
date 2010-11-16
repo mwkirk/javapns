@@ -1,6 +1,6 @@
 package javapns.devices;
 
-import javapns.exceptions.*;
+import javapns.devices.exceptions.*;
 
 /**
  * This is the common interface for all DeviceFactories.

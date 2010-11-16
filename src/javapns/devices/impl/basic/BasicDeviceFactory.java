@@ -4,7 +4,7 @@ import java.sql.*;
 import java.util.*;
 
 import javapns.devices.*;
-import javapns.exceptions.*;
+import javapns.devices.exceptions.*;
 
 import org.apache.commons.lang.*;
 import org.apache.log4j.*;
