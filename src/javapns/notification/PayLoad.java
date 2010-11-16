@@ -1,12 +1,11 @@
 package javapns.notification;
 
-import java.util.List;
+import java.util.*;
 
-import javapns.impl.basic.*;
+import javapns.devices.*;
 
-import org.apache.log4j.Logger;
-import org.json.JSONException;
-import org.json.JSONObject;
+import org.apache.log4j.*;
+import org.json.*;
 
 /**
  * This class is the JSON representation of the notification
@@ -16,7 +15,7 @@ import org.json.JSONObject;
  */
 public class PayLoad {
 
-    protected static final Logger logger = Logger.getLogger( BasicDeviceFactory.class );
+    protected static final Logger logger = Logger.getLogger( DeviceFactory.class );
 
     /* The root Payload */
 	private JSONObject payload;

@@ -1,4 +1,4 @@
-package javapns.impl.basic;
+package javapns.devices.impl.basic;
 
 import java.sql.Timestamp;
 

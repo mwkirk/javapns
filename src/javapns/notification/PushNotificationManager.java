@@ -5,8 +5,8 @@ import java.security.*;
 import java.security.cert.*;
 
 import javapns.devices.*;
+import javapns.devices.impl.basic.*;
 import javapns.exceptions.*;
-import javapns.impl.basic.*;
 
 import javax.net.ssl.*;
 
@@ -14,7 +14,6 @@ import org.apache.log4j.*;
 
 /**
  * The main class used to send notification and handle a connection to Apple SSLServerSocket
- * @author Maxime Peron
  *
  */
 public class PushNotificationManager {

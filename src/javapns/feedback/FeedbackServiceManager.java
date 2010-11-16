@@ -7,8 +7,8 @@ import java.sql.Timestamp;
 import java.util.*;
 
 import javapns.devices.*;
+import javapns.devices.impl.basic.*;
 import javapns.exceptions.*;
-import javapns.impl.basic.*;
 import javapns.notification.*;
 
 import javax.net.ssl.*;
