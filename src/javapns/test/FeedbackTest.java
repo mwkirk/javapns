@@ -33,7 +33,7 @@ public class FeedbackTest {
 
 			while( itr.hasNext() ) {
 				Device device = itr.next();
-				System.out.println( "Device: id=[" + device.getId() + " token=[" + device.getToken() + "]" );
+				System.out.println( "Device: id=[" + device.getDeviceId() + " token=[" + device.getToken() + "]" );
 			}
 
 			System.out.println( "done" );

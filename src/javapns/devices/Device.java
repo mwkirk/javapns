@@ -15,7 +15,7 @@ public interface Device {
 	 * Getter
 	 * @return the device id
 	 */
-	public String getId();
+	public String getDeviceId();
 
 
 	/**
@@ -36,7 +36,7 @@ public interface Device {
 	 * Setter
 	 * @param id the device id
 	 */
-	public void setId(String id);
+	public void setDeviceId(String id);
 
 
 	/**

@@ -12,7 +12,7 @@ import javapns.devices.*;
 public class BasicDevice implements Device {
 
 	/* An id representing a particular device */
-	private String id;
+	private String deviceId;
 
 	/* The device token given by Apple Server, hexadecimal form, 64bits length */
 	private String token;
@@ -28,7 +28,7 @@ public class BasicDevice implements Device {
 	 */
 	public BasicDevice(String id, String token, Timestamp register) {
 		super();
-		this.id = id;
+		this.deviceId = id;
 		this.token = token;
 		this.lastRegister = register;
 	}
@@ -38,8 +38,8 @@ public class BasicDevice implements Device {
 	 * Getter
 	 * @return the device id
 	 */
-	public String getId() {
-		return id;
+	public String getDeviceId() {
+		return deviceId;
 	}
 
 
@@ -65,8 +65,8 @@ public class BasicDevice implements Device {
 	 * Setter
 	 * @param id the device id
 	 */
-	public void setId(String id) {
-		this.id = id;
+	public void setDeviceId(String id) {
+		this.deviceId = id;
 	}
 
 	/**
