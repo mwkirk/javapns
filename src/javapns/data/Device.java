@@ -23,8 +23,12 @@ public class Device {
 	 * @param id The device id
 	 * @param token The device token
 	 */
-	public Device(String id, String token, Timestamp register) {
+	public Device(String id, String token, Timestamp register) throws Exception {
 		super();
+		
+		if ( token.getBytes().length != 64) {
+			throw new Exception( "Device Token has length of [" + token.getBytes().length + "] and not the required 64bits!");
+		}
 		this.id = id;
 		this.token = token;
 		this.lastRegister = register;
