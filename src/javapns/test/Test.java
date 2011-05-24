@@ -16,7 +16,8 @@ public class Test {
 			// Get PushNotification Instance
 			PushNotificationManager pushManager = PushNotificationManager.getInstance();
 			// Link iPhone's UDID (64-char device token) to a stringName 
-			pushManager.addDevice("my_iPhone", "2ed202ac08ea9033665d853a3dc8bc4c5e78f7c6cf8d55910df290567037dcc4");
+			//pushManager.addDevice("my_iPhone", "7a5007eec7b0b8167bc78a98fcf3d879254cf9372c64bc0502d3ecaaa091ad57" );
+			pushManager.addDevice("my_iPhone", "7a5007eec7b0b8167bc78a9aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" );
 			
 			// Create a simple PayLoad with a simple alert
 			PayLoad simplePayLoad = new PayLoad();
@@ -50,8 +51,9 @@ public class Test {
 			Device client = PushNotificationManager.getInstance().getDevice("my_iPhone");
 //			PushNotificationManager.getInstance().setProxy("my_proxy_host", "my_proxy_port");
 			//PushNotificationManager.getInstance().initializeConnection("gateway.sandbox.push.apple.com", 2195, "my_cert_path", "my_cert_password", SSLConnectionHelper.KEYSTORE_TYPE_PKCS12);
-//			PushNotificationManager.getInstance().initializeConnection("gateway.sandbox.push.apple.com", 2195, "/Volumes/HereMe/projects/hereme-server/src/com/hereme/helper/HereMe_Development_Push_Cert_Jan_21.p12", "here123", SSLConnectionHelper.KEYSTORE_TYPE_PKCS12);
-			PushNotificationManager.getInstance().initializeConnection("gateway.push.apple.com", 2195, "/Volumes/HereMe/projects/hereme-server/src/com/hereme/helper/HereMePushProd.p12", "here123", SSLConnectionHelper.KEYSTORE_TYPE_PKCS12);
+//			PushNotificationManager.getInstance().initializeConnection("gateway.sandbox.push.apple.com", 2195, "/Volumes/Eclipse_SVN/assets/Megosi_Dev_APNS.p12", "pier8", SSLConnectionHelper.KEYSTORE_TYPE_PKCS12);
+			PushNotificationManager.getInstance().initializeConnection("gateway.push.apple.com", 2195, "/Volumes/Eclipse_SVN/assets/Megosi_Dev_APNS.p12", "pier8", SSLConnectionHelper.KEYSTORE_TYPE_PKCS12);
+//			PushNotificationManager.getInstance().initializeConnection("gateway.push.apple.com", 2195, "/Users/idbill/Downloads/hereMe_push_production.p12", "hereme123123", SSLConnectionHelper.KEYSTORE_TYPE_PKCS12);
 			PushNotificationManager.getInstance().sendNotification(client, simplePayLoad);
 //			PushNotificationManager.getInstance().sendNotification(client, complexPayLoad);
 		} catch (Exception e) {
