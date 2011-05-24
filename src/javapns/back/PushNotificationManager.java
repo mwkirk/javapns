@@ -1,9 +1,12 @@
 package javapns.back;
 
+import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.nio.ByteBuffer;
 import java.security.KeyManagementException;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
@@ -37,6 +40,9 @@ public class PushNotificationManager {
 	/* Singleton pattern */
 	private static PushNotificationManager instance;
 	
+	/* synclock */
+	private static final Object synclock = new Object();
+	
 	/* Connection helper */
 	private SSLConnectionHelper connectionHelper;
 	
@@ -46,13 +52,17 @@ public class PushNotificationManager {
 	/* Default retry attempts */
 	private int retryAttempts = DEFAULT_RETRIES;
 	
+	private boolean proxySet = false;
+	
 	/**
 	 * Singleton pattern implementation
 	 * @return the PushNotificationManager instance
 	 */
 	public static PushNotificationManager getInstance(){
-		if (instance == null){
-			instance = new PushNotificationManager();
+		synchronized( synclock ) {
+			if (instance == null){
+				instance = new PushNotificationManager();
+			}
 		}
 		return instance;
 	}
@@ -69,6 +79,7 @@ public class PushNotificationManager {
 	 * @param keyStorePath the path to the keystore
 	 * @param keyStorePass the keystore password
 	 * @param keyStoreType the keystore type
+	 * @param proxySet
 	 * @throws UnrecoverableKeyException
 	 * @throws KeyManagementException
 	 * @throws KeyStoreException
@@ -80,7 +91,7 @@ public class PushNotificationManager {
 	 */
 	public void initializeConnection(String appleHost, int applePort, String keyStorePath, String keyStorePass, String keyStoreType) throws UnrecoverableKeyException, KeyManagementException, KeyStoreException, NoSuchAlgorithmException, CertificateException, FileNotFoundException, IOException, NoSuchProviderException{
 		logger.debug( "Initializing Connection to Host: [" + appleHost + "] Port: [" + applePort + "] with KeyStorePath [" + keyStorePath + "]/[" + keyStoreType + "]" );
-		this.connectionHelper = new SSLConnectionHelper(appleHost, applePort, keyStorePath, keyStorePass, keyStoreType);
+		this.connectionHelper = new SSLConnectionHelper(appleHost, applePort, keyStorePath, keyStorePass, keyStoreType, proxySet );
 		this.socket = connectionHelper.getSSLSocket();
 	}
 	
@@ -91,6 +102,7 @@ public class PushNotificationManager {
 	 * @param keyStoreStream the keystore stream
 	 * @param keyStorePass the keystore password
 	 * @param keyStoreType the keystore type
+	 * @param proxySet
 	 * @throws UnrecoverableKeyException
 	 * @throws KeyManagementException
 	 * @throws KeyStoreException
@@ -102,7 +114,7 @@ public class PushNotificationManager {
 	 */
 	public void initializeConnection(String appleHost, int applePort, InputStream keyStoreStream, String keyStorePass, String keyStoreType) throws UnrecoverableKeyException, KeyManagementException, KeyStoreException, NoSuchAlgorithmException, CertificateException, FileNotFoundException, IOException, NoSuchProviderException{
 		logger.debug( "Initializing Connection to Host: [" + appleHost + "] Port: [" + applePort + "] with KeyStoreStream/[" + keyStoreType + "]" );
-		this.connectionHelper = new SSLConnectionHelper(appleHost, applePort, keyStoreStream, keyStorePass, keyStoreType);
+		this.connectionHelper = new SSLConnectionHelper(appleHost, applePort, keyStoreStream, keyStorePass, keyStoreType, proxySet );
 		this.socket = connectionHelper.getSSLSocket();
 	}
 	
@@ -131,16 +143,30 @@ public class PushNotificationManager {
 		byte[] message = getMessage(device.getToken(), payload);
 		boolean success = false;
 		
+		BufferedReader in = new BufferedReader( new InputStreamReader( this.socket.getInputStream() ) );
+		
 		int attempts = 0;
 		// Keep trying until we have a success
 		while( !success ){
 			try {
 				logger.debug( "Attempting to send Notification [" + payload.toString() + "]" );
 				attempts++;
-				this.socket.getOutputStream().write(message);
+				//this.socket.getOutputStream().write(message);
+//				System.out.println("Message is " + getMessage(device.getToken(), new PayLoad() ));
+				this.socket.getOutputStream().write(getMessage(device.getToken(), new PayLoad() ));
+				logger.debug( "Flushing" );
 				this.socket.getOutputStream().flush();
 				success = true;
 				logger.debug( "Notification sent" );
+				logger.debug( "In: [" + in.readLine() + "]" );
+				while ( ! this.socket.isInputShutdown() ) {
+
+					while( in.ready() ) {
+						logger.debug("ready now");
+						logger.debug(in.readLine());
+						System.out.println( this.socket.getInputStream().read() );
+					}
+				}
 				
 			} catch (IOException e) {
 				// throw exception if we surpassed the valid number of retry attempts
@@ -152,6 +178,7 @@ public class PushNotificationManager {
 					logger.info( "Attempt failed... trying again" );
 					//Try again
 					try{
+						System.out.println( "preclose" );
 						this.socket.close();
 					} catch( Exception e2 ){
 						// do nothing
@@ -159,6 +186,36 @@ public class PushNotificationManager {
 					//e.printStackTrace();
 					this.socket = connectionHelper.getSSLSocket();
 				}
+			}
+			finally { 
+				System.out.println( "in finally" );
+				System.out.println("reading " + in.readLine());
+//				while( in.ready() ) {
+//				while ( ! this.socket.isInputShutdown() ) {
+//					System.out.println( this.socket.getInputStream().read() );
+//				}
+//					int result = in.read();
+//					if ( result != -1 ) {
+//						System.out.println( "in.read 1: " + in.read() );
+//					} else {
+//						System.out.print( ":" );
+//					}
+//				    System.out.println( "in.read 2: " + in.read() );
+				    //in.close();
+					//BufferedReader in =  new BufferedReader( new InputStreamReader( is ) );
+//					System.out.println( in.read() );
+
+//					System.out.println( in.toString() );
+//					//byte[] bytes = IOUtils.toByteArray( this.socket.getInputStream() );
+//					
+//					System.out.println( bytes );
+//					System.out.println( bytes.length );
+//					System.out.println( encodeHex( bytes ) );
+					///
+					//ByteBuffer.
+//				}
+				System.out.println( "done" );
+				this.socket.close();
 			}
 		}
 	}
@@ -171,7 +228,7 @@ public class PushNotificationManager {
 	 * @throws NullDeviceTokenException 
 	 * @throws NullIdException 
 	 */
-	public void addDevice(String id, String token) throws DuplicateDeviceException, NullIdException, NullDeviceTokenException{
+	public void addDevice(String id, String token) throws DuplicateDeviceException, NullIdException, NullDeviceTokenException, Exception {
 		logger.debug( "Adding Token [" + token + "] to Device [" + id + "]" );
 		DeviceFactory.getInstance().addDevice(id, token);
 	}
@@ -205,6 +262,8 @@ public class PushNotificationManager {
 	 * @param port the proxyPort
 	 */
 	public void setProxy(String host, String port){
+		this.proxySet = true;
+		
 		System.setProperty("http.proxyHost", host);
 		System.setProperty("http.proxyPort", port);
 
@@ -235,6 +294,8 @@ public class PushNotificationManager {
 	 * Compose the Raw Interface that will be sent through the SSLSocket
 	 * A notification message is
 	 * COMMAND | TOKENLENGTH | DEVICETOKEN | PAYLOADLENGTH | PAYLOAD
+	 * NEW!
+	 * COMMAND | !Identifier! | !Expiry! | TOKENLENGTH| DEVICETOKEN | PAYLOADLENGTH | PAYLOAD
 	 * See page 30 of Apple Push Notification Service Programming Guide
 	 * @param deviceToken the deviceToken
 	 * @param payload the payload
@@ -258,9 +319,22 @@ public class PushNotificationManager {
 		ByteArrayOutputStream bao = new ByteArrayOutputStream(size);
 
 		// Write command to ByteArrayOutputStream
-		byte b = 0;
+		// 0 = simple
+		// 1 = enhanced
+		byte b = 1;
+		//bao.write( ByteBuffer.allocate( 1 ).put( 1 ).array() );
 		bao.write(b);
 
+		// 4 bytes
+        String identifier = "ap";   
+        bao.write( ByteBuffer.allocate( 4 ).put( identifier.getBytes() ).array() );
+		//bao.write( identifier.getBytes() );
+		
+		// 4 bytes
+		long ctime = System.currentTimeMillis();
+		Long expiry = ( ( ctime + 86400l ) / 1000l );
+		bao.write( intTo4ByteArray( expiry.intValue() ) );
+		
 		// Write the TokenLength as a 16bits unsigned int, in big endian
 		int tl = deviceTokenAsBytes.length;
 		bao.write((byte) (tl & 0xFF00) >> 8);
@@ -295,5 +369,15 @@ public class PushNotificationManager {
 	 */
 	public void setRetryAttempts(int retryAttempts) {
 		this.retryAttempts = retryAttempts;
+	}
+	
+	public static final byte[] intTo4ByteArray( int value) {
+		return ByteBuffer.allocate(4).putInt(value).array();
+//	    return new byte[] { 
+//	        (byte)(value >>> 24),
+//	        (byte)(value >> 16 & 0xff),
+//	        (byte)(value >> 8 & 0xff),
+//	        (byte)(value & 0xff)
+//	    };    
 	}
 }

@@ -5,6 +5,9 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
+import java.io.UnsupportedEncodingException;
+import java.net.Socket;
 import java.net.UnknownHostException;
 import java.security.KeyManagementException;
 import java.security.KeyStore;
@@ -15,6 +18,8 @@ import java.security.Security;
 import java.security.UnrecoverableKeyException;
 import java.security.cert.CertificateException;
 
+import javax.net.ssl.HandshakeCompletedEvent;
+import javax.net.ssl.HandshakeCompletedListener;
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSocket;
@@ -52,7 +57,9 @@ public class SSLConnectionHelper {
 	private SSLSocketFactory feedbackSSLSocketFactory;
 
 	/* The algorithm used by KeyManagerFactory */
-	private static final String ALGORITHM = "sunx509";
+	//private static final String ALGORITHM = "sunx509";
+	private static final String ALGORITHM = ( ( Security.getProperty("ssl.KeyManagerFactory.algorithm") == null ) ? "sunx509" : Security.getProperty("ssl.KeyManagerFactory.algorithm"));
+	
 	/* The protocol used to create the SSLSocket */
 	private static final String PROTOCOL = "TLS";
 	
@@ -60,6 +67,8 @@ public class SSLConnectionHelper {
 	public static final String KEYSTORE_TYPE_PKCS12 = "PKCS12";
 	/* JKS */
 	public static final String KEYSTORE_TYPE_JKS = "JKS";
+	
+	private boolean proxySet = false;
 	
 	static {
         Security.addProvider( new BouncyCastleProvider() );
@@ -79,15 +88,20 @@ public class SSLConnectionHelper {
 	 * @throws CertificateException 
 	 * @throws NoSuchAlgorithmException 
 	 */
-	public SSLConnectionHelper(String appleHost, int applePort, String keyStorePath, String keyStorePass, String keystoreType) throws KeyStoreException, NoSuchAlgorithmException, CertificateException, FileNotFoundException, IOException {
+	public SSLConnectionHelper(String appleHost, int applePort, String keyStorePath, String keyStorePass, String keystoreType, boolean proxySet ) throws KeyStoreException, NoSuchAlgorithmException, CertificateException, FileNotFoundException, IOException {
 		logger.debug( "Instantiate SSLConnectionHelper with Path to Keystore" );
 		this.appleHost = appleHost;
 		this.applePort = applePort;
 		this.keyStorePass = keyStorePass;
+		this.proxySet = proxySet;
 
 		// Load the Keystore
 		this.keyStore = KeyStore.getInstance(keystoreType);
-		this.keyStore.load( new FileInputStream(keyStorePath), this.keyStorePass.toCharArray() );
+		if ( this.keyStorePass == null ) {
+			this.keyStore.load( new FileInputStream(keyStorePath), null );
+		} else {
+		    this.keyStore.load( new FileInputStream(keyStorePath), this.keyStorePass.toCharArray() );
+		}
 	}
 
 	/**
@@ -104,15 +118,21 @@ public class SSLConnectionHelper {
 	 * @throws CertificateException 
 	 * @throws NoSuchAlgorithmException 
 	 */
-	public SSLConnectionHelper(String appleHost, int applePort, InputStream keyStoreInputStream, String keyStorePass, String keystoreType) throws KeyStoreException, CertificateException, NoSuchAlgorithmException, NoSuchProviderException, IOException {
+	public SSLConnectionHelper(String appleHost, int applePort, InputStream keyStoreInputStream, String keyStorePass, String keystoreType, boolean proxySet ) throws KeyStoreException, CertificateException, NoSuchAlgorithmException, NoSuchProviderException, IOException {
 		logger.debug( "Instantiate SSLConnectionHelper with Keystore as InputStream" );
 		this.appleHost = appleHost;
 		this.applePort = applePort;
 		this.keyStorePass = keyStorePass;
+		this.proxySet = proxySet;
 		
 		// Load the Keystore
 		this.keyStore = KeyStore.getInstance(keystoreType);
-		this.keyStore.load( keyStoreInputStream, this.keyStorePass.toCharArray() );
+		if ( this.keyStorePass == null ) {
+			this.keyStore.load( keyStoreInputStream, null );
+			
+		} else {
+			this.keyStore.load( keyStoreInputStream, this.keyStorePass.toCharArray() );	
+		}
 	}
 	
 	/**
@@ -212,9 +232,100 @@ public class SSLConnectionHelper {
 	public SSLSocket getSSLSocket() throws IOException, UnknownHostException, KeyStoreException, NoSuchProviderException, CertificateException, NoSuchAlgorithmException, UnrecoverableKeyException, KeyManagementException {
 		SSLSocketFactory socketFactory = getPushSSLSocketFactory();
 		logger.debug( "Returning Push SSLSocket" );
-		return (SSLSocket) socketFactory.createSocket(appleHost, applePort);
+		
+		if ( proxySet ) {
+			return tunnelThroughProxy( socketFactory );
+		} else {
+			return (SSLSocket) socketFactory.createSocket(appleHost, applePort);
+		}
 	}
 	
+    private SSLSocket tunnelThroughProxy( SSLSocketFactory socketFactory ) throws UnknownHostException, IOException {
+    	SSLSocket socket;
+
+    	// If a proxy was set, tunnel through the proxy to create the connection
+    	String tunnelHost = System.getProperty("https.proxyHost");
+    	Integer tunnelPort = Integer.getInteger("https.proxyPort").intValue();
+
+    	Socket tunnel = new Socket( tunnelHost, tunnelPort );
+    	doTunnelHandshake( tunnel, appleHost, applePort );
+
+    	/* overlay the tunnel socket with SSL */
+    	socket = (SSLSocket)socketFactory.createSocket(tunnel, appleHost, applePort, true);
+
+    	/* register a callback for handshaking completion event */
+    	socket.addHandshakeCompletedListener(
+    			new HandshakeCompletedListener() {
+    				public void handshakeCompleted( HandshakeCompletedEvent event ) {
+	                    logger.debug( "Handshake finished!" );
+	                    logger.debug( "\t CipherSuite:" + event.getCipherSuite() );
+	                    logger.debug( "\t SessionId " + event.getSession() );
+	                    logger.debug( "\t PeerHost " + event.getSession().getPeerHost() );
+    				}
+    			}
+    	);
+
+    	return socket;
+    }
+
+    private void doTunnelHandshake(Socket tunnel, String host, int port) throws IOException {
+        
+        OutputStream out = tunnel.getOutputStream();
+        
+        String msg = "CONNECT " + host + ":" + port + " HTTP/1.0\n" + "User-Agent: BoardPad Server" + "\r\n\r\n";
+        byte b[] = null;
+        try { //We really do want ASCII7 -- the http protocol doesn't change with locale.
+                b = msg.getBytes("ASCII7");
+        } catch (UnsupportedEncodingException ignored) { //If ASCII7 isn't there, something serious is wrong, but Paranoia Is Good (tm)
+                b = msg.getBytes();
+        }
+        out.write(b);
+        out.flush();
+
+        // We need to store the reply so we can create a detailed error message to the user.
+        byte reply[] = new byte[200];
+        int replyLen = 0;
+        int newlinesSeen = 0;
+        boolean headerDone = false; //Done on first newline
+
+        InputStream in = tunnel.getInputStream();
+
+        while (newlinesSeen < 2) {
+                int i = in.read();
+                if (i < 0) {
+                        throw new IOException("Unexpected EOF from proxy");
+                }
+                if (i == '\n') {
+                        headerDone = true;
+                        ++newlinesSeen;
+                } else if (i != '\r') {
+                        newlinesSeen = 0;
+                        if (!headerDone && replyLen < reply.length) {
+                                reply[replyLen++] = (byte) i;
+                        }
+                }
+        }
+
+        /*
+         * Converting the byte array to a string is slightly wasteful
+         * in the case where the connection was successful, but it's
+         * insignificant compared to the network overhead.
+         */
+        String replyStr;
+        try {
+                replyStr = new String(reply, 0, replyLen, "ASCII7");
+        } catch ( UnsupportedEncodingException ignored) {
+                replyStr = new String(reply, 0, replyLen);
+        }
+
+        /* We check for Connection Established because our proxy returns HTTP/1.1 instead of 1.0 */
+        if(replyStr.toLowerCase().indexOf("200 connection established") == -1) {
+                throw new IOException("Unable to tunnel through. Proxy returns \"" + replyStr + "\"");
+        }
+
+        /* tunneling Handshake was successful! */
+    }       
+
 	
 	/**
 	 * Create a SSLSocket which will be used to retrieve data from Apple

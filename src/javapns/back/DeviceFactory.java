@@ -37,13 +37,18 @@ public class DeviceFactory {
 	/* Singleton pattern */
 	private static DeviceFactory instance;
 
+	/* synclock */
+	private static final Object synclock = new Object();
+	
 	/**
 	 * Singleton pattern implementation
 	 * @return the instance of DeviceFactory
 	 */
 	public static DeviceFactory getInstance(){
-		if (instance == null){
-			instance = new DeviceFactory();
+		synchronized( synclock ) {
+			if (instance == null){
+				instance = new DeviceFactory();
+			}
 		}
 		logger.debug( "Get DeviceFactory Instance" );
 		return instance;
@@ -64,7 +69,7 @@ public class DeviceFactory {
 	 * @throws NullIdException 
 	 * @throws NullDeviceTokenException 
 	 */
-	public void addDevice(String id, String token) throws DuplicateDeviceException, NullIdException, NullDeviceTokenException{
+	public void addDevice(String id, String token) throws DuplicateDeviceException, NullIdException, NullDeviceTokenException, Exception {
 		logger.debug( "Adding Token [" + token + "] to Device [" + id + "]" );
 		if ((id == null) || (id.trim().equals(""))){
 			throw new NullIdException();
