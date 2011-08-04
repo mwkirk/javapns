@@ -66,6 +66,17 @@ public class PayLoad {
 		this.apsDictionary.putOpt("sound", sound);
 	}
 
+    /**
+     * Add Content Available
+     *
+     * @param contentAvailable
+     * @throws JSONException
+     */
+    public void addContentAvailable(int contentAvailable) throws JSONException {
+        logger.debug("Adding content-available [" + contentAvailable + "]");
+        this.apsDictionary.putOpt("content-available", contentAvailable);
+    }
+
 	/**
 	 * Add an alert message
 	 * @param alert
