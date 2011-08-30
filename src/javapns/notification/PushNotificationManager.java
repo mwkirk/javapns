@@ -1,6 +1,7 @@
 package javapns.notification;
 
 import java.io.*;
+import java.nio.*;
 import java.security.*;
 import java.security.cert.*;
 
@@ -19,13 +20,19 @@ import org.apache.log4j.*;
  */
 public class PushNotificationManager {
 	
-    protected static final Logger logger = Logger.getLogger( PushNotificationManager.class );
+	/*
+	 * Number of milliseconds to use as socket timeout.
+	 * Set to -1 to leave the timeout to its default setting.
+	 */
+    private int sslSocketTimeout = 30*1000;
+
+	public static final Logger logger = Logger.getLogger( PushNotificationManager.class );
 
 	/* Default retries for a connection */
-	public static final int DEFAULT_RETRIES = 3;
+	public static final int DEFAULT_RETRIES = 1;
 	
 	/* Connection helper */
-	private SSLConnectionHelper connectionHelper;
+	private ConnectionToAppleServer connectionHelper;
 	
 	/* The always connected SSLSocket */
 	private SSLSocket socket;
@@ -33,11 +40,21 @@ public class PushNotificationManager {
 	/* Default retry attempts */
 	private int retryAttempts = DEFAULT_RETRIES;
 	
+	/*
+	 * To circumvent an issue with invalid server certificates,
+	 * set to true to use a trust manager that will always accept
+	 * server certificates, regardless of their validity.
+	 */
+	private boolean trustAllServerCertificates = false;
+	
+	private boolean proxySet = false;
+	
 	/* The DeviceFactory to use with this PushNotificationManager */
 	private DeviceFactory deviceFactory;
 
 	/**
 	 * Constructs a PushNotificationManager with a default DeviceFactory;
+	 * Must allow the device factory to be replaced later, to support IoC.
 	 */
 	public PushNotificationManager() {
 		deviceFactory = new BasicDeviceFactory();
@@ -62,42 +79,36 @@ public class PushNotificationManager {
 	 * @param keyStorePath the path to the keystore
 	 * @param keyStorePass the keystore password
 	 * @param keyStoreType the keystore type
-	 * @throws UnrecoverableKeyException
-	 * @throws KeyManagementException
-	 * @throws KeyStoreException
-	 * @throws NoSuchAlgorithmException
-	 * @throws CertificateException
-	 * @throws FileNotFoundException
-	 * @throws IOException
-	 * @throws NoSuchProviderException 
+	 * @throws Exception 
 	 */
-	public void initializeConnection(String appleHost, int applePort, String keyStorePath, String keyStorePass, String keyStoreType) throws UnrecoverableKeyException, KeyManagementException, KeyStoreException, NoSuchAlgorithmException, CertificateException, FileNotFoundException, IOException, NoSuchProviderException{
-		logger.debug( "Initializing Connection to Host: [" + appleHost + "] Port: [" + applePort + "] with KeyStorePath [" + keyStorePath + "]/[" + keyStoreType + "]" );
-		this.connectionHelper = new SSLConnectionHelper(appleHost, applePort, keyStorePath, keyStorePass, keyStoreType);
+	public void initializeConnection(AppleNotificationServer server) throws Exception{
+//		logger.debug( "Initializing Connection to Host: [" + appleHost + "] Port: [" + applePort + "] with KeyStorePath [" + keyStorePath + "]/[" + keyStoreType + "]" );
+//		this.connectionHelper = new ConnectionToAppleServer_deprecated(appleHost, applePort, keyStorePath, keyStorePass, keyStoreType, proxySet);
+		this.connectionHelper = new ConnectionToNotificationServer(server);
 		this.socket = connectionHelper.getSSLSocket();
 	}
 	
-	/**
-	 * Initialize the connection and create a SSLSocket
-	 * @param appleHost the Apple ServerSocket host
-	 * @param applePort the Apple ServerSocket port
-	 * @param keyStoreStream the keystore stream
-	 * @param keyStorePass the keystore password
-	 * @param keyStoreType the keystore type
-	 * @throws UnrecoverableKeyException
-	 * @throws KeyManagementException
-	 * @throws KeyStoreException
-	 * @throws NoSuchAlgorithmException
-	 * @throws CertificateException
-	 * @throws FileNotFoundException
-	 * @throws IOException
-	 * @throws NoSuchProviderException 
-	 */
-	public void initializeConnection(String appleHost, int applePort, InputStream keyStoreStream, String keyStorePass, String keyStoreType) throws UnrecoverableKeyException, KeyManagementException, KeyStoreException, NoSuchAlgorithmException, CertificateException, FileNotFoundException, IOException, NoSuchProviderException{
-		logger.debug( "Initializing Connection to Host: [" + appleHost + "] Port: [" + applePort + "] with KeyStoreStream/[" + keyStoreType + "]" );
-		this.connectionHelper = new SSLConnectionHelper(appleHost, applePort, keyStoreStream, keyStorePass, keyStoreType);
-		this.socket = connectionHelper.getSSLSocket();
-	}
+//	/**
+//	 * Initialize the connection and create a SSLSocket
+//	 * @param appleHost the Apple ServerSocket host
+//	 * @param applePort the Apple ServerSocket port
+//	 * @param keyStoreStream the keystore stream
+//	 * @param keyStorePass the keystore password
+//	 * @param keyStoreType the keystore type
+//	 * @throws UnrecoverableKeyException
+//	 * @throws KeyManagementException
+//	 * @throws KeyStoreException
+//	 * @throws NoSuchAlgorithmException
+//	 * @throws CertificateException
+//	 * @throws FileNotFoundException
+//	 * @throws IOException
+//	 * @throws NoSuchProviderException 
+//	 */
+//	public void initializeConnection(String appleHost, int applePort, InputStream keyStoreStream, String keyStorePass, String keyStoreType) throws UnrecoverableKeyException, KeyManagementException, KeyStoreException, NoSuchAlgorithmException, CertificateException, FileNotFoundException, IOException, NoSuchProviderException{
+//		logger.debug( "Initializing Connection to Host: [" + appleHost + "] Port: [" + applePort + "] with KeyStoreStream/[" + keyStoreType + "]" );
+//		this.connectionHelper = new ConnectionToAppleServer_deprecated(appleHost, applePort, keyStoreStream, keyStorePass, keyStoreType, proxySet);
+//		this.socket = connectionHelper.getSSLSocket();
+//	}
 	
 	/**
 	 * Close the SSLSocket connection
@@ -124,19 +135,45 @@ public class PushNotificationManager {
 		byte[] message = getMessage(device.getToken(), payload);
 		boolean success = false;
 		
+		BufferedReader in = new BufferedReader( new InputStreamReader( this.socket.getInputStream() ) );
+		if (getSslSocketTimeout()>0) this.socket.setSoTimeout(getSslSocketTimeout());
 		int attempts = 0;
 		// Keep trying until we have a success
 		while( !success ){
 			try {
-				logger.debug( "Attempting to send Notification [" + payload.toString() + "]" );
+				logger.debug( "Attempting to send Notification: " + payload.toString() + "" );
 				attempts++;
-				this.socket.getOutputStream().write(message);
+				//this.socket.getOutputStream().write(message);
+//				System.out.println("Message is " + getMessage(device.getToken(), new PayLoad() ));
+				try {
+					this.socket.getOutputStream().write(message);
+					//this.socket.getOutputStream().write(getMessage(device.getToken(), new PayLoad() ));
+				} catch (Exception e) {
+					if (e!=null) {
+						if (e.toString().contains("certificate_unknown")) {
+							throw new InvalidCertificateChainException(e.getMessage());
+						}
+					}
+					throw e;
+				}
+				logger.debug( "Flushing" );
 				this.socket.getOutputStream().flush();
 				success = true;
 				logger.debug( "Notification sent" );
 				
+//				logger.debug( "In: [" + in.readLine() + "]" );
+//				while ( ! this.socket.isInputShutdown() ) {
+//
+//					while( in.ready() ) {
+//						logger.debug("ready now");
+//						logger.debug(in.readLine());
+//						System.out.println( this.socket.getInputStream().read() );
+//					}
+//				}
+				
 			} catch (IOException e) {
 				// throw exception if we surpassed the valid number of retry attempts
+				e.printStackTrace();
 				if ( attempts >= retryAttempts ){
 					logger.error( "Attempt to send Notification failed and beyond the maximum number of attempts permitted" );
 					throw e;
@@ -145,13 +182,45 @@ public class PushNotificationManager {
 					logger.info( "Attempt failed... trying again" );
 					//Try again
 					try{
+						System.out.println( "preclose" );
 						this.socket.close();
 					} catch( Exception e2 ){
 						// do nothing
 					}
 					//e.printStackTrace();
 					this.socket = connectionHelper.getSSLSocket();
+					if (getSslSocketTimeout()>0) this.socket.setSoTimeout(getSslSocketTimeout());
 				}
+			}
+			finally { 
+				System.out.println( "in finally" );
+//				System.out.println("reading " + in.readLine());
+//				while( in.ready() ) {
+//				while ( ! this.socket.isInputShutdown() ) {
+//					System.out.println( this.socket.getInputStream().read() );
+//				}
+//					int result = in.read();
+//					if ( result != -1 ) {
+//						System.out.println( "in.read 1: " + in.read() );
+//					} else {
+//						System.out.print( ":" );
+//					}
+//				    System.out.println( "in.read 2: " + in.read() );
+				    //in.close();
+					//BufferedReader in =  new BufferedReader( new InputStreamReader( is ) );
+//					System.out.println( in.read() );
+
+//					System.out.println( in.toString() );
+//					//byte[] bytes = IOUtils.toByteArray( this.socket.getInputStream() );
+//					
+//					System.out.println( bytes );
+//					System.out.println( bytes.length );
+//					System.out.println( encodeHex( bytes ) );
+					///
+					//ByteBuffer.
+//				}
+				System.out.println( "done" );
+				this.socket.close();
 			}
 		}
 	}
@@ -164,7 +233,7 @@ public class PushNotificationManager {
 	 * @throws NullDeviceTokenException 
 	 * @throws NullIdException 
 	 */
-	public void addDevice(String id, String token) throws DuplicateDeviceException, NullIdException, NullDeviceTokenException{
+	public void addDevice(String id, String token) throws DuplicateDeviceException, NullIdException, NullDeviceTokenException, Exception{
 		logger.debug( "Adding Token [" + token + "] to Device [" + id + "]" );
 		deviceFactory.addDevice(id, token);
 	}
@@ -198,6 +267,8 @@ public class PushNotificationManager {
 	 * @param port the proxyPort
 	 */
 	public void setProxy(String host, String port){
+		proxySet = true;
+		
 		System.setProperty("http.proxyHost", host);
 		System.setProperty("http.proxyPort", port);
 
@@ -228,6 +299,8 @@ public class PushNotificationManager {
 	 * Compose the Raw Interface that will be sent through the SSLSocket
 	 * A notification message is
 	 * COMMAND | TOKENLENGTH | DEVICETOKEN | PAYLOADLENGTH | PAYLOAD
+	 * NEW!
+	 * COMMAND | !Identifier! | !Expiry! | TOKENLENGTH| DEVICETOKEN | PAYLOADLENGTH | PAYLOAD
 	 * See page 30 of Apple Push Notification Service Programming Guide
 	 * @param deviceToken the deviceToken
 	 * @param payload the payload
@@ -251,9 +324,22 @@ public class PushNotificationManager {
 		ByteArrayOutputStream bao = new ByteArrayOutputStream(size);
 
 		// Write command to ByteArrayOutputStream
-		byte b = 0;
+		// 0 = simple
+		// 1 = enhanced
+		byte b = 1;
+		//bao.write( ByteBuffer.allocate( 1 ).put( 1 ).array() );
 		bao.write(b);
 
+		// 4 bytes
+        String identifier = "ap";   
+        bao.write( ByteBuffer.allocate( 4 ).put( identifier.getBytes() ).array() );
+		//bao.write( identifier.getBytes() );
+		
+		// 4 bytes
+		long ctime = System.currentTimeMillis();
+		Long expiry = ( ( ctime + 86400l ) / 1000l );
+		bao.write( intTo4ByteArray( expiry.intValue() ) );
+		
 		// Write the TokenLength as a 16bits unsigned int, in big endian
 		int tl = deviceTokenAsBytes.length;
 		bao.write((byte) (tl & 0xFF00) >> 8);
@@ -274,6 +360,7 @@ public class PushNotificationManager {
 		return bao.toByteArray();
 	}
 
+
 	/**
 	 * Get the number of retry attempts
 	 * @return int
@@ -282,6 +369,18 @@ public class PushNotificationManager {
 		return this.retryAttempts;
 	}
 
+	
+	public static final byte[] intTo4ByteArray( int value) {
+		return ByteBuffer.allocate(4).putInt(value).array();
+//	    return new byte[] { 
+//	        (byte)(value >>> 24),
+//	        (byte)(value >> 16 & 0xff),
+//	        (byte)(value >> 8 & 0xff),
+//	        (byte)(value & 0xff)
+//	    };    
+	}
+
+	
 	/**
 	 * Set the number of retry attempts
 	 * @param retryAttempts
@@ -307,5 +406,25 @@ public class PushNotificationManager {
 	 */
 	public DeviceFactory getDeviceFactory() {
 		return deviceFactory;
+	}
+
+
+	public void setSslSocketTimeout(int sslSocketTimeout) {
+		this.sslSocketTimeout = sslSocketTimeout;
+	}
+
+
+	public int getSslSocketTimeout() {
+		return sslSocketTimeout;
+	}
+
+
+	public void setTrustAllServerCertificates(boolean trustAllServerCertificates) {
+		this.trustAllServerCertificates = trustAllServerCertificates;
+	}
+
+
+	public boolean isTrustAllServerCertificates() {
+		return trustAllServerCertificates;
 	}
 }

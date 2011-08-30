@@ -5,6 +5,7 @@ import java.util.*;
 
 import javapns.devices.*;
 import javapns.devices.exceptions.*;
+import javapns.notification.*;
 
 import org.apache.commons.lang.*;
 import org.apache.log4j.*;
@@ -24,12 +25,14 @@ import org.apache.log4j.*;
  */
 public class BasicDeviceFactory implements DeviceFactory {
 
-    protected static final Logger logger = Logger.getLogger( BasicDeviceFactory.class );
+    protected static final Logger logger = PushNotificationManager.logger;
 
     /* A map containing all the devices, identified with their id */
 	private Map<String, BasicDevice> devices;
 	
-
+	/* synclock */
+	private static final Object synclock = new Object();
+			
 	/**
 	 * Constructs a VolatileDeviceFactory
 	 */
@@ -45,7 +48,7 @@ public class BasicDeviceFactory implements DeviceFactory {
 	 * @throws NullIdException 
 	 * @throws NullDeviceTokenException 
 	 */
-	public Device addDevice(String id, String token) throws DuplicateDeviceException, NullIdException, NullDeviceTokenException{
+	public Device addDevice(String id, String token) throws DuplicateDeviceException, NullIdException, NullDeviceTokenException, Exception {
 		logger.debug( "Adding Token [" + token + "] to Device [" + id + "]" );
 		if ((id == null) || (id.trim().equals(""))){
 			throw new NullIdException();

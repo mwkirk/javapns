@@ -26,11 +26,16 @@ public class BasicDevice implements Device {
 	 * @param id The device id
 	 * @param token The device token
 	 */
-	public BasicDevice(String id, String token, Timestamp register) {
+	public BasicDevice(String id, String token, Timestamp register) throws Exception {
 		super();
 		this.deviceId = id;
 		this.token = token;
 		this.lastRegister = register;
+		
+		if (token.getBytes().length != 64) {
+			throw new Exception("Device Token has length of [" + token.getBytes().length + "] and not the required 64bits!");
+		}
+		
 	}
 
 

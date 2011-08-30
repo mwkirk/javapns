@@ -20,7 +20,7 @@ public interface DeviceFactory {
 	 * @throws NullIdException 
 	 * @throws NullDeviceTokenException 
 	 */
-	public Device addDevice(String id, String token) throws DuplicateDeviceException, NullIdException, NullDeviceTokenException;
+	public Device addDevice(String id, String token) throws DuplicateDeviceException, NullIdException, NullDeviceTokenException, Exception;
 
 
 	/**

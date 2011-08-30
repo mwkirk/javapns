@@ -6,7 +6,13 @@ import javapns.communication.*;
 import javapns.devices.*;
 import javapns.notification.*;
 
-public class Test {
+public class NotificationTest {
+
+	private static final String PUSH_SERVER_HOST = "gateway.sandbox.push.apple.com";
+	private static final int PUSH_SERVER_PORT = 2195;
+	private static final String KEYSTORE_FILE_PATH = "/Volumes/HereMe/projects/hereme-server/src/com/hereme/helper/HereMe_Development_Push_Cert_Jan_21.p12";
+	private static final String KEYSTORE_PASSWORD = "here123";
+	private static final String DEVICE_TOKEN = "2ed202ac08ea9033665d853a3dc8bc4c5e78f7c6cf8d55910df290567037dcc4";
 
 	@SuppressWarnings("unchecked")
 	public static void main(String[] args) {
@@ -14,7 +20,7 @@ public class Test {
 			// Get PushNotification Instance
 			PushNotificationManager pushManager = new PushNotificationManager();
 			// Link iPhone's UDID (64-char device token) to a stringName 
-			pushManager.addDevice("my_iPhone", "2ed202ac08ea9033665d853a3dc8bc4c5e78f7c6cf8d55910df290567037dcc4");
+			pushManager.addDevice("my_iPhone", DEVICE_TOKEN);
 			
 			// Create a simple PayLoad with a simple alert
 			PayLoad simplePayLoad = new PayLoad();
@@ -46,12 +52,12 @@ public class Test {
 			complexPayLoad.addCustomDictionary("acme3", values);
 			
 			Device client = pushManager.getDevice("my_iPhone");
-//			PushNotificationManager.getInstance().setProxy("my_proxy_host", "my_proxy_port");
-			//PushNotificationManager.getInstance().initializeConnection("gateway.sandbox.push.apple.com", 2195, "my_cert_path", "my_cert_password", SSLConnectionHelper.KEYSTORE_TYPE_PKCS12);
-//			PushNotificationManager.getInstance().initializeConnection("gateway.sandbox.push.apple.com", 2195, "/Volumes/HereMe/projects/hereme-server/src/com/hereme/helper/HereMe_Development_Push_Cert_Jan_21.p12", "here123", SSLConnectionHelper.KEYSTORE_TYPE_PKCS12);
-			pushManager.initializeConnection("gateway.push.apple.com", 2195, "/Volumes/HereMe/projects/hereme-server/src/com/hereme/helper/HereMePushProd.p12", "here123", SSLConnectionHelper.KEYSTORE_TYPE_PKCS12);
+
+			AppleNotificationServer server = new AppleNotificationServerBasicImpl(KEYSTORE_FILE_PATH, KEYSTORE_PASSWORD, ConnectionToAppleServer.KEYSTORE_TYPE_PKCS12, PUSH_SERVER_HOST, PUSH_SERVER_PORT);
+			
+			pushManager.initializeConnection(server);
 			pushManager.sendNotification(client, simplePayLoad);
-//			PushNotificationManager.getInstance().sendNotification(client, complexPayLoad);
+
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
