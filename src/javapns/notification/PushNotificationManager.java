@@ -119,6 +119,10 @@ public class PushNotificationManager {
 		this.socket.close();
 	}
 
+	public void sendNotification(Device device, PayLoad payload) throws UnrecoverableKeyException, KeyManagementException, KeyStoreException, NoSuchAlgorithmException, CertificateException, FileNotFoundException, IOException, Exception {
+		sendNotification(device, payload, false);
+	}
+	
 	/**
 	 * Send a notification (Payload) to the given device
 	 * @param device the device to be notified
@@ -131,7 +135,7 @@ public class PushNotificationManager {
 	 * @throws FileNotFoundException
 	 * @throws IOException
 	 */
-	public void sendNotification(Device device, PayLoad payload) throws UnrecoverableKeyException, KeyManagementException, KeyStoreException, NoSuchAlgorithmException, CertificateException, FileNotFoundException, IOException, Exception {
+	public void sendNotification(Device device, PayLoad payload, boolean closeAfter) throws UnrecoverableKeyException, KeyManagementException, KeyStoreException, NoSuchAlgorithmException, CertificateException, FileNotFoundException, IOException, Exception {
 		byte[] message = getMessage(device.getToken(), payload);
 		boolean success = false;
 		
@@ -220,7 +224,8 @@ public class PushNotificationManager {
 					//ByteBuffer.
 //				}
 				System.out.println( "done" );
-				this.socket.close();
+				if (closeAfter)
+					this.socket.close();
 			}
 		}
 	}

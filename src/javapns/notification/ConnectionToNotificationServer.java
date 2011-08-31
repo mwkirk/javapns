@@ -37,7 +37,6 @@ public class ConnectionToNotificationServer extends ConnectionToAppleServer {
 
 	public ConnectionToNotificationServer(AppleNotificationServer server) throws KeyStoreException, NoSuchAlgorithmException, CertificateException, IOException, Exception {
 		super(server);
-		loadKeystore();
 	}
 
 

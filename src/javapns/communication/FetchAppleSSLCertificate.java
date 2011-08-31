@@ -3,6 +3,8 @@ package javapns.communication;
 import java.security.*;
 import java.security.cert.*;
 
+import javapns.feedback.*;
+
 import javax.net.ssl.*;
 
 import org.apache.log4j.Logger;
@@ -42,10 +44,12 @@ import org.apache.log4j.Logger;
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  * 
  **/
+@Deprecated
 public class FetchAppleSSLCertificate {
-	
-    protected static final Logger logger = Logger.getLogger( FetchAppleSSLCertificate.class );
-	
+
+	protected static final Logger logger = Logger.getLogger(FetchAppleSSLCertificate.class);
+
+
 	/**
 	 * Fetch certificate from host/port
 	 * 
@@ -54,18 +58,21 @@ public class FetchAppleSSLCertificate {
 	 * @return Keystore with the first cert added
 	 * @throws Exception
 	 */
-	public static KeyStore fetch( String host, int port ) throws Exception {
+	public static KeyStore fetch(AppleFeedbackServer server) throws Exception {
+		String host = server.getFeedbackServerHost();
+		int port = server.getFeedbackServerPort();
+		KeyStore ks = KeyStore.getInstance(KeyStore.getDefaultType());
+		ks.load(null);
+//		KeyStore ks = KeystoreManager.loadKeystore(server);
 
-		KeyStore ks = KeyStore.getInstance( KeyStore.getDefaultType() );
-		ks.load( null );
-
-		SSLContext context = SSLContext.getInstance( "TLS" );
-		TrustManagerFactory tmf = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
+		SSLContext context = SSLContext.getInstance("TLS");
+		String defaultAlgorithm = TrustManagerFactory.getDefaultAlgorithm();
+		TrustManagerFactory tmf = TrustManagerFactory.getInstance(defaultAlgorithm);
 		tmf.init(ks);
-		
+
 		X509TrustManager defaultTrustManager = (X509TrustManager) tmf.getTrustManagers()[0];
-		SavingTrustManager tm = new SavingTrustManager( defaultTrustManager );
-		context.init( null, new TrustManager[] {tm}, null );
+		SavingTrustManager tm = new SavingTrustManager(defaultTrustManager);
+		context.init(null, new TrustManager[] { tm }, null);
 		SSLSocketFactory factory = context.getSocketFactory();
 
 		logger.debug("Opening connection to " + host + ":" + port + "...");
@@ -77,9 +84,11 @@ public class FetchAppleSSLCertificate {
 			socket.close();
 			logger.debug("No errors, certificate is already trusted");
 		} catch (SSLException e) {
-			logger.debug( "Known error occurs here");
-//			e.printStackTrace(System.out);
+			logger.debug("Known error occurs here");
+			//			throw e;
+			e.printStackTrace(System.out);
 		}
+//		PKIXParameters pkixParameters = new PKIXParameters(ks);
 
 		X509Certificate[] chain = tm.chain;
 		if (chain == null) {
@@ -92,9 +101,9 @@ public class FetchAppleSSLCertificate {
 			X509Certificate cert = chain[i];
 			logger.debug(" " + (i + 1) + " Subject " + cert.getSubjectDN());
 			logger.debug("   Issuer  " + cert.getIssuerDN());
-			sha1.update( cert.getEncoded() );
+			sha1.update(cert.getEncoded());
 			logger.debug("   sha1    " + toHexString(sha1.digest()));
-			md5.update( cert.getEncoded() );
+			md5.update(cert.getEncoded());
 			logger.debug("   md5     " + toHexString(md5.digest()));
 		}
 
@@ -102,12 +111,13 @@ public class FetchAppleSSLCertificate {
 
 		X509Certificate cert = chain[k];
 		String alias = host + "-" + (k + 1);
-		ks.setCertificateEntry( alias, cert );
-		
+		ks.setCertificateEntry(alias, cert);
+
 		return ks;
 	}
 
 	private static final char[] HEXDIGITS = "0123456789abcdef".toCharArray();
+
 
 	private static String toHexString(byte[] bytes) {
 		StringBuilder sb = new StringBuilder(bytes.length * 3);
@@ -125,23 +135,25 @@ public class FetchAppleSSLCertificate {
 		private final X509TrustManager tm;
 		private X509Certificate[] chain;
 
+
 		SavingTrustManager(X509TrustManager tm) {
 			this.tm = tm;
 		}
+
 
 		public X509Certificate[] getAcceptedIssuers() {
 			throw new UnsupportedOperationException();
 		}
 
-		public void checkClientTrusted(X509Certificate[] chain, String authType)
-		throws CertificateException {
-			throw new UnsupportedOperationException();
+
+		public void checkClientTrusted(X509Certificate[] chain, String authType) throws CertificateException {
+			//throw new UnsupportedOperationException();
 		}
 
-		public void checkServerTrusted(X509Certificate[] chain, String authType)
-		throws CertificateException {
+
+		public void checkServerTrusted(X509Certificate[] chain, String authType) throws CertificateException {
 			this.chain = chain;
-			tm.checkServerTrusted(chain, authType);
+//			tm.checkServerTrusted(chain, authType);
 		}
 	}
 }

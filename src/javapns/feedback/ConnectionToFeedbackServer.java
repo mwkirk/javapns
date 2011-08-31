@@ -5,13 +5,14 @@ import java.security.*;
 import java.security.cert.*;
 
 import javapns.communication.*;
+import javapns.notification.ConnectionToNotificationServer.*;
 
 import javax.net.ssl.*;
 
 public class ConnectionToFeedbackServer extends ConnectionToAppleServer  {
 
 	
-	public ConnectionToFeedbackServer(AppleFeedbackServer feedbackServer) {
+	public ConnectionToFeedbackServer(AppleFeedbackServer feedbackServer) throws KeyStoreException, NoSuchAlgorithmException, CertificateException, IOException, Exception {
 		super(feedbackServer);
 	}
 	
@@ -30,24 +31,7 @@ public class ConnectionToFeedbackServer extends ConnectionToAppleServer  {
 	 * @throws Exception
 	 */
 	public SSLSocketFactory createSSLSocketFactory() throws KeyStoreException, NoSuchProviderException, CertificateException, NoSuchAlgorithmException, IOException, UnrecoverableKeyException, KeyManagementException, Exception {
-		
-		
-			if ( getKeystore() == null ) {
-				setKeystore(FetchAppleSSLCertificate.fetch( getServerHost(), getServerPort() ));
-			}
-			
-//			KeyStore ks2 = KeyStore.getInstance("JKS");
-//			ks2.load(new FileInputStream(new File("/tmp/feedback.cert")),"changeme".toCharArray());
-								
-			TrustManagerFactory tmf = TrustManagerFactory.getInstance(ALGORITHM);			
-			tmf.init( getKeystore() );
-
-			// Get a TrustManagerFactory and init with KeyStore
-//			TrustManagerFactory tmf2 = TrustManagerFactory.getInstance(ALGORITHM);
-//			tmf2.init(keyStore);
-	
-			SSLSocketFactory feedbackSSLSocketFactory = createSSLSocketFactoryWithTrustManagers( tmf.getTrustManagers() );
-		return feedbackSSLSocketFactory;
+		return createSSLSocketFactoryWithTrustManagers(new TrustManager[] { new ServerTrustingTrustManager() });
 	}
 
 	@Override

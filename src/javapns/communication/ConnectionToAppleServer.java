@@ -5,8 +5,6 @@ import java.net.*;
 import java.security.*;
 import java.security.cert.*;
 
-import javapns.devices.exceptions.*;
-
 import javax.net.ssl.*;
 
 import org.apache.log4j.*;
@@ -51,8 +49,9 @@ public abstract class ConnectionToAppleServer {
 	private AppleServer server;
 	
 	
-	public ConnectionToAppleServer(AppleServer server) {
+	public ConnectionToAppleServer(AppleServer server) throws KeyStoreException, NoSuchAlgorithmException, CertificateException, IOException, Exception {
 		this.server = server;
+		this.keyStore = KeystoreManager.loadKeystore(server);
 	}
 
 	public AppleServer getServer() {
@@ -130,27 +129,6 @@ public abstract class ConnectionToAppleServer {
 		}
 	}
 
-	protected void loadKeystore() throws KeyStoreException, NoSuchAlgorithmException, CertificateException, IOException, Exception {
-		// Load the Keystore
-		this.keyStore = KeyStore.getInstance(server.getKeystoreType());
-		if ( this.server.getKeystorePassword() == null ) {
-			this.keyStore.load( server.getKeystoreStream(), null );
-			
-		} else {
-			try {
-				this.keyStore.load( server.getKeystoreStream(), this.server.getKeystorePassword().toCharArray() );
-			} catch (Exception e) {
-				if (e!=null) {
-					if (e.toString().contains("javax.crypto.BadPaddingException")) {
-						throw new InvalidKeystorePasswordException();
-					}
-				}
-				throw e;
-			}	
-		}
-
-	}
-	
     private SSLSocket tunnelThroughProxy( SSLSocketFactory socketFactory ) throws UnknownHostException, IOException {
     	SSLSocket socket;
 

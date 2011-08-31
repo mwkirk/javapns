@@ -11,7 +11,7 @@ import javapns.feedback.*;
 
 public class FeedbackTest {
 
-	private static final String FEEDBACK_SERVER_HOST = "feedback.push.apple.com";
+	private static final String FEEDBACK_SERVER_HOST = "feedback.sandbox.push.apple.com";
 	private static final int FEEDBACK_SERVER_PORT = 2196;
 	private static final String KEYSTORE_FILE_PATH = "/tmp/HereMePushProd.p12";
 	private static final String KEYSTORE_PASSWORD = "here123";
