@@ -13,7 +13,7 @@ public interface DeviceFactory {
 
 	/**
 	 * Add a device to the map
-	 * @param id The device id
+	 * @param id The local device id
 	 * @param token The device token
 	 * @return The device created
 	 * @throws DuplicateDeviceException
@@ -25,7 +25,7 @@ public interface DeviceFactory {
 
 	/**
 	 * Get a device according to his id
-	 * @param id The device id
+	 * @param id The local device id
 	 * @return The device
 	 * @throws UnknownDeviceException
 	 * @throws NullIdException 
@@ -35,7 +35,7 @@ public interface DeviceFactory {
 
 	/**
 	 * Remove a device
-	 * @param id The device id
+	 * @param id The local device id
 	 * @throws UnknownDeviceException
 	 * @throws NullIdException 
 	 */

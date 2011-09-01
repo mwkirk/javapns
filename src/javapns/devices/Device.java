@@ -12,42 +12,55 @@ import java.sql.*;
 public interface Device {
 
 	/**
-	 * Getter
+	 * An id representing a particular device.
+	 * 
+	 * Note that this is a local reference to the device,
+	 * which is not related to the actual device UUID or
+	 * other device-specific identification. Most of the
+	 * time, this deviceId should be the same as the token.
+	 * 
 	 * @return the device id
 	 */
 	public String getDeviceId();
 
 
 	/**
-	 * Getter
+	 * A device token.
+	 * 
 	 * @return the device token
 	 */
 	public String getToken();
 
 
 	/**
-	 * Getter
+	 * 
 	 * @return the last register
 	 */
 	public Timestamp getLastRegister();
 
 
 	/**
-	 * Setter
+	 * An id representing a particular device.
+	 * 
+	 * Note that this is a local reference to the device,
+	 * which is not related to the actual device UUID or
+	 * other device-specific identification. Most of the
+	 * time, this deviceId should be the same as the token.
+	 * 
 	 * @param id the device id
 	 */
 	public void setDeviceId(String id);
 
 
 	/**
-	 * Setter the device token
+	 * Set the device token
 	 * @param token
 	 */
 	public void setToken(String token);
 
 
 	/**
-	 * Setter
+	 * 
 	 * @param lastRegister the last register
 	 */
 	public void setLastRegister(Timestamp lastRegister);

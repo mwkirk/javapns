@@ -10,7 +10,6 @@ import javapns.notification.*;
 import org.apache.commons.lang.*;
 import org.apache.log4j.*;
 
-
 /**
  * This class implements an in-memory DeviceFactory (backed by a Map).
  * Since this class does not persist Device objects, it should not be used in a production environment.
@@ -25,20 +24,22 @@ import org.apache.log4j.*;
  */
 public class BasicDeviceFactory implements DeviceFactory {
 
-    protected static final Logger logger = PushNotificationManager.logger;
+	protected static final Logger logger = PushNotificationManager.logger;
 
-    /* A map containing all the devices, identified with their id */
+	/* A map containing all the devices, identified with their id */
 	private Map<String, BasicDevice> devices;
-	
+
 	/* synclock */
 	private static final Object synclock = new Object();
-			
+
+
 	/**
 	 * Constructs a VolatileDeviceFactory
 	 */
-	public BasicDeviceFactory(){
+	public BasicDeviceFactory() {
 		this.devices = new HashMap<String, BasicDevice>();
 	}
+
 
 	/**
 	 * Add a device to the map
@@ -49,13 +50,12 @@ public class BasicDeviceFactory implements DeviceFactory {
 	 * @throws NullDeviceTokenException 
 	 */
 	public Device addDevice(String id, String token) throws DuplicateDeviceException, NullIdException, NullDeviceTokenException, Exception {
-		logger.debug( "Adding Token [" + token + "] to Device [" + id + "]" );
-		if ((id == null) || (id.trim().equals(""))){
+		if ((id == null) || (id.trim().equals(""))) {
 			throw new NullIdException();
-		} else if ((token == null) || (token.trim().equals(""))){
+		} else if ((token == null) || (token.trim().equals(""))) {
 			throw new NullDeviceTokenException();
 		} else {
-			if (!this.devices.containsKey(id)){
+			if (!this.devices.containsKey(id)) {
 				token = StringUtils.deleteWhitespace(token);
 				BasicDevice device = new BasicDevice(id, token, new Timestamp(Calendar.getInstance().getTime().getTime()));
 				this.devices.put(id, device);
@@ -66,6 +66,7 @@ public class BasicDeviceFactory implements DeviceFactory {
 		}
 	}
 
+
 	/**
 	 * Get a device according to his id
 	 * @param id The device id
@@ -73,18 +74,18 @@ public class BasicDeviceFactory implements DeviceFactory {
 	 * @throws UnknownDeviceException
 	 * @throws NullIdException 
 	 */
-	public Device getDevice(String id) throws UnknownDeviceException, NullIdException{
-		logger.debug( "Getting Token from Device [" + id + "]" );
-		if ((id == null) || (id.trim().equals(""))){
+	public Device getDevice(String id) throws UnknownDeviceException, NullIdException {
+		if ((id == null) || (id.trim().equals(""))) {
 			throw new NullIdException();
 		} else {
-			if (this.devices.containsKey(id)){
+			if (this.devices.containsKey(id)) {
 				return this.devices.get(id);
 			} else {
 				throw new UnknownDeviceException();
 			}
 		}
 	}
+
 
 	/**
 	 * Remove a device
@@ -93,11 +94,10 @@ public class BasicDeviceFactory implements DeviceFactory {
 	 * @throws NullIdException 
 	 */
 	public void removeDevice(String id) throws UnknownDeviceException, NullIdException {
-		logger.debug( "Removing Token from Device [" + id + "]" );
-		if ((id == null) || (id.trim().equals(""))){
+		if ((id == null) || (id.trim().equals(""))) {
 			throw new NullIdException();
 		}
-		if (this.devices.containsKey(id)){
+		if (this.devices.containsKey(id)) {
 			this.devices.remove(id);
 		} else {
 			throw new UnknownDeviceException();

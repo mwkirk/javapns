@@ -43,7 +43,6 @@ public class FeedbackTest {
 			// Initialize connection
 			AppleFeedbackServer server = new AppleFeedbackServerBasicImpl(keystorePath, keystorePassword, ConnectionToAppleServer.KEYSTORE_TYPE_PKCS12, FEEDBACK_SERVER_HOST, FEEDBACK_SERVER_PORT);
 
-			System.out.println("Connection initialized...");
 			LinkedList<Device> list = feedbackManager.getDevices(server);
 			System.out.println("List is: "+list);
 
@@ -54,7 +53,6 @@ public class FeedbackTest {
 				System.out.println("Device: id=[" + device.getDeviceId() + " token=[" + device.getToken() + "]");
 			}
 
-			System.out.println("done");
 
 		} catch (Exception e) {
 			e.printStackTrace();

@@ -1,8 +1,8 @@
 package javapns.devices.exceptions;
 
 /**
- * Thrown when we try to retrieve a device that doesn't exist
- * @author SYPECom Inc.
+ * Thrown when we try to contact Apple with an invalid keystore or certificate chain.
+ * @author Sylvain Pedneault
  *
  */
 @SuppressWarnings("serial")

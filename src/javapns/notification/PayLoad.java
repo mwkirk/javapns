@@ -15,17 +15,60 @@ import org.json.*;
  */
 public class PayLoad {
 
-    protected static final Logger logger = Logger.getLogger( DeviceFactory.class );
+	protected static final Logger logger = Logger.getLogger(DeviceFactory.class);
 
-    /* The root Payload */
+
+	public static PayLoad alert(String message) {
+		PayLoad payload = new PayLoad();
+		try {
+			payload.addAlert(message);
+		} catch (JSONException e) {
+		}
+		return payload;
+	}
+
+
+	public static PayLoad badge(int badge) {
+		PayLoad payload = new PayLoad();
+		try {
+			payload.addBadge(badge);
+		} catch (JSONException e) {
+		}
+		return payload;
+	}
+
+
+	public static PayLoad sound(String sound) {
+		PayLoad payload = new PayLoad();
+		try {
+			payload.addSound(sound);
+		} catch (JSONException e) {
+		}
+		return payload;
+	}
+
+
+	public static PayLoad combined(String message, int badge, String sound) {
+		PayLoad payload = new PayLoad();
+		try {
+			if (message != null) payload.addAlert(message);
+			if (badge >= 0) payload.addBadge(badge);
+			if (sound != null) payload.addSound(sound);
+		} catch (JSONException e) {
+		}
+		return payload;
+	}
+
+	/* The root Payload */
 	private JSONObject payload;
 	/* The application Dictionnary */
 	private JSONObject apsDictionary;
 
+
 	/**
 	 * Constructor, instantiate the two JSONObjects
 	 */
-	public PayLoad(){
+	public PayLoad() {
 		super();
 		this.payload = new JSONObject();
 		this.apsDictionary = new JSONObject();
@@ -36,54 +79,60 @@ public class PayLoad {
 		}
 	}
 
-	public PayLoad(String alert, int badge, String sound)  throws JSONException {
+
+	public PayLoad(String alert, int badge, String sound) throws JSONException {
 		this();
 		addAlert(alert);
 		addBadge(badge);
-		if(sound != null){
+		if (sound != null) {
 			addSound(sound);
 		}
 	}
-	
+
+
 	/**
 	 * Add a badge
 	 * @param badge
 	 * @throws JSONException
 	 */
-	public void addBadge (int badge) throws JSONException{
-		logger.debug( "Adding badge [" + badge + "]" );
+	public void addBadge(int badge) throws JSONException {
+		logger.debug("Adding badge [" + badge + "]");
 		this.apsDictionary.putOpt("badge", badge);
 	}
+
 
 	/**
 	 * Add a sound
 	 * @param sound
 	 * @throws JSONException
 	 */
-	public void addSound (String sound) throws JSONException{
-		logger.debug( "Adding sound [" + sound + "]" );
+	public void addSound(String sound) throws JSONException {
+		logger.debug("Adding sound [" + sound + "]");
 		this.apsDictionary.putOpt("sound", sound);
 	}
+
 
 	/**
 	 * Add an alert message
 	 * @param alert
 	 * @throws JSONException
 	 */
-	public void addAlert (String alert) throws JSONException{
-		logger.debug( "Adding alert [" + alert + "]" );
+	public void addAlert(String alert) throws JSONException {
+		logger.debug("Adding alert [" + alert + "]");
 		this.apsDictionary.put("alert", alert);
 	}
+
 
 	/**
 	 * Add a custom alert message
 	 * @param alert
 	 * @throws JSONException
 	 */
-	public void addCustomAlert (PayLoadCustomAlert alert) throws JSONException{
-		logger.debug( "Adding custom Alert" );
+	public void addCustomAlert(PayLoadCustomAlert alert) throws JSONException {
+		logger.debug("Adding custom Alert");
 		this.apsDictionary.put("alert", alert);
 	}
+
 
 	/**
 	 * Add a custom dictionnary with a string value
@@ -91,10 +140,11 @@ public class PayLoad {
 	 * @param value
 	 * @throws JSONException
 	 */
-	public void addCustomDictionary (String name, String value) throws JSONException{
-		logger.debug( "Adding custom Dictionary [" + name + "] = [" + value + "]" );
-		this.payload.put(name,value);
+	public void addCustomDictionary(String name, String value) throws JSONException {
+		logger.debug("Adding custom Dictionary [" + name + "] = [" + value + "]");
+		this.payload.put(name, value);
 	}
+
 
 	/**
 	 * Add a custom dictionnary with a int value
@@ -102,10 +152,11 @@ public class PayLoad {
 	 * @param value
 	 * @throws JSONException
 	 */
-	public void addCustomDictionary (String name, int value) throws JSONException{
-		logger.debug( "Adding custom Dictionary [" + name + "] = [" + value + "]" );
+	public void addCustomDictionary(String name, int value) throws JSONException {
+		logger.debug("Adding custom Dictionary [" + name + "] = [" + value + "]");
 		this.payload.put(name, value);
 	}
+
 
 	/**
 	 * Add a custom dictionnary with multiple values
@@ -113,17 +164,19 @@ public class PayLoad {
 	 * @param values
 	 * @throws JSONException
 	 */
-	public void addCustomDictionary (String name, List values) throws JSONException{
-		logger.debug( "Adding custom Dictionary [" + name + "] = (list)" );
+	public void addCustomDictionary(String name, List values) throws JSONException {
+		logger.debug("Adding custom Dictionary [" + name + "] = (list)");
 		this.payload.put(name, values);
 	}
+
 
 	/**
 	 * Get the string representation
 	 */
-	public String toString(){
+	public String toString() {
 		return this.payload.toString();
 	}
+
 
 	/**
 	 * Get this payload as a byte array
@@ -136,11 +189,11 @@ public class PayLoad {
 		} catch (Exception ex) {
 			payload = toString().getBytes();
 		}
-		
-		if ( payload.length > 256 ) {
-			throw new Exception( "Payload too large...[256 Bytes is the limit]" );
+
+		if (payload.length > 256) {
+			throw new Exception("Payload too large...[256 Bytes is the limit]");
 		}
-		
+
 		return payload;
 	}
 

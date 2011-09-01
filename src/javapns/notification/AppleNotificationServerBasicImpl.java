@@ -16,29 +16,8 @@ public class AppleNotificationServerBasicImpl extends AppleServerBasicImpl imple
 	private int port = 2195;
 
 
-	public AppleNotificationServerBasicImpl(InputStream input, String password, String type, String host, int port) {
-		super(input, password, type);
-		this.host = host;
-		this.port = port;
-	}
-
-
-	public AppleNotificationServerBasicImpl(byte[] bytes, String password, String type, String host, int port) {
-		super(bytes, password, type);
-		this.host = host;
-		this.port = port;
-	}
-
-
-	public AppleNotificationServerBasicImpl(File file, String password, String type, String host, int port) throws FileNotFoundException {
-		super(file, password, type);
-		this.host = host;
-		this.port = port;
-	}
-
-
-	public AppleNotificationServerBasicImpl(String filePath, String password, String type, String host, int port) throws FileNotFoundException {
-		super(filePath, password, type);
+	public AppleNotificationServerBasicImpl(Object keystore, String password, String type, String host, int port) throws FileNotFoundException {
+		super(keystore, password, type);
 		this.host = host;
 		this.port = port;
 	}

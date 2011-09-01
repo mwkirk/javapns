@@ -11,7 +11,14 @@ import javapns.devices.*;
  */
 public class BasicDevice implements Device {
 
-	/* An id representing a particular device */
+	/* 
+	 * An id representing a particular device.
+	 * 
+	 * Note that this is a local reference to the device,
+	 * which is not related to the actual device UUID or
+	 * other device-specific identification. Most of the
+	 * time, this deviceId should be the same as the token.
+	 */
 	private String deviceId;
 
 	/* The device token given by Apple Server, hexadecimal form, 64bits length */
@@ -20,6 +27,22 @@ public class BasicDevice implements Device {
 	/* The last time a device registered */
 	private Timestamp lastRegister;
 
+
+	/**
+	 * Default constructor.
+	 * @param token The device token
+	 */
+	public BasicDevice(String token) throws Exception {
+		super();
+		this.deviceId = token;
+		this.token = token;
+		this.lastRegister = new Timestamp(System.currentTimeMillis());
+		
+		if (token.getBytes().length != 64) {
+			throw new Exception("Device Token has length of [" + token.getBytes().length + "] and not the required 64bits!");
+		}
+		
+	}
 
 	/**
 	 * Constructor

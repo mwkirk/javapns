@@ -15,7 +15,7 @@ import javax.net.ssl.*;
  */
 public class ConnectionToNotificationServer extends ConnectionToAppleServer {
 
-	// TrustManager class that simply trusts all servers. Obviously this isn't very secure!!!
+	// TrustManager class that simply trusts all servers. Obviously this isn't very secure, but it helps deploying rapidly.
 	public static class ServerTrustingTrustManager implements X509TrustManager {
 
 		public void checkClientTrusted(X509Certificate[] chain, String authType) throws CertificateException {
@@ -25,7 +25,6 @@ public class ConnectionToNotificationServer extends ConnectionToAppleServer {
 
 		public void checkServerTrusted(X509Certificate[] chain, String authType) {
 			// trust all servers
-			System.out.println("Trusting all servers, including " + chain);
 		}
 
 

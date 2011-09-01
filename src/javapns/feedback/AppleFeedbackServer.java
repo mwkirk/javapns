@@ -10,8 +10,8 @@ import javapns.communication.*;
 public interface AppleFeedbackServer extends AppleServer {
 
 	public String getFeedbackServerHost();
-	
+
+
 	public int getFeedbackServerPort();
-	
-	
+
 }

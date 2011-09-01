@@ -9,6 +9,12 @@ import javax.net.ssl.*;
 
 import org.apache.log4j.Logger;
 
+/*
+ * Note: this code is most likely deprecated.  Need to validate.
+ * S.Pedneault
+ * 
+ */
+
 /**
  * {{modified from}}
  * 
@@ -63,7 +69,7 @@ public class FetchAppleSSLCertificate {
 		int port = server.getFeedbackServerPort();
 		KeyStore ks = KeyStore.getInstance(KeyStore.getDefaultType());
 		ks.load(null);
-//		KeyStore ks = KeystoreManager.loadKeystore(server);
+		//		KeyStore ks = KeystoreManager.loadKeystore(server);
 
 		SSLContext context = SSLContext.getInstance("TLS");
 		String defaultAlgorithm = TrustManagerFactory.getDefaultAlgorithm();
@@ -88,7 +94,7 @@ public class FetchAppleSSLCertificate {
 			//			throw e;
 			e.printStackTrace(System.out);
 		}
-//		PKIXParameters pkixParameters = new PKIXParameters(ks);
+		//		PKIXParameters pkixParameters = new PKIXParameters(ks);
 
 		X509Certificate[] chain = tm.chain;
 		if (chain == null) {
@@ -153,7 +159,7 @@ public class FetchAppleSSLCertificate {
 
 		public void checkServerTrusted(X509Certificate[] chain, String authType) throws CertificateException {
 			this.chain = chain;
-//			tm.checkServerTrusted(chain, authType);
+			//			tm.checkServerTrusted(chain, authType);
 		}
 	}
 }

@@ -15,29 +15,8 @@ public abstract class AppleServerBasicImpl implements AppleServer {
 	private final String type;
 
 
-	public AppleServerBasicImpl(InputStream input, String password, String type) {
-		this.input = input;
-		this.password = password;
-		this.type = type;
-	}
-
-
-	public AppleServerBasicImpl(byte[] bytes, String password, String type) {
-		this.input = new ByteArrayInputStream(bytes);
-		this.password = password;
-		this.type = type;
-	}
-
-
-	public AppleServerBasicImpl(File file, String password, String type) throws FileNotFoundException {
-		this.input = new BufferedInputStream(new FileInputStream(file));
-		this.password = password;
-		this.type = type;
-	}
-
-
-	public AppleServerBasicImpl(String filePath, String password, String type) throws FileNotFoundException {
-		this.input = new BufferedInputStream(new FileInputStream(filePath));
+	public AppleServerBasicImpl(Object keystore, String password, String type) throws FileNotFoundException {
+		this.input = KeystoreManager.streamKeystore(keystore);
 		this.password = password;
 		this.type = type;
 	}

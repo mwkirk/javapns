@@ -9,14 +9,13 @@ import javapns.notification.ConnectionToNotificationServer.*;
 
 import javax.net.ssl.*;
 
-public class ConnectionToFeedbackServer extends ConnectionToAppleServer  {
+public class ConnectionToFeedbackServer extends ConnectionToAppleServer {
 
-	
 	public ConnectionToFeedbackServer(AppleFeedbackServer feedbackServer) throws KeyStoreException, NoSuchAlgorithmException, CertificateException, IOException, Exception {
 		super(feedbackServer);
 	}
-	
-	
+
+
 	/**
 	 * Return SSLSocketFactory for Feedback notifications
 	 * 
@@ -34,16 +33,16 @@ public class ConnectionToFeedbackServer extends ConnectionToAppleServer  {
 		return createSSLSocketFactoryWithTrustManagers(new TrustManager[] { new ServerTrustingTrustManager() });
 	}
 
+
 	@Override
 	public String getServerHost() {
-		return ((AppleFeedbackServer)getServer()).getFeedbackServerHost();
+		return ((AppleFeedbackServer) getServer()).getFeedbackServerHost();
 	}
+
 
 	@Override
 	public int getServerPort() {
-		return ((AppleFeedbackServer)getServer()).getFeedbackServerPort();
+		return ((AppleFeedbackServer) getServer()).getFeedbackServerPort();
 	}
 
-
-	
 }
