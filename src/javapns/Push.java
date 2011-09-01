@@ -114,9 +114,10 @@ public class Push {
 			pushManager.initializeConnection(server);
 			for (String token : tokens) {
 				Device device = new BasicDevice(token);
-				pushManager.sendNotification(device, payload);
+				pushManager.sendNotification(device, payload, false);
 				devices.add(device);
 			}
+			pushManager.stopConnection();
 		} catch (Exception e) {
 			System.out.println("Error pushing notification(s):");
 			e.printStackTrace();
