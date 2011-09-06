@@ -115,7 +115,7 @@ public abstract class ConnectionToAppleServer {
 	 */
 	public SSLSocket getSSLSocket() throws Exception {
 		SSLSocketFactory socketFactory = getSSLSocketFactory();
-		logger.debug("Creating SSLSocket");
+		logger.debug("Creating SSLSocket to " + getServerHost() + ":" + getServerPort());
 
 		try {
 			if (proxySet) {

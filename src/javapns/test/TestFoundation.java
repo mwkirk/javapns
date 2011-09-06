@@ -4,17 +4,30 @@ import org.apache.log4j.*;
 
 public class TestFoundation {
 
-	
-	
-	static boolean verifyCorrectUsage(Class classe, String[] argumentsRecus, String ... argumentsAttendus) {
-		if (argumentsRecus == null || argumentsRecus.length < argumentsAttendus.length) {
+	static boolean verifyCorrectUsage(Class testClass, String[] argsProvided, String... argsRequired) {
+		if (argsProvided == null) return true;
+		int numberOfArgsRequired = 0;
+		for (String argRequired : argsRequired) {
+			if (argRequired.startsWith("[")) break;
+			numberOfArgsRequired++;
+		}
+		if (argsProvided.length < numberOfArgsRequired) {
 			StringBuilder message = new StringBuilder("Usage: ");
-			message.append(classe.getName());
-			for (String argumentsAttendu : argumentsAttendus) {
-				message.append(" <");
-				message.append(argumentsAttendu);
-				message.append(">");
+			message.append("java -cp \"<required libraries>\" ");
+			message.append(testClass.getName());
+			for (String argRequired : argsRequired) {
+				boolean optional = argRequired.startsWith("[");
+				if (optional) {
+					message.append(" [");
+					message.append(argRequired.substring(1, argRequired.length() - 1));
+					message.append("]");
+				} else {
+					message.append(" <");
+					message.append(argRequired);
+					message.append(">");
+				}
 			}
+			System.out.println(message);
 			return false;
 		}
 		return true;
@@ -28,6 +41,4 @@ public class TestFoundation {
 		}
 	}
 
-	
-	
 }
