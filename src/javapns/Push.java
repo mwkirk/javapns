@@ -2,7 +2,6 @@ package javapns;
 
 import java.util.*;
 
-import javapns.communication.*;
 import javapns.devices.*;
 import javapns.devices.implementations.basic.*;
 import javapns.feedback.*;
@@ -110,7 +109,7 @@ public class Push {
 		List<Device> devices = new Vector<Device>();
 		try {
 			PushNotificationManager pushManager = new PushNotificationManager();
-			AppleNotificationServer server = new AppleNotificationServerBasicImpl(keystore, password, ConnectionToAppleServer.KEYSTORE_TYPE_PKCS12, production ? "gateway.push.apple.com" : "gateway.sandbox.push.apple.com", 2195);
+			AppleNotificationServer server = new AppleNotificationServerBasicImpl(keystore, password, production);
 			pushManager.initializeConnection(server);
 			for (String token : tokens) {
 				Device device = new BasicDevice(token);
@@ -152,7 +151,7 @@ public class Push {
 		List<Device> devices = new Vector<Device>();
 		try {
 			FeedbackServiceManager feedbackManager = new FeedbackServiceManager();
-			AppleFeedbackServer server = new AppleFeedbackServerBasicImpl(keystore, password, ConnectionToAppleServer.KEYSTORE_TYPE_PKCS12, production ? "feedback.push.apple.com" : "gateway.sandbox.push.apple.com", 2196);
+			AppleFeedbackServer server = new AppleFeedbackServerBasicImpl(keystore, password, production);
 			devices.addAll(feedbackManager.getDevices(server));
 		} catch (Exception e) {
 			System.out.println("Error pushing notification(s):");
