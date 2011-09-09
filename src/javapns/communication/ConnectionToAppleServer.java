@@ -11,10 +11,10 @@ import org.apache.log4j.*;
 import org.bouncycastle.jce.provider.*;
 
 /**
- * Class representing an abstract connection to an Apple server.
+ * <h1>Class representing an abstract connection to an Apple server</h1>
  * 
  * Communication protocol differences between Notification and Feedback servers are
- * implemented in ConnectionToNotificationServer and ConnectionToFeedbackServer.
+ * implemented in {@link javapns.notification.ConnectionToNotificationServer} and {@link javapns.feedback.ConnectionToFeedbackServer}.
  * 
  * @author Sylvain Pedneault
  */
@@ -23,10 +23,10 @@ public abstract class ConnectionToAppleServer {
 	protected static final Logger logger = Logger.getLogger(ConnectionToAppleServer.class);
 
 	/* The algorithm used by KeyManagerFactory */
-	protected static final String ALGORITHM = ((Security.getProperty("ssl.KeyManagerFactory.algorithm") == null) ? "sunx509" : Security.getProperty("ssl.KeyManagerFactory.algorithm"));
+	private static final String ALGORITHM = ((Security.getProperty("ssl.KeyManagerFactory.algorithm") == null) ? "sunx509" : Security.getProperty("ssl.KeyManagerFactory.algorithm"));
 
 	/* The protocol used to create the SSLSocket */
-	protected static final String PROTOCOL = "TLS";
+	private static final String PROTOCOL = "TLS";
 
 	/* PKCS12 */
 	public static final String KEYSTORE_TYPE_PKCS12 = "PKCS12";
@@ -42,7 +42,16 @@ public abstract class ConnectionToAppleServer {
 	private boolean proxySet = false;
 	private AppleServer server;
 
-
+	/**
+	 * Builds a connection to an Apple server.
+	 * 
+	 * @param server
+	 * @throws KeyStoreException
+	 * @throws NoSuchAlgorithmException
+	 * @throws CertificateException
+	 * @throws IOException
+	 * @throws Exception
+	 */
 	public ConnectionToAppleServer(AppleServer server) throws KeyStoreException, NoSuchAlgorithmException, CertificateException, IOException, Exception {
 		this.server = server;
 		this.keyStore = KeystoreManager.loadKeystore(server);
@@ -98,7 +107,22 @@ public abstract class ConnectionToAppleServer {
 	public abstract int getServerPort();
 
 
-	public abstract SSLSocketFactory createSSLSocketFactory() throws KeyStoreException, NoSuchProviderException, CertificateException, NoSuchAlgorithmException, IOException, UnrecoverableKeyException, KeyManagementException, Exception;
+	/**
+	 * Return a SSLSocketFactory for creating sockets to communicate with Apple.
+	 * 
+	 * @return SSLSocketFactory
+	 * @throws KeyStoreException
+	 * @throws NoSuchProviderException
+	 * @throws CertificateException
+	 * @throws NoSuchAlgorithmException
+	 * @throws IOException
+	 * @throws UnrecoverableKeyException
+	 * @throws KeyManagementException
+	 * @throws Exception
+	 */
+	public SSLSocketFactory createSSLSocketFactory() throws KeyStoreException, NoSuchProviderException, CertificateException, NoSuchAlgorithmException, IOException, UnrecoverableKeyException, KeyManagementException, Exception {
+		return createSSLSocketFactoryWithTrustManagers(new TrustManager[] { new ServerTrustingTrustManager() });
+	}
 
 
 	public SSLSocketFactory getSSLSocketFactory() throws Exception {

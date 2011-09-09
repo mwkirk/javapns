@@ -1,61 +1,47 @@
 package javapns.test;
 
-import java.io.*;
 import java.util.*;
 
-import org.apache.log4j.*;
-
-import javapns.communication.*;
+import javapns.*;
 import javapns.devices.*;
-import javapns.feedback.*;
 
-public class FeedbackTest {
+/**
+ * A command-line test facility for the Feedback Service.
+ * <p>Example:  <code>java -cp "[required libraries]" javapns.test.FeedbackTest keystore.p12 mypass</code></p>
+ * 
+ * <p>By default, this test uses the sandbox service.  To switch, add "production" as a third parameter:</p>
+ * <p>Example:  <code>java -cp "[required libraries]" javapns.test.FeedbackTest keystore.p12 mypass production</code></p>
+ * 
+ * @author Sylvain Pedneault
+ */
+public class FeedbackTest extends TestFoundation {
 
-	private static final String FEEDBACK_SERVER_HOST = "feedback.sandbox.push.apple.com";
-	private static final int FEEDBACK_SERVER_PORT = 2196;
-	private static final String KEYSTORE_FILE_PATH = "/tmp/HereMePushProd.p12";
-	private static final String KEYSTORE_PASSWORD = "here123";
+	public static void main(String[] args) {
 
+		/* Verify that the test is being invoked  */
+		if (!verifyCorrectUsage(FeedbackTest.class, args, "keystore-path", "keystore-password", "[production|sandbox]")) return;
 
-	public static void main(String[] args) throws Exception {
-		try {
-			BasicConfigurator.configure();
-		} catch (Exception e) {
-		}
+		/* Initialize Log4j to print logs to console */
+		configureBasicLogging();
 
-		String keystorePath = args != null && args.length >= 1 ? args[0] : KEYSTORE_FILE_PATH;
-		String keystorePassword = args != null && args.length >= 2 ? args[1] : KEYSTORE_PASSWORD;
-
-		feedback(keystorePath, keystorePassword);
+		/* Get a list of inactive devices */
+		feedbackTest(args);
 	}
 
 
-	private static void feedback(String keystorePath, String keystorePassword) {
-		System.out.println("Setting up feedback request...");
-		System.out.println("Using keystore: "+new File(keystorePath).getAbsolutePath());
-		System.out.println(" with password: "+keystorePassword);
+	/**
+	 * Retrieves a list of inactive devices from the Feedback service.
+	 * @param args
+	 */
+	private static void feedbackTest(String[] args) {
+		String keystore = args[0];
+		String password = args[1];
+		boolean production = args.length >= 3 ? args[2].equalsIgnoreCase("production") : false;
+		List<Device> devices = Push.feedback(keystore, password, production);
 
-		try {
-
-			// Get FeedbackServiceManager Instance
-			FeedbackServiceManager feedbackManager = new FeedbackServiceManager();
-
-			// Initialize connection
-			AppleFeedbackServer server = new AppleFeedbackServerBasicImpl(keystorePath, keystorePassword, ConnectionToAppleServer.KEYSTORE_TYPE_PKCS12, FEEDBACK_SERVER_HOST, FEEDBACK_SERVER_PORT);
-
-			LinkedList<Device> list = feedbackManager.getDevices(server);
-			System.out.println("List is: "+list);
-
-			ListIterator<Device> itr = list.listIterator();
-
-			while (itr.hasNext()) {
-				Device device = itr.next();
-				System.out.println("Device: id=[" + device.getDeviceId() + " token=[" + device.getToken() + "]");
-			}
-
-
-		} catch (Exception e) {
-			e.printStackTrace();
+		for (Device device : devices) {
+			System.out.println("Inactive device: " + device.getToken());
 		}
 	}
+
 }

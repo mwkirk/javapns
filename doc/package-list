@@ -1,0 +1,11 @@
+javapns
+javapns.communication
+javapns.devices
+javapns.devices.exceptions
+javapns.devices.implementations.basic
+javapns.feedback
+javapns.notification
+javapns.notification.management
+javapns.notification.transmission
+javapns.test
+org.json

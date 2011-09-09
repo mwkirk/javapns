@@ -38,10 +38,17 @@ public class BasicDevice implements Device {
 		this.token = token;
 		this.lastRegister = new Timestamp(System.currentTimeMillis());
 		
-		if (token.getBytes().length != 64) {
-			throw new Exception("Device Token has length of [" + token.getBytes().length + "] and not the required 64bits!");
-		}
+		validateTokenFormat(token);
 		
+	}
+
+	public static void validateTokenFormat(String token) throws IllegalArgumentException {
+		if (token==null) {
+			throw new IllegalArgumentException("Device Token is null, and not the required 64 bytes...");
+		}
+		if (token.getBytes().length != 64) {
+			throw new IllegalArgumentException("Device Token has a length of [" + token.getBytes().length + "] and not the required 64 bytes!");
+		}
 	}
 
 	/**
@@ -55,9 +62,7 @@ public class BasicDevice implements Device {
 		this.token = token;
 		this.lastRegister = register;
 		
-		if (token.getBytes().length != 64) {
-			throw new Exception("Device Token has length of [" + token.getBytes().length + "] and not the required 64bits!");
-		}
+		validateTokenFormat(token);
 		
 	}
 

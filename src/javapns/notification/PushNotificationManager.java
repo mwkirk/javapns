@@ -4,6 +4,7 @@ import java.io.*;
 import java.nio.*;
 import java.security.*;
 import java.security.cert.*;
+import java.util.*;
 
 import javapns.communication.*;
 import javapns.devices.*;
@@ -17,7 +18,9 @@ import org.apache.log4j.*;
 /**
  * The main class used to send notification and handle a connection to Apple SSLServerSocket
  *
- * Contributor: Sylvain Pedneault
+ * @author Maxime Pilon
+ * @author Sylvain Pedneault
+ * @author Others...
  */
 public class PushNotificationManager {
 
@@ -74,11 +77,7 @@ public class PushNotificationManager {
 
 	/**
 	 * Initialize the connection and create a SSLSocket
-	 * @param appleHost the Apple ServerSocket host
-	 * @param applePort the Apple ServerSocket port
-	 * @param keyStorePath the path to the keystore
-	 * @param keyStorePass the keystore password
-	 * @param keyStoreType the keystore type
+	 * @param server The Apple Server to connect to.
 	 * @throws Exception 
 	 */
 	public void initializeConnection(AppleNotificationServer server) throws Exception {
@@ -93,18 +92,18 @@ public class PushNotificationManager {
 	 * @throws IOException
 	 */
 	public void stopConnection() throws IOException {
-		logger.debug("Closing connection");
-		this.socket.close();
-	}
-
-
-	public void sendNotification(Device device, PayLoad payload) throws UnrecoverableKeyException, KeyManagementException, KeyStoreException, NoSuchAlgorithmException, CertificateException, FileNotFoundException, IOException, Exception {
-		sendNotification(device, payload, false);
+		try {
+			logger.debug("Closing connection");
+			this.socket.close();
+		} catch (Exception e) {
+			/* Do not complain if connection is already closed... */
+		}
 	}
 
 
 	/**
-	 * Send a notification (Payload) to the given device
+	 * Send a notification to a single device and close the connection.
+	 * 
 	 * @param device the device to be notified
 	 * @param payload the payload to send
 	 * @throws UnrecoverableKeyException
@@ -114,9 +113,75 @@ public class PushNotificationManager {
 	 * @throws CertificateException
 	 * @throws FileNotFoundException
 	 * @throws IOException
+	 * @throws Exception
 	 */
-	public void sendNotification(Device device, PayLoad payload, boolean closeAfter) throws UnrecoverableKeyException, KeyManagementException, KeyStoreException, NoSuchAlgorithmException, CertificateException, FileNotFoundException, IOException, Exception {
-		byte[] message = getMessage(device.getToken(), payload);
+	public void sendNotification(Device device, Payload payload) throws UnrecoverableKeyException, KeyManagementException, KeyStoreException, NoSuchAlgorithmException, CertificateException, FileNotFoundException, IOException, Exception {
+		sendNotification(device, payload, true);
+	}
+
+
+	/**
+	 * Send a notification to a multiple devices in a single connection and close the connection.
+	 * 
+	 * @param payload the payload to send
+	 * @param devices the device to be notified
+	 * @throws UnrecoverableKeyException
+	 * @throws KeyManagementException
+	 * @throws KeyStoreException
+	 * @throws NoSuchAlgorithmException
+	 * @throws CertificateException
+	 * @throws FileNotFoundException
+	 * @throws IOException
+	 * @throws Exception
+	 */
+	public void sendNotifications(Payload payload, List<Device> devices) throws UnrecoverableKeyException, KeyManagementException, KeyStoreException, NoSuchAlgorithmException, CertificateException, FileNotFoundException, IOException, Exception {
+		for (Device device : devices)
+			sendNotification(device, payload, false);
+		stopConnection();
+	}
+
+
+	/**
+	 * Send a notification to a multiple devices in a single connection and close the connection.
+	 * 
+	 * @param payload the payload to send
+	 * @param devices the device to be notified
+	 * @throws UnrecoverableKeyException
+	 * @throws KeyManagementException
+	 * @throws KeyStoreException
+	 * @throws NoSuchAlgorithmException
+	 * @throws CertificateException
+	 * @throws FileNotFoundException
+	 * @throws IOException
+	 * @throws Exception
+	 */
+	public void sendNotifications(Payload payload, Device... devices) throws UnrecoverableKeyException, KeyManagementException, KeyStoreException, NoSuchAlgorithmException, CertificateException, FileNotFoundException, IOException, Exception {
+		for (Device device : devices)
+			sendNotification(device, payload, false);
+		stopConnection();
+	}
+
+
+	/**
+	 * Send a notification (Payload) to the given device
+	 * 
+	 * @param device the device to be notified
+	 * @param payload the payload to send
+	 * @param closeAfter indicates if the connection should be closed after the payload has been sent
+	 * @throws UnrecoverableKeyException
+	 * @throws KeyManagementException
+	 * @throws KeyStoreException
+	 * @throws NoSuchAlgorithmException
+	 * @throws CertificateException
+	 * @throws FileNotFoundException
+	 * @throws IOException
+	 */
+	public void sendNotification(Device device, Payload payload, boolean closeAfter) throws UnrecoverableKeyException, KeyManagementException, KeyStoreException, NoSuchAlgorithmException, CertificateException, FileNotFoundException, IOException, Exception {
+		String token = device.getToken();
+		// even though the BasicDevice constructor validates the token, we revalidate it in case we were passed another implementation of Device
+		BasicDevice.validateTokenFormat(token);
+
+		byte[] message = getMessage(token, payload);
 		boolean success = false;
 
 		BufferedReader in = new BufferedReader(new InputStreamReader(this.socket.getInputStream()));
@@ -126,7 +191,7 @@ public class PushNotificationManager {
 		while (!success) {
 			try {
 				logger.debug("Attempting to send notification: " + payload.toString() + "");
-				logger.debug("  to device: " + device.getToken() + "");
+				logger.debug("  to device: " + token + "");
 				attempts++;
 				try {
 					this.socket.getOutputStream().write(message);
@@ -238,7 +303,7 @@ public class PushNotificationManager {
 	 * @return the byteArray to write to the SSLSocket OutputStream
 	 * @throws IOException
 	 */
-	private static byte[] getMessage(String deviceToken, PayLoad payload) throws IOException, Exception {
+	private static byte[] getMessage(String deviceToken, Payload payload) throws IOException, Exception {
 		logger.debug("Building Raw message from deviceToken and payload");
 		// First convert the deviceToken (in hexa form) to a binary format
 		byte[] deviceTokenAsBytes = new byte[deviceToken.length() / 2];

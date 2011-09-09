@@ -14,7 +14,14 @@ public abstract class AppleServerBasicImpl implements AppleServer {
 	private final String password;
 	private final String type;
 
-
+	/**
+	 * Constructs a AppleServerBasicImpl object.
+	 * 
+	 * @param keystore The keystore to use (can be a File, an InputStream, a String for a file path, or a byte[] array)
+	 * @param password The keystore's password
+	 * @param type The keystore type (typically PKCS12)
+	 * @throws FileNotFoundException
+	 */
 	public AppleServerBasicImpl(Object keystore, String password, String type) throws FileNotFoundException {
 		this.input = KeystoreManager.streamKeystore(keystore);
 		this.password = password;

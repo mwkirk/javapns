@@ -14,7 +14,8 @@ import javax.net.ssl.*;
 import org.apache.log4j.*;
 
 /**
- * An implementation of the feedback service (beta version)
+ * Class for interacting with a specific Feedback Service. 
+ *
  * @author kljajo, dgardon, Sylvain Pedneault
  *
  */

@@ -28,7 +28,7 @@ public class Push {
 	 * @return Returns a list of devices the notification was presumably sent to (see Feedback Service).
 	 */
 	public static List<Device> alert(String message, Object keystore, String password, boolean production, String... tokens) {
-		return payload(PayLoad.alert(message), keystore, password, production, tokens);
+		return payload(PushNotificationPayload.alert(message), keystore, password, production, tokens);
 	}
 
 
@@ -43,7 +43,7 @@ public class Push {
 	 * @return Returns a list of devices the notification was presumably sent to (see Feedback Service).
 	 */
 	public static List<Device> badge(int badge, Object keystore, String password, boolean production, String... tokens) {
-		return payload(PayLoad.badge(badge), keystore, password, production, tokens);
+		return payload(PushNotificationPayload.badge(badge), keystore, password, production, tokens);
 	}
 
 
@@ -58,7 +58,7 @@ public class Push {
 	 * @return Returns a list of devices the notification was presumably sent to (see Feedback Service).
 	 */
 	public static List<Device> sound(String sound, Object keystore, String password, boolean production, String... tokens) {
-		return payload(PayLoad.sound(sound), keystore, password, production, tokens);
+		return payload(PushNotificationPayload.sound(sound), keystore, password, production, tokens);
 	}
 
 
@@ -75,7 +75,7 @@ public class Push {
 	 * @return Returns a list of devices the notification was presumably sent to (see Feedback Service).
 	 */
 	public static List<Device> combined(String message, int badge, String sound, Object keystore, String password, boolean production, String... tokens) {
-		return payload(PayLoad.sound(sound), keystore, password, production, tokens);
+		return payload(PushNotificationPayload.sound(sound), keystore, password, production, tokens);
 	}
 
 
@@ -90,7 +90,7 @@ public class Push {
 	 * @param tokens One or more device tokens to push to.
 	 * @return Returns a list of devices the notification was presumably sent to (see Feedback Service).
 	 */
-	public static List<Device> payload(PayLoad payload, Object keystore, String password, boolean production, List<String> tokens) {
+	public static List<Device> payload(Payload payload, Object keystore, String password, boolean production, List<String> tokens) {
 		return payload(payload, keystore, password, production, tokens.toArray(new String[0]));
 	}
 
@@ -105,8 +105,9 @@ public class Push {
 	 * @param tokens One or more device tokens to push to.
 	 * @return Returns a list of devices the notification was presumably sent to (see Feedback Service).
 	 */
-	public static List<Device> payload(PayLoad payload, Object keystore, String password, boolean production, String... tokens) {
+	public static List<Device> payload(Payload payload, Object keystore, String password, boolean production, String... tokens) {
 		List<Device> devices = new Vector<Device>();
+		if (payload==null) return devices;
 		try {
 			PushNotificationManager pushManager = new PushNotificationManager();
 			AppleNotificationServer server = new AppleNotificationServerBasicImpl(keystore, password, production);
@@ -126,21 +127,21 @@ public class Push {
 
 
 	/**
-	 * Retrieve a list of devices that should be removed from future notification lists.
+	 * <p>Retrieve a list of devices that should be removed from future notification lists.</p>
 	 * 
-	 * Devices in this list are ones that you previously tried to push a notification to,
+	 * <p>Devices in this list are ones that you previously tried to push a notification to,
 	 * but to which Apple could not actually deliver because the device user has either
-	 * opted out of notifications, has uninstalled your application, or some other conditions.
+	 * opted out of notifications, has uninstalled your application, or some other conditions.</p>
 	 * 
-	 * Important: Apple's Feedback Service always resets its list of inactive devices
+	 * <p>Important: Apple's Feedback Service always resets its list of inactive devices
 	 * after each time you contact it.  Calling this method twice will not return the same
-	 * list of devices!
+	 * list of devices!</p>
 	 * 
-	 * Please be aware that Apple does not specify precisely when a device will be listed
+	 * <p>Please be aware that Apple does not specify precisely when a device will be listed
 	 * by the Feedback Service.  More specifically, it is unlikely that the device will
 	 * be  listed immediately if you uninstall the application during testing.  It might
 	 * get listed after some number of notifications couldn't reach it, or some amount of
-	 * time has elapsed, or a combination of both.
+	 * time has elapsed, or a combination of both.</p>
 	 * 
 	 * @param keystore A PKCS12 keystore provided by Apple (File, InputStream, byte[] or String for a file path)
 	 * @param password The keystore's password.

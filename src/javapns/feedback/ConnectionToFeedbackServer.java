@@ -5,32 +5,16 @@ import java.security.*;
 import java.security.cert.*;
 
 import javapns.communication.*;
-import javapns.notification.ConnectionToNotificationServer.*;
 
-import javax.net.ssl.*;
-
+/**
+ * Class representing a connection to a specific Feedback Server.
+ * 
+ * @author Sylvain Pedneault
+ */
 public class ConnectionToFeedbackServer extends ConnectionToAppleServer {
 
 	public ConnectionToFeedbackServer(AppleFeedbackServer feedbackServer) throws KeyStoreException, NoSuchAlgorithmException, CertificateException, IOException, Exception {
 		super(feedbackServer);
-	}
-
-
-	/**
-	 * Return SSLSocketFactory for Feedback notifications
-	 * 
-	 * @return SSLSocketFactory
-	 * @throws KeyStoreException
-	 * @throws NoSuchProviderException
-	 * @throws CertificateException
-	 * @throws NoSuchAlgorithmException
-	 * @throws IOException
-	 * @throws UnrecoverableKeyException
-	 * @throws KeyManagementException
-	 * @throws Exception
-	 */
-	public SSLSocketFactory createSSLSocketFactory() throws KeyStoreException, NoSuchProviderException, CertificateException, NoSuchAlgorithmException, IOException, UnrecoverableKeyException, KeyManagementException, Exception {
-		return createSSLSocketFactoryWithTrustManagers(new TrustManager[] { new ServerTrustingTrustManager() });
 	}
 
 

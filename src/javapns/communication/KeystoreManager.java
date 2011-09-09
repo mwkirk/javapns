@@ -6,13 +6,41 @@ import java.security.cert.*;
 
 import javapns.devices.exceptions.*;
 
-public class KeystoreManager {
+/**
+ * Class responsible for dealing with keystores.
+ * 
+ * @author Sylvain Pedneault
+ */
+class KeystoreManager {
 
+	/**
+	 * Loads a keystore.
+	 * 
+	 * @param server The server the keystore is intended for
+	 * @return A loaded keystore
+	 * @throws KeyStoreException
+	 * @throws NoSuchAlgorithmException
+	 * @throws CertificateException
+	 * @throws IOException
+	 * @throws Exception
+	 */
 	public static KeyStore loadKeystore(AppleServer server) throws KeyStoreException, NoSuchAlgorithmException, CertificateException, IOException, Exception {
 		return loadKeystore(server, server.getKeystoreStream());
 	}
 
 
+	/**
+	 * Loads a keystore.
+	 * 
+	 * @param server The server the keystore is intended for
+	 * @param keystore The keystore to load (can be a File, an InputStream, a String for a file path, or a byte[] array)
+	 * @return A loaded keystore
+	 * @throws KeyStoreException
+	 * @throws NoSuchAlgorithmException
+	 * @throws CertificateException
+	 * @throws IOException
+	 * @throws Exception
+	 */
 	public static KeyStore loadKeystore(AppleServer server, Object keystore) throws KeyStoreException, NoSuchAlgorithmException, CertificateException, IOException, Exception {
 		InputStream keystoreStream = streamKeystore(keystore);
 		KeyStore keyStore = KeyStore.getInstance(server.getKeystoreType());
