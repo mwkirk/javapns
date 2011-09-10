@@ -75,7 +75,7 @@ public class Push {
 	 * @return Returns a list of devices the notification was presumably sent to (see Feedback Service).
 	 */
 	public static List<Device> combined(String message, int badge, String sound, Object keystore, String password, boolean production, String... tokens) {
-		return payload(PushNotificationPayload.sound(sound), keystore, password, production, tokens);
+		return payload(PushNotificationPayload.combined(message, badge, sound), keystore, password, production, tokens);
 	}
 
 

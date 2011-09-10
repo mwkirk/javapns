@@ -9,6 +9,7 @@
 
 	<!-- javapns version id (no spaces allowed!) -->
 	<property name="javapns.version" value="2.0_Beta_3" />
+	<property name="javapns.revision" value=" r002" />
 
 	<property name="src" location="src" />
 	<property name="build" location="build" />
@@ -39,7 +40,7 @@
 		<jar jarfile="${dist.jar}" basedir="${build}">
 			<manifest>
 				<attribute name="Implementation-Title" value="javapns" />
-				<attribute name="Implementation-Version" value="${javapns.version}" />
+				<attribute name="Implementation-Version" value="${javapns.version}${javapns.revision}" />
 				<attribute name="Implementation-Reference" value="http://code.google.com/p/javapns/" />
 			</manifest>
 
@@ -51,7 +52,7 @@
 		<jar jarfile="${doc.jar}" basedir="${doc}">
 			<manifest>
 				<attribute name="Implementation-Title" value="javapns" />
-				<attribute name="Implementation-Version" value="${javapns.version}" />
+				<attribute name="Implementation-Version" value="${javapns.version}${javapns.revision}" />
 				<attribute name="Implementation-Reference" value="http://code.google.com/p/javapns/" />
 			</manifest>
 		</jar>
