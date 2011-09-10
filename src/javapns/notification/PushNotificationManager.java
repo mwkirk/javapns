@@ -86,6 +86,11 @@ public class PushNotificationManager {
 		this.socket = connectionHelper.getSSLSocket();
 	}
 
+	public void restartConnection(AppleNotificationServer server) throws Exception {
+		stopConnection();
+		initializeConnection(server);
+	}
+	
 
 	/**
 	 * Close the SSLSocket connection

@@ -8,9 +8,10 @@ import javapns.notification.*;
 /**
  * <h1>Pushes a payload to a large number of devices in a single separate thread</h1>
  * 
- * <p>The list of devices is divided into groups no larger than {@link maxNotificationsPerConnection},
- * and a connection is created for each group sequentially.  This is intended to avoid a vague
- * notification-per-connection limit observed occasionnally with Apple servers.</p>
+ * <p>No more than {@link maxNotificationsPerConnection} are pushed over a single connection.
+ * When that maximum is reached, the connection is restarted automatically and push continues.
+ * This is intended to avoid an undocumented notification-per-connection limit observed 
+ * occasionnally with Apple servers.</p>
  * 
  * <p>Usage: once a NotificationThread is created, invoke {@code start()} to push the payload to all devices in a separate thread.</p>
  * 
@@ -46,20 +47,15 @@ public class NotificationThread extends Thread {
 
 	public void run() {
 		int total = devices.size();
-		int runs = (total % maxNotificationsPerConnection) + 1;
 		try {
-			for (int i = 0; i < runs; i++) {
-				int firstDevice = i * maxNotificationsPerConnection;
-				int lastDevice = firstDevice + maxNotificationsPerConnection;
-				if (lastDevice >= total) lastDevice = total - 1;
-				notificationManager.initializeConnection(server);
-				for (int d = firstDevice; d <= lastDevice; d++) {
-					Device device = devices.get(d);
-					notificationManager.sendNotification(device, payload, false);
-					if (sleepBetweenNotifications > 0) sleep(sleepBetweenNotifications);
-				}
-				notificationManager.stopConnection();
+			notificationManager.initializeConnection(server);
+			for (int i = 0; i < total; i++) {
+				Device device = devices.get(i);
+				notificationManager.sendNotification(device, payload, false);
+				if (sleepBetweenNotifications > 0) sleep(sleepBetweenNotifications);
+				if (i != 0 && i % maxNotificationsPerConnection == 0) notificationManager.restartConnection(server);
 			}
+			notificationManager.stopConnection();
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -83,6 +79,16 @@ public class NotificationThread extends Thread {
 
 	public long getSleepBetweenNotifications() {
 		return sleepBetweenNotifications;
+	}
+
+
+	public void setDevices(List<Device> devices) {
+		this.devices = devices;
+	}
+
+
+	public List<Device> getDevices() {
+		return devices;
 	}
 
 }
