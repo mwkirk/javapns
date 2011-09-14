@@ -11,12 +11,15 @@ import javapns.notification.*;
  * <p>The list of devices is spread evenly into multiple {@link javapns.notification.transmission.NotificationThread}s.</p>
  * 
  * <p>Usage: once a NotificationThreads is created, invoke {@code start()} to start all {@link javapns.notification.transmission.NotificationThread} threads.</p>
- * 
+ * <p>You can provide a {@link javapns.notification.transmission.NotificationProgressListener} to receive events about the work being done.</p>
+
  * @author Sylvain Pedneault
  */
-public class NotificationThreads {
+public class NotificationThreads extends ThreadGroup {
 
 	private List<NotificationThread> threads = new Vector<NotificationThread>();
+	private NotificationProgressListener listener;
+	private int threadsRunning = 0;
 
 
 	/**
@@ -29,6 +32,7 @@ public class NotificationThreads {
 	 * @param numberOfThreads the number of threads to create to share the work
 	 */
 	public NotificationThreads(PushNotificationManager notificationManager, AppleNotificationServer server, Payload payload, List<Device> devices, int numberOfThreads) {
+		super("javapns notification threads (" + numberOfThreads + " threads)");
 		for (List<Device> deviceGroup : groupDevices(devices, numberOfThreads))
 			threads.add(new NotificationThread(notificationManager, server, payload, deviceGroup));
 	}
@@ -44,6 +48,7 @@ public class NotificationThreads {
 	 * @param threads a list of pre-built threads
 	 */
 	public NotificationThreads(PushNotificationManager notificationManager, AppleNotificationServer server, Payload payload, List<Device> devices, List<NotificationThread> threads) {
+		super("javapns notification threads (" + threads.size() + " threads)");
 		this.threads = threads;
 		List<List<Device>> groups = groupDevices(devices, threads.size());
 		for (int i = 0; i < groups.size(); i++)
@@ -60,6 +65,7 @@ public class NotificationThreads {
 	 * @param threads a list of pre-built threads
 	 */
 	public NotificationThreads(PushNotificationManager notificationManager, AppleNotificationServer server, Payload payload, List<NotificationThread> threads) {
+		super("javapns notification threads (" + threads.size() + " threads)");
 		this.threads = threads;
 	}
 
@@ -90,9 +96,13 @@ public class NotificationThreads {
 	/**
 	 * Start all notification threads.
 	 */
-	public void start() {
-		for (NotificationThread thread : threads)
+	public synchronized void start() {
+		if (threadsRunning > 0) throw new IllegalStateException("NotificationThreads already started (" + threadsRunning + " still running)");
+		for (NotificationThread thread : threads) {
+			threadsRunning++;
 			thread.run();
+		}
+		if (listener != null) listener.eventAllThreadsStarted(this);
 	}
 
 
@@ -126,6 +136,24 @@ public class NotificationThreads {
 
 	public List<NotificationThread> getThreads() {
 		return threads;
+	}
+
+
+	public NotificationProgressListener getListener() {
+		return listener;
+	}
+
+
+	public void setListener(NotificationProgressListener listener) {
+		this.listener = listener;
+		for (NotificationThread thread : threads)
+			thread.setListener(listener);
+	}
+
+
+	public void threadFinished(NotificationThread notificationThread) {
+		threadsRunning--;
+		if (threadsRunning == 0 && listener != null) listener.eventAllThreadsFinished(this);
 	}
 
 }

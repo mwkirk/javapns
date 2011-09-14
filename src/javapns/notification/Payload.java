@@ -19,14 +19,23 @@ import org.json.*;
  */
 public abstract class Payload {
 
+	/* Maximum total length (serialized) of a payload */
+	private static final int MAXIMUM_PAYLOAD_LENGTH = 256;
+
+	/* Character encoding specified by Apple documentation */
+	private static final String DEFAULT_CHARACTER_ENCODING = "UTF-8";
+
 	protected static final Logger logger = Logger.getLogger(DeviceFactory.class);
 
 	/* The root Payload */
 	private JSONObject payload;
 
+	/* Character encoding to use for streaming the payload (should be UTF-8) */
+	private String characterEncoding = DEFAULT_CHARACTER_ENCODING;
+
 
 	/**
-	 * Constructor, instantiate the two JSONObjects
+	 * Constructor, instantiate the the root JSONObject
 	 */
 	public Payload() {
 		super();
@@ -84,22 +93,46 @@ public abstract class Payload {
 
 
 	/**
-	 * Get this payload as a byte array
-	 * @return byte[]
+	 * Get this payload as a byte array using the preconfigured character encoding.
+	 * 
+	 * @return byte[] bytes ready to be streamed directly to Apple servers
 	 */
 	public byte[] getPayloadAsBytes() throws Exception {
 		byte[] payload = null;
 		try {
-			payload = toString().getBytes("UTF-8");
+			payload = toString().getBytes(characterEncoding);
 		} catch (Exception ex) {
 			payload = toString().getBytes();
 		}
 
-		if (payload.length > 256) {
+		if (payload.length > MAXIMUM_PAYLOAD_LENGTH) {
 			throw new Exception("Payload too large...[256 Bytes is the limit]");
 		}
 
 		return payload;
+	}
+
+
+	/**
+	 * Changes the character encoding for streaming the payload.
+	 * Character encoding is preset to UTF-8, as Apple documentation specifies.
+	 * Therefore, unless you are working on a special project, you should leave it as is.
+	 * 
+	 * @param characterEncoding a valid character encoding that String.getBytes(encoding) will accept
+	 */
+	public void setCharacterEncoding(String characterEncoding) {
+		this.characterEncoding = characterEncoding;
+	}
+
+
+	/**
+	 * Returns the character encoding that will be used by getPayloadAsBytes().
+	 * Default is UTF-8, as per Apple documentation.
+	 * 
+	 * @return a character encoding
+	 */
+	public String getCharacterEncoding() {
+		return characterEncoding;
 	}
 
 }
