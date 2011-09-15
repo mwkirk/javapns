@@ -1,4 +1,4 @@
-package javapns.devices.exceptions;
+package javapns.communication.exceptions;
 
 /**
  * Thrown when we try to contact Apple with an invalid password for the keystore.

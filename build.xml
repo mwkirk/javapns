@@ -8,8 +8,8 @@
 	<property name="java.target" value="1.5" />
 
 	<!-- javapns version id (no spaces allowed!) -->
-	<property name="javapns.version" value="2.0_Beta_3" />
-	<property name="javapns.revision" value=" r003" />
+	<property name="javapns.version" value="2.0_Beta_4" />
+	<property name="javapns.revision" value=" r001" />
 
 	<property name="src" location="src" />
 	<property name="build" location="build" />

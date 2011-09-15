@@ -54,6 +54,7 @@ public abstract class ConnectionToAppleServer {
 	 */
 	public ConnectionToAppleServer(AppleServer server) throws KeyStoreException, NoSuchAlgorithmException, CertificateException, IOException, Exception {
 		this.server = server;
+		
 		this.keyStore = KeystoreManager.loadKeystore(server);
 	}
 
@@ -63,8 +64,9 @@ public abstract class ConnectionToAppleServer {
 	}
 
 
-	public KeyStore getKeystore() {
+	public KeyStore getKeystore() throws KeyStoreException, NoSuchAlgorithmException, CertificateException, IOException, Exception {
 		return keyStore;
+//		return KeystoreManager.loadKeystore(server);
 	}
 
 
@@ -78,20 +80,15 @@ public abstract class ConnectionToAppleServer {
 	 * 
 	 * @param trustManagers
 	 * @return SSLSocketFactory
-	 * @throws NoSuchAlgorithmException
-	 * @throws CertificateException
-	 * @throws FileNotFoundException
-	 * @throws IOException
-	 * @throws UnrecoverableKeyException
-	 * @throws KeyManagementException
-	 * @throws KeyStoreException
+	 * @throws Exception 
 	 */
-	protected SSLSocketFactory createSSLSocketFactoryWithTrustManagers(TrustManager[] trustManagers) throws NoSuchAlgorithmException, CertificateException, FileNotFoundException, IOException, UnrecoverableKeyException, KeyManagementException, KeyStoreException {
+	protected SSLSocketFactory createSSLSocketFactoryWithTrustManagers(TrustManager[] trustManagers) throws Exception {
 
 		logger.debug("Creating SSLSocketFactory");
 		// Get a KeyManager and initialize it 
+		KeyStore keystore = getKeystore();
 		KeyManagerFactory kmf = KeyManagerFactory.getInstance(ALGORITHM);
-		kmf.init(this.keyStore, this.server.getKeystorePassword().toCharArray());
+		kmf.init(keystore, this.server.getKeystorePassword().toCharArray());
 
 		// Get the SSLContext to help create SSLSocketFactory			
 		SSLContext sslc = SSLContext.getInstance(PROTOCOL);

@@ -4,7 +4,7 @@ import java.io.*;
 import java.security.*;
 import java.security.cert.*;
 
-import javapns.devices.exceptions.*;
+import javapns.communication.exceptions.*;
 
 /**
  * Class responsible for dealing with keystores.
@@ -42,24 +42,38 @@ class KeystoreManager {
 	 * @throws Exception
 	 */
 	public static KeyStore loadKeystore(AppleServer server, Object keystore) throws KeyStoreException, NoSuchAlgorithmException, CertificateException, IOException, Exception {
-		InputStream keystoreStream = streamKeystore(keystore);
-		KeyStore keyStore = KeyStore.getInstance(server.getKeystoreType());
-		if (server.getKeystorePassword() == null) {
-			keyStore.load(server.getKeystoreStream(), null);
-
-		} else {
+		synchronized (server) {
+			InputStream keystoreStream = streamKeystore(keystore);
+			//System.out.println("Loading keystore from "+keystore+" synchronized on "+server);
+			KeyStore keyStore;
 			try {
-				keyStore.load(keystoreStream, server.getKeystorePassword().toCharArray());
-			} catch (Exception e) {
-				if (e != null) {
-					if (e.toString().contains("javax.crypto.BadPaddingException")) {
-						throw new InvalidKeystorePasswordException();
+				keyStore = KeyStore.getInstance(server.getKeystoreType());
+				if (server.getKeystorePassword() == null) {
+					keyStore.load(server.getKeystoreStream(), null);
+
+				} else {
+					try {
+						keyStore.load(keystoreStream, server.getKeystorePassword().toCharArray());
+					} catch (Exception e) {
+						if (e != null) {
+							if (e.toString().contains("javax.crypto.BadPaddingException")) {
+								throw new InvalidKeystorePasswordException();
+							}
+							if (e.toString().contains("DerInputStream.getLength(): lengthTag=127, too big")) {
+								throw new InvalidKeystoreFormatException();
+							}
+						}
+						throw e;
 					}
 				}
-				throw e;
+			} finally {
+				try {
+					keystoreStream.close();
+				} catch (Exception e) {
+				}
 			}
+			return keyStore;
 		}
-		return keyStore;
 	}
 
 

@@ -33,6 +33,9 @@ public abstract class Payload {
 	/* Character encoding to use for streaming the payload (should be UTF-8) */
 	private String characterEncoding = DEFAULT_CHARACTER_ENCODING;
 
+	/* Number of seconds after which this payload should expire */
+	private int expiry = 1 * 24 * 60 * 60;
+
 
 	/**
 	 * Constructor, instantiate the the root JSONObject
@@ -133,6 +136,40 @@ public abstract class Payload {
 	 */
 	public String getCharacterEncoding() {
 		return characterEncoding;
+	}
+
+
+	/**
+	 * Set the number of seconds after which this payload should expire.
+	 * Default is one (1) day.
+	 * 
+	 * @param seconds
+	 */
+	public void setExpiry(int seconds) {
+		this.expiry = seconds;
+	}
+
+
+	/**
+	 * Return the number of seconds after which this payload should expire.
+	 * 
+	 * @return a number of seconds
+	 */
+	public int getExpiry() {
+		return expiry;
+	}
+
+
+	/**
+	 * Enables a special simulation mode which causes the library to behave
+	 * as usual *except* that at the precise point where the payload would
+	 * actually be streamed out to Apple, it is not.
+	 * 
+	 * @return the same payload
+	 */
+	public Payload asSimulationOnly() {
+		setExpiry(919191);
+		return this;
 	}
 
 }

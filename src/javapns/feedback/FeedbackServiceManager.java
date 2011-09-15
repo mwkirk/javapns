@@ -8,7 +8,6 @@ import java.util.*;
 import javapns.devices.*;
 import javapns.devices.exceptions.*;
 import javapns.devices.implementations.basic.*;
-
 import javax.net.ssl.*;
 
 import org.apache.log4j.*;

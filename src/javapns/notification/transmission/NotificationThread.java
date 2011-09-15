@@ -30,27 +30,65 @@ public class NotificationThread extends Thread {
 	private int maxNotificationsPerConnection = DEFAULT_MAXNOTIFICATIONSPERCONNECTION;
 	private long sleepBetweenNotifications = 0;
 	private NotificationProgressListener listener;
+	private int threadNumber = 1;
+	private int nextMessageIdentifier = 1;
 
 
+	/**
+	 * Create a grouped thread for pushing notifications to a list of devices
+	 * and coordinating with a parent NotificationThreads object.
+	 * 
+	 * @param threads
+	 * @param notificationManager
+	 * @param server
+	 * @param payload
+	 * @param devices
+	 */
 	public NotificationThread(NotificationThreads threads, PushNotificationManager notificationManager, AppleNotificationServer server, Payload payload, List<Device> devices) {
 		super(threads, "javapns notification thread (" + devices.size() + ")");
-		this.notificationManager = notificationManager;
+		this.notificationManager = notificationManager == null ? new PushNotificationManager() : notificationManager;
 		this.server = server;
 		this.payload = payload;
 		this.devices = devices;
 	}
 
 
+	/**
+	 * Create a grouped thread for pushing notifications to an array of devices
+	 * and coordinating with a parent NotificationThreads object.
+	 * 
+	 * @param threads
+	 * @param notificationManager
+	 * @param server
+	 * @param payload
+	 * @param devices
+	 */
 	public NotificationThread(NotificationThreads threads, PushNotificationManager notificationManager, AppleNotificationServer server, Payload payload, Device... devices) {
-		this(null, notificationManager, server, payload, Arrays.asList(devices));
+		this(threads, notificationManager, server, payload, Arrays.asList(devices));
 	}
 
 
+	/**
+	 * Create a standalone thread for pushing notifications to a list of devices.
+	 * 
+	 * @param notificationManager
+	 * @param server
+	 * @param payload
+	 * @param devices
+	 */
 	public NotificationThread(PushNotificationManager notificationManager, AppleNotificationServer server, Payload payload, List<Device> devices) {
 		this(null, notificationManager, server, payload, devices);
 	}
 
 
+	/**
+	 * Create a standalone thread for pushing notifications to an array of devices.
+	 * 
+	 * @param notificationManager
+	 * @param server
+	 * @param payload
+	 * @param devices
+	 */
 	public NotificationThread(PushNotificationManager notificationManager, AppleNotificationServer server, Payload payload, Device... devices) {
 		this(notificationManager, server, payload, Arrays.asList(devices));
 	}
@@ -63,7 +101,8 @@ public class NotificationThread extends Thread {
 			notificationManager.initializeConnection(server);
 			for (int i = 0; i < total; i++) {
 				Device device = devices.get(i);
-				notificationManager.sendNotification(device, payload, false);
+				int message = newMessageIdentifier();
+				notificationManager.sendNotification(device, payload, false, message);
 				if (sleepBetweenNotifications > 0) sleep(sleepBetweenNotifications);
 				if (i != 0 && i % maxNotificationsPerConnection == 0) {
 					if (listener != null) listener.eventConnectionRestarted(this);
@@ -80,6 +119,15 @@ public class NotificationThread extends Thread {
 	}
 
 
+	/**
+	 * Set a maximum number of notifications that should be streamed over a continuous connection
+	 * to an Apple server.  When that maximum is reached, the thread automatically closes and
+	 * reopens a fresh new connection to the server and continues streaming notifications.
+	 * 
+	 * Default is 200 (recommended).
+	 * 
+	 * @param maxNotificationsPerConnection
+	 */
 	public void setMaxNotificationsPerConnection(int maxNotificationsPerConnection) {
 		this.maxNotificationsPerConnection = maxNotificationsPerConnection;
 	}
@@ -90,8 +138,17 @@ public class NotificationThread extends Thread {
 	}
 
 
-	public void setSleepBetweenNotifications(long sleepBetweenNotifications) {
-		this.sleepBetweenNotifications = sleepBetweenNotifications;
+	/**
+	 * Set a delay the thread should sleep between each notification.
+	 * This is sometimes useful when communication with Apple servers is
+	 * unreliable and notifications are streaming too fast.
+	 * 
+	 * Default is 0.
+	 * 
+	 * @param milliseconds
+	 */
+	public void setSleepBetweenNotifications(long milliseconds) {
+		this.sleepBetweenNotifications = milliseconds;
 	}
 
 
@@ -110,6 +167,21 @@ public class NotificationThread extends Thread {
 	}
 
 
+	/**
+	 * Get the number of devices that this thread pushes to.
+	 * 
+	 * @return the number of devices registered with this thread
+	 */
+	public int size() {
+		return devices.size();
+	}
+
+
+	/**
+	 * Provide an event listener which will be notified of this thread's progress.
+	 * 
+	 * @param listener any object implementing the NotificationProgressListener interface
+	 */
 	public void setListener(NotificationProgressListener listener) {
 		this.listener = listener;
 	}
@@ -117,6 +189,57 @@ public class NotificationThread extends Thread {
 
 	public NotificationProgressListener getListener() {
 		return listener;
+	}
+
+
+	/**
+	 * Set the thread number so that generated message identifiers can be made 
+	 * unique across all threads.
+	 * 
+	 * @param threadNumber
+	 */
+	protected void setThreadNumber(int threadNumber) {
+		this.threadNumber = threadNumber;
+	}
+
+
+	/**
+	 * Return the thread number assigned by the parent NotificationThreads object, if any.
+	 * 
+	 * @return the unique number assigned to this thread by the parent group
+	 */
+	public int getThreadNumber() {
+		return threadNumber;
+	}
+
+
+	/**
+	 * Return a new sequential message identifier.
+	 * 
+	 * @return a message identifier unique to all NotificationThread objects
+	 */
+	public int newMessageIdentifier() {
+		return (threadNumber << 24) | nextMessageIdentifier++;
+	}
+
+
+	/**
+	 * Returns the first message identifier generated by this thread.
+	 * 
+	 * @return a message identifier unique to all NotificationThread objects
+	 */
+	public int getFirstMessageIdentifier() {
+		return (threadNumber << 24) | 1;
+	}
+
+
+	/**
+	 * Returns the last message identifier generated by this thread.
+	 * 
+	 * @return a message identifier unique to all NotificationThread objects
+	 */
+	public int getLastMessageIdentifier() {
+		return (threadNumber << 24) | devices.size();
 	}
 
 }

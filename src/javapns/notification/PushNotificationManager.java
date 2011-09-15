@@ -7,16 +7,17 @@ import java.security.cert.*;
 import java.util.*;
 
 import javapns.communication.*;
+import javapns.communication.exceptions.*;
 import javapns.devices.*;
 import javapns.devices.exceptions.*;
 import javapns.devices.implementations.basic.*;
-
 import javax.net.ssl.*;
 
 import org.apache.log4j.*;
 
 /**
- * The main class used to send notification and handle a connection to Apple SSLServerSocket
+ * The main class used to send notification and handle a connection to Apple SSLServerSocket.
+ * This class is not multi-threaded.  One instance per thread must be created.
  *
  * @author Maxime Pilon
  * @author Sylvain Pedneault
@@ -33,7 +34,10 @@ public class PushNotificationManager {
 	public static final Logger logger = Logger.getLogger(PushNotificationManager.class);
 
 	/* Default retries for a connection */
-	public static final int DEFAULT_RETRIES = 1;
+	public static final int DEFAULT_RETRIES = 3;
+
+	/* Special identifier that tells the manager to generate a sequential identifier for each payload pushed */
+	private static final int SEQUENTIAL_IDENTIFIER = -1;
 
 	/* Connection helper */
 	private ConnectionToAppleServer connectionHelper;
@@ -44,12 +48,14 @@ public class PushNotificationManager {
 	/* Default retry attempts */
 	private int retryAttempts = DEFAULT_RETRIES;
 
+	private int nextMessageIdentifier = 1;
+
 	/*
 	 * To circumvent an issue with invalid server certificates,
 	 * set to true to use a trust manager that will always accept
 	 * server certificates, regardless of their validity.
 	 */
-	private boolean trustAllServerCertificates = false;
+	private boolean trustAllServerCertificates = true;
 
 	private boolean proxySet = false;
 
@@ -81,16 +87,17 @@ public class PushNotificationManager {
 	 * @throws Exception 
 	 */
 	public void initializeConnection(AppleNotificationServer server) throws Exception {
-		//		logger.debug( "Initializing Connection to Host: [" + appleHost + "] Port: [" + applePort + "] with KeyStorePath [" + keyStorePath + "]/[" + keyStoreType + "]" );
 		this.connectionHelper = new ConnectionToNotificationServer(server);
 		this.socket = connectionHelper.getSSLSocket();
+		logger.debug("Initialized Connection to Host: [" + server.getNotificationServerHost() + "] Port: [" + server.getNotificationServerPort() + "]: " + socket);
 	}
+
 
 	public void restartConnection(AppleNotificationServer server) throws Exception {
 		stopConnection();
 		initializeConnection(server);
 	}
-	
+
 
 	/**
 	 * Close the SSLSocket connection
@@ -141,7 +148,7 @@ public class PushNotificationManager {
 	 */
 	public void sendNotifications(Payload payload, List<Device> devices) throws UnrecoverableKeyException, KeyManagementException, KeyStoreException, NoSuchAlgorithmException, CertificateException, FileNotFoundException, IOException, Exception {
 		for (Device device : devices)
-			sendNotification(device, payload, false);
+			sendNotification(device, payload, false, SEQUENTIAL_IDENTIFIER);
 		stopConnection();
 	}
 
@@ -162,7 +169,7 @@ public class PushNotificationManager {
 	 */
 	public void sendNotifications(Payload payload, Device... devices) throws UnrecoverableKeyException, KeyManagementException, KeyStoreException, NoSuchAlgorithmException, CertificateException, FileNotFoundException, IOException, Exception {
 		for (Device device : devices)
-			sendNotification(device, payload, false);
+			sendNotification(device, payload, false, SEQUENTIAL_IDENTIFIER);
 		stopConnection();
 	}
 
@@ -182,15 +189,59 @@ public class PushNotificationManager {
 	 * @throws IOException
 	 */
 	public void sendNotification(Device device, Payload payload, boolean closeAfter) throws UnrecoverableKeyException, KeyManagementException, KeyStoreException, NoSuchAlgorithmException, CertificateException, FileNotFoundException, IOException, Exception {
+		sendNotification(device, payload, closeAfter, SEQUENTIAL_IDENTIFIER);
+	}
+
+
+	/**
+	 * Send a notification (Payload) to the given device
+	 * 
+	 * @param device the device to be notified
+	 * @param payload the payload to send
+	 * @param identifier a unique identifier which will match any error reported later (if any)
+	 * @throws UnrecoverableKeyException
+	 * @throws KeyManagementException
+	 * @throws KeyStoreException
+	 * @throws NoSuchAlgorithmException
+	 * @throws CertificateException
+	 * @throws FileNotFoundException
+	 * @throws IOException
+	 */
+	public void sendNotification(Device device, Payload payload, int identifier) throws UnrecoverableKeyException, KeyManagementException, KeyStoreException, NoSuchAlgorithmException, CertificateException, FileNotFoundException, IOException, Exception {
+		sendNotification(device, payload, false, identifier);
+	}
+
+
+	/**
+	 * Send a notification (Payload) to the given device
+	 * 
+	 * @param device the device to be notified
+	 * @param payload the payload to send
+	 * @param closeAfter indicates if the connection should be closed after the payload has been sent
+	 * @param identifier a unique identifier which will match any error reported later (if any)
+	 * @throws UnrecoverableKeyException
+	 * @throws KeyManagementException
+	 * @throws KeyStoreException
+	 * @throws NoSuchAlgorithmException
+	 * @throws CertificateException
+	 * @throws FileNotFoundException
+	 * @throws IOException
+	 */
+	public void sendNotification(Device device, Payload payload, boolean closeAfter, int identifier) throws UnrecoverableKeyException, KeyManagementException, KeyStoreException, NoSuchAlgorithmException, CertificateException, FileNotFoundException, IOException, Exception {
 		String token = device.getToken();
 		// even though the BasicDevice constructor validates the token, we revalidate it in case we were passed another implementation of Device
 		BasicDevice.validateTokenFormat(token);
 
-		byte[] message = getMessage(token, payload);
+		byte[] message = getMessage(token, payload, identifier);
+
+		/* Special simulation mode to skip actual streaming of message */
+		boolean simulationMode = payload.getExpiry() == 919191;
+
 		boolean success = false;
 
 		BufferedReader in = new BufferedReader(new InputStreamReader(this.socket.getInputStream()));
-		if (getSslSocketTimeout() > 0) this.socket.setSoTimeout(getSslSocketTimeout());
+		int socketTimeout = getSslSocketTimeout();
+		if (socketTimeout > 0) this.socket.setSoTimeout(socketTimeout);
 		int attempts = 0;
 		// Keep trying until we have a success
 		while (!success) {
@@ -199,7 +250,11 @@ public class PushNotificationManager {
 				logger.debug("  to device: " + token + "");
 				attempts++;
 				try {
-					this.socket.getOutputStream().write(message);
+					if (!simulationMode) {
+						this.socket.getOutputStream().write(message);
+					} else {
+						logger.debug("* Simulation only: would have streamed " + message.length + "-bytes message now..");
+					}
 				} catch (Exception e) {
 					if (e != null) {
 						if (e.toString().contains("certificate_unknown")) {
@@ -211,17 +266,17 @@ public class PushNotificationManager {
 				logger.debug("Flushing");
 				this.socket.getOutputStream().flush();
 				success = true;
-				logger.debug("Notification sent");
+				logger.debug("Notification sent " + (attempts == 1 ? ("on first attempt") : ("on attempt #" + attempts)));
 
 			} catch (IOException e) {
 				// throw exception if we surpassed the valid number of retry attempts
-				e.printStackTrace();
 				if (attempts >= retryAttempts) {
 					logger.error("Attempt to send Notification failed and beyond the maximum number of attempts permitted");
+					e.printStackTrace();
 					throw e;
 
 				} else {
-					logger.info("Attempt failed... trying again");
+					logger.info("Attempt failed (" + e.getMessage() + ")... trying again");
 					//Try again
 					try {
 						this.socket.close();
@@ -229,7 +284,7 @@ public class PushNotificationManager {
 						// do nothing
 					}
 					this.socket = connectionHelper.getSSLSocket();
-					if (getSslSocketTimeout() > 0) this.socket.setSoTimeout(getSslSocketTimeout());
+					if (socketTimeout > 0) this.socket.setSoTimeout(socketTimeout);
 				}
 			} finally {
 				if (closeAfter) {
@@ -308,7 +363,7 @@ public class PushNotificationManager {
 	 * @return the byteArray to write to the SSLSocket OutputStream
 	 * @throws IOException
 	 */
-	private static byte[] getMessage(String deviceToken, Payload payload) throws IOException, Exception {
+	private byte[] getMessage(String deviceToken, Payload payload, int identifier) throws IOException, Exception {
 		logger.debug("Building Raw message from deviceToken and payload");
 		// First convert the deviceToken (in hexa form) to a binary format
 		byte[] deviceTokenAsBytes = new byte[deviceToken.length() / 2];
@@ -331,15 +386,15 @@ public class PushNotificationManager {
 		//bao.write( ByteBuffer.allocate( 1 ).put( 1 ).array() );
 		bao.write(b);
 
-		// 4 bytes
-		String identifier = "ap";
-		bao.write(ByteBuffer.allocate(4).put(identifier.getBytes()).array());
-		//bao.write( identifier.getBytes() );
+		// 4 bytes identifier (which will match any error packet received later on)
+		if (identifier < 0) identifier = newMessageIdentifier();
+		bao.write(intTo4ByteArray(identifier));
 
 		// 4 bytes
 		long ctime = System.currentTimeMillis();
-		Long expiry = ((ctime + 86400l) / 1000l);
-		bao.write(intTo4ByteArray(expiry.intValue()));
+		long ttl = payload.getExpiry() * 1000; // time-to-live in milliseconds
+		Long expiryDateInSeconds = ((ctime + ttl) / 1000L);
+		bao.write(intTo4ByteArray(expiryDateInSeconds.intValue()));
 
 		// Write the TokenLength as a 16bits unsigned int, in big endian
 		int tl = deviceTokenAsBytes.length;
@@ -421,5 +476,17 @@ public class PushNotificationManager {
 
 	public boolean isTrustAllServerCertificates() {
 		return trustAllServerCertificates;
+	}
+
+
+	/**
+	 * Return a new sequential message identifier.
+	 * 
+	 * @return a message identifier unique to this PushNotificationManager
+	 */
+	private int newMessageIdentifier() {
+		int id = nextMessageIdentifier;
+		nextMessageIdentifier++;
+		return id;
 	}
 }

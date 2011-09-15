@@ -10,9 +10,10 @@ import java.io.*;
  */
 public abstract class AppleServerBasicImpl implements AppleServer {
 
-	private final InputStream input;
+	private final Object keystore;
 	private final String password;
 	private final String type;
+
 
 	/**
 	 * Constructs a AppleServerBasicImpl object.
@@ -23,14 +24,20 @@ public abstract class AppleServerBasicImpl implements AppleServer {
 	 * @throws FileNotFoundException
 	 */
 	public AppleServerBasicImpl(Object keystore, String password, String type) throws FileNotFoundException {
-		this.input = KeystoreManager.streamKeystore(keystore);
+		//this.input = KeystoreManager.streamKeystore(keystore);
+		this.keystore = keystore;
 		this.password = password;
 		this.type = type;
 	}
 
 
 	public InputStream getKeystoreStream() {
-		return input;
+		try {
+			return KeystoreManager.streamKeystore(keystore);
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+			return null;
+		}
 	}
 
 

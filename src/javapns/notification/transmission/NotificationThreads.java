@@ -20,34 +20,33 @@ public class NotificationThreads extends ThreadGroup {
 	private List<NotificationThread> threads = new Vector<NotificationThread>();
 	private NotificationProgressListener listener;
 	private int threadsRunning = 0;
+	private Object finishPoint = new Object();
 
 
 	/**
-	 * Create the specified number of notification threads and spreads the devices evenly between the threads.
+	 * Create the specified number of notification threads and spread the devices evenly between the threads.
 	 * 
-	 * @param notificationManager a notification manager
 	 * @param server the server to push to
 	 * @param payload the payload to push
 	 * @param devices a very large list of devices
 	 * @param numberOfThreads the number of threads to create to share the work
 	 */
-	public NotificationThreads(PushNotificationManager notificationManager, AppleNotificationServer server, Payload payload, List<Device> devices, int numberOfThreads) {
+	public NotificationThreads(AppleNotificationServer server, Payload payload, List<Device> devices, int numberOfThreads) {
 		super("javapns notification threads (" + numberOfThreads + " threads)");
 		for (List<Device> deviceGroup : groupDevices(devices, numberOfThreads))
-			threads.add(new NotificationThread(notificationManager, server, payload, deviceGroup));
+			threads.add(new NotificationThread(this, new PushNotificationManager(), server, payload, deviceGroup));
 	}
 
 
 	/**
 	 * Spread the devices evenly between the provided threads.
 	 * 
-	 * @param notificationManager a notification manager
 	 * @param server the server to push to
 	 * @param payload the payload to push
 	 * @param devices a very large list of devices
 	 * @param threads a list of pre-built threads
 	 */
-	public NotificationThreads(PushNotificationManager notificationManager, AppleNotificationServer server, Payload payload, List<Device> devices, List<NotificationThread> threads) {
+	public NotificationThreads(AppleNotificationServer server, Payload payload, List<Device> devices, List<NotificationThread> threads) {
 		super("javapns notification threads (" + threads.size() + " threads)");
 		this.threads = threads;
 		List<List<Device>> groups = groupDevices(devices, threads.size());
@@ -59,12 +58,11 @@ public class NotificationThreads extends ThreadGroup {
 	/**
 	 * Use the provided threads which should already each have their group of devices to work with.
 	 * 
-	 * @param notificationManager a notification manager
 	 * @param server the server to push to
 	 * @param payload the payload to push
 	 * @param threads a list of pre-built threads
 	 */
-	public NotificationThreads(PushNotificationManager notificationManager, AppleNotificationServer server, Payload payload, List<NotificationThread> threads) {
+	public NotificationThreads(AppleNotificationServer server, Payload payload, List<NotificationThread> threads) {
 		super("javapns notification threads (" + threads.size() + " threads)");
 		this.threads = threads;
 	}
@@ -84,7 +82,7 @@ public class NotificationThreads extends ThreadGroup {
 		if (total % threads > 0) devicesPerThread++;
 		for (int i = 0; i < threads; i++) {
 			int firstDevice = i * devicesPerThread;
-			int lastDevice = firstDevice + devicesPerThread;
+			int lastDevice = firstDevice + devicesPerThread - 1;
 			if (lastDevice >= total) lastDevice = total - 1;
 			List<Device> threadDevices = devices.subList(firstDevice, lastDevice + 1);
 			groups.add(threadDevices);
@@ -96,13 +94,15 @@ public class NotificationThreads extends ThreadGroup {
 	/**
 	 * Start all notification threads.
 	 */
-	public synchronized void start() {
+	public final synchronized NotificationThreads start() {
 		if (threadsRunning > 0) throw new IllegalStateException("NotificationThreads already started (" + threadsRunning + " still running)");
+		assignThreadsNumbers();
 		for (NotificationThread thread : threads) {
 			threadsRunning++;
-			thread.run();
+			thread.start();
 		}
 		if (listener != null) listener.eventAllThreadsStarted(this);
+		return this;
 	}
 
 
@@ -144,6 +144,11 @@ public class NotificationThreads extends ThreadGroup {
 	}
 
 
+	/**
+	 * Attach an event listener to this object as well as all linked threads.
+	 * 
+	 * @param listener
+	 */
 	public void setListener(NotificationProgressListener listener) {
 		this.listener = listener;
 		for (NotificationThread thread : threads)
@@ -151,9 +156,58 @@ public class NotificationThreads extends ThreadGroup {
 	}
 
 
-	public void threadFinished(NotificationThread notificationThread) {
+	/**
+	 * Worker threads invoke this method as soon as they have completed their work.
+	 * This method tracks the number of threads still running, allowing us
+	 * to detect when ALL threads have finished.
+	 * 
+	 * When all threads are done working, this method fires an AllThreadsFinished
+	 * event to the attached listener (if one is present) and wakes up any
+	 * object that is waiting for the waitForAllThreads() method to return.
+	 * 
+	 * @param notificationThread
+	 */
+	protected void threadFinished(NotificationThread notificationThread) {
 		threadsRunning--;
-		if (threadsRunning == 0 && listener != null) listener.eventAllThreadsFinished(this);
+		if (threadsRunning == 0) {
+			if (listener != null) listener.eventAllThreadsFinished(this);
+			try {
+				synchronized (finishPoint) {
+					finishPoint.notifyAll();
+				}
+			} catch (Exception e) {
+			}
+		}
+	}
+
+
+	/**
+	 * Wait for all threads to complete their work.
+	 * 
+	 * This method blocks and returns only when all threads are done.
+	 * 
+	 * @throws InterruptedException
+	 */
+	public void waitForAllThreads() throws InterruptedException {
+		try {
+			synchronized (finishPoint) {
+				finishPoint.wait();
+			}
+		} catch (IllegalMonitorStateException e) {
+			/* All threads are most likely already done, so we ignore this */
+		}
+	}
+
+
+	/**
+	 * Assign unique numbers to worker threads.
+	 * Thread numbers allow each thread to generate message identifiers that
+	 * are unique to all threads in the group.
+	 */
+	private void assignThreadsNumbers() {
+		int t = 1;
+		for (NotificationThread thread : threads)
+			thread.setThreadNumber(t++);
 	}
 
 }
