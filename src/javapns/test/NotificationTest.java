@@ -114,7 +114,6 @@ public class NotificationTest extends TestFoundation {
 
 	private static void pushSimplePayloadUsingThreads(String keystore, String password, boolean production, String token, boolean simulation, int devices, int threads) {
 		try {
-			if (token == null || token.length() != 64) token = "1234567890123456789012345678901234567890123456789012345678901234";
 
 			System.out.println("Creating PushNotificationManager and AppleNotificationServer");
 			AppleNotificationServer server = new AppleNotificationServerBasicImpl(keystore, password, production);
@@ -123,8 +122,13 @@ public class NotificationTest extends TestFoundation {
 
 			System.out.println("Generating " + devices + " fake devices");
 			List<Device> deviceList = new ArrayList<Device>(devices);
-			for (int i = 0; i < devices; i++)
-				deviceList.add(new BasicDevice(token));
+			for (int i = 0; i < devices; i++) {
+				String tokenToUse = token;
+				if (tokenToUse == null || tokenToUse.length() != 64) {
+					tokenToUse = "123456789012345678901234567890123456789012345678901234567" + (1000000 + i);
+				}
+				deviceList.add(new BasicDevice(tokenToUse));
+			}
 
 			System.out.println("Creating " + threads + " notification threads");
 			NotificationThreads work = new NotificationThreads(server, simulation ? payload.asSimulationOnly() : payload, deviceList, threads);
@@ -139,15 +143,8 @@ public class NotificationTest extends TestFoundation {
 			work.waitForAllThreads();
 			long timestamp2 = System.currentTimeMillis();
 			System.out.println("All threads finished in " + (timestamp2 - timestamp1) + " milliseconds");
-			List<PushedNotification> failedNotifications = work.getFailedNotifications();
-			if (failedNotifications.size() == 0) {
-				System.out.println("All notifications pushed successfully!");
-			} else {
-				System.out.println("Some notifications failed (" + failedNotifications.size() + "):");
-				for (PushedNotification failedNotification : failedNotifications) {
-					System.out.println("  " + failedNotification.toString());
-				}
-			}
+
+			printPushedNotifications(work.getPushedNotifications());
 
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -183,7 +180,19 @@ public class NotificationTest extends TestFoundation {
 
 
 	public static void printPushedNotifications(List<PushedNotification> notifications) {
-		System.out.println("Pushed notifications:");
+		List<PushedNotification> failedNotifications = PushedNotification.findFailedNotifications(notifications);
+		List<PushedNotification> succesfulNotifications = PushedNotification.findSuccessfulNotifications(notifications);
+		if (failedNotifications.size() == 0) {
+			printPushedNotifications("All notifications pushed successfully (" + succesfulNotifications.size() + "):", succesfulNotifications);
+		} else {
+			printPushedNotifications("Some notifications failed (" + failedNotifications.size() + "):", failedNotifications);
+			printPushedNotifications("Others succeeded (" + succesfulNotifications.size() + "):", succesfulNotifications);
+		}
+	}
+
+
+	public static void printPushedNotifications(String description, List<PushedNotification> notifications) {
+		System.out.println(description);
 		for (PushedNotification notification : notifications) {
 			try {
 				System.out.println("  " + notification.toString());

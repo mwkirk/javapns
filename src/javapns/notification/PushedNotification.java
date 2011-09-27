@@ -30,6 +30,13 @@ public class PushedNotification {
 	}
 
 
+	protected PushedNotification(Device device, Payload payload, int identifier) {
+		this.device = device;
+		this.payload = payload;
+		this.identifier = identifier;
+	}
+
+
 	/**
 	 * Returns the payload that was pushed.
 	 * 
@@ -210,7 +217,9 @@ public class PushedNotification {
 	public static List<PushedNotification> findFailedNotifications(List<PushedNotification> notifications) {
 		List<PushedNotification> filteredList = new Vector<PushedNotification>();
 		for (PushedNotification notification : notifications) {
-			if (!notification.isSuccessful()) filteredList.add(notification);
+			if (!notification.isSuccessful()) {
+				filteredList.add(notification);
+			}
 		}
 		return filteredList;
 	}
@@ -229,6 +238,16 @@ public class PushedNotification {
 			msg.append("  " + response.getMessage());
 		}
 		return msg.toString();
+	}
+
+
+	public void updateTo(PushedNotification repushedNotification) {
+		//		this.setIdentifier(repushedNotification.getIdentifier());
+		ResponsePacket newResponse = repushedNotification.getResponse();
+		System.out.println(response + " >>> " + newResponse);
+		if (newResponse != null) this.setResponse(newResponse);
+		this.setTransmissionAttempts(repushedNotification.getTransmissionAttempts());
+		this.setTransmissionCompleted(repushedNotification.isTransmissionCompleted());
 	}
 
 }

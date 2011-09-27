@@ -264,4 +264,14 @@ public class NotificationThread extends Thread {
 		return PushedNotification.findFailedNotifications(getPushedNotifications());
 	}
 
+
+	/**
+	 * Returns list of all notifications that this thread attempted to push and succeeded.
+	 * 
+	 * @return a list of failed notifications
+	 */
+	public List<PushedNotification> getSuccessfulNotifications() {
+		return PushedNotification.findSuccessfulNotifications(getPushedNotifications());
+	}
+
 }

@@ -236,4 +236,14 @@ public class NotificationThreads extends ThreadGroup {
 		return PushedNotification.findFailedNotifications(getPushedNotifications());
 	}
 
+
+	/**
+	 * Returns list of all notifications that all threads attempted to push and succeeded.
+	 * 
+	 * @return a list of successful notifications
+	 */
+	public List<PushedNotification> getSuccessfulNotifications() {
+		return PushedNotification.findSuccessfulNotifications(getPushedNotifications());
+	}
+
 }

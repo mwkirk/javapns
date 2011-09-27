@@ -13,7 +13,7 @@ import java.util.*;
 class ResponsePacketReader {
 
 	/* The number of seconds to wait for a response */
-	private static final int TIMEOUT = 3 * 1000;
+	private static final int TIMEOUT = 5 * 1000;
 
 
 	/**
@@ -57,12 +57,14 @@ class ResponsePacketReader {
 
 		} catch (Exception e) {
 			/* Ignore exception, as we are expecting timeout exceptions because Apple might not reply anything */
+			//System.out.println(e);
 		}
 		/* Reset socket timeout, just in case */
 		try {
 			socket.setSoTimeout(previousTimeout);
 		} catch (Exception e) {
 		}
+		//System.out.println("Received "+responses.size()+" response packets");
 		return responses;
 	}
 
@@ -97,6 +99,7 @@ class ResponsePacketReader {
 
 	@Deprecated
 	private static void handleResponse(ResponsePacket response, PushNotificationManager notificationManager) {
+		//System.out.println("Received response packet: " + response.getMessage());
 		if (response.getCommand() == 8) handleErrorResponse(response, notificationManager);
 	}
 

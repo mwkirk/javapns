@@ -64,7 +64,7 @@ public class PushNotificationManager {
 	/* The DeviceFactory to use with this PushNotificationManager */
 	private DeviceFactory deviceFactory;
 
-	private Map<Integer, PushedNotification> pushedNotifications = new Hashtable<Integer, PushedNotification>();
+	private LinkedHashMap<Integer, PushedNotification> pushedNotifications = new LinkedHashMap<Integer, PushedNotification>();
 
 
 	/**
@@ -97,9 +97,25 @@ public class PushNotificationManager {
 	}
 
 
+	public void initializePreviousConnection() throws Exception {
+		initializeConnection((AppleNotificationServer) this.connectionToAppleServer.getServer());
+	}
+
+
 	public void restartConnection(AppleNotificationServer server) throws Exception {
 		stopConnection();
 		initializeConnection(server);
+	}
+
+
+	private void restartPreviousConnection() throws Exception {
+		try {
+			logger.debug("Closing connection to restart previous one");
+			this.socket.close();
+		} catch (Exception e) {
+			/* Do not complain if connection is already closed... */
+		}
+		initializePreviousConnection();
 	}
 
 
@@ -108,17 +124,50 @@ public class PushNotificationManager {
 	 * 
 	 * @throws IOException
 	 */
-	public void stopConnection() throws IOException {
+	public void stopConnection() throws Exception {
+		processedFailedNotifications();
 		try {
-			logger.debug("Reading responses");
-			ResponsePacketReader.processResponses(this);
-			pushedNotifications.clear();
-
 			logger.debug("Closing connection");
 			this.socket.close();
 		} catch (Exception e) {
 			/* Do not complain if connection is already closed... */
 		}
+	}
+
+
+	private int processedFailedNotifications() throws Exception {
+		logger.debug("Reading responses");
+		int responsesReceived = ResponsePacketReader.processResponses(this);
+		while (responsesReceived > 0) {
+			PushedNotification skippedNotification = null;
+			List<PushedNotification> notificationsToResend = new ArrayList<PushedNotification>();
+			boolean foundFirstFail = false;
+			for (PushedNotification notification : pushedNotifications.values()) {
+				if (foundFirstFail || !notification.isSuccessful()) {
+					if (foundFirstFail) notificationsToResend.add(notification);
+					else {
+						foundFirstFail = true;
+						skippedNotification = notification;
+					}
+				}
+			}
+			pushedNotifications.clear();
+			int toResend = notificationsToResend.size();
+			logger.debug("Found " + toResend + " notifications that must be re-sent");
+			if (toResend > 0) {
+				logger.debug("Restarting connection to resend notifications");
+				restartPreviousConnection();
+				for (PushedNotification pushedNotification : notificationsToResend) {
+					sendNotification(pushedNotification, false);
+				}
+			}
+			int remaining = responsesReceived = ResponsePacketReader.processResponses(this);
+			if (remaining == 0) {
+				logger.debug("No notifications remaining to be resent");
+				return 0;
+			}
+		}
+		return responsesReceived;
 	}
 
 
@@ -158,11 +207,11 @@ public class PushNotificationManager {
 	 * @throws Exception
 	 */
 	public List<PushedNotification> sendNotifications(Payload payload, List<Device> devices) throws UnrecoverableKeyException, KeyManagementException, KeyStoreException, NoSuchAlgorithmException, CertificateException, FileNotFoundException, IOException, Exception {
-		List<PushedNotification> envelopes = new Vector<PushedNotification>();
+		List<PushedNotification> notifications = new Vector<PushedNotification>();
 		for (Device device : devices)
-			envelopes.add(sendNotification(device, payload, false, SEQUENTIAL_IDENTIFIER));
+			notifications.add(sendNotification(device, payload, false, SEQUENTIAL_IDENTIFIER));
 		stopConnection();
-		return envelopes;
+		return notifications;
 	}
 
 
@@ -182,11 +231,11 @@ public class PushNotificationManager {
 	 * @throws Exception
 	 */
 	public List<PushedNotification> sendNotifications(Payload payload, Device... devices) throws UnrecoverableKeyException, KeyManagementException, KeyStoreException, NoSuchAlgorithmException, CertificateException, FileNotFoundException, IOException, Exception {
-		List<PushedNotification> envelopes = new Vector<PushedNotification>();
+		List<PushedNotification> notifications = new Vector<PushedNotification>();
 		for (Device device : devices)
-			envelopes.add(sendNotification(device, payload, false, SEQUENTIAL_IDENTIFIER));
+			notifications.add(sendNotification(device, payload, false, SEQUENTIAL_IDENTIFIER));
 		stopConnection();
-		return envelopes;
+		return notifications;
 	}
 
 
@@ -248,12 +297,40 @@ public class PushNotificationManager {
 	 * @return TransmissionEnvelope an object that encapsulates all message transmission results
 	 */
 	public PushedNotification sendNotification(Device device, Payload payload, boolean closeAfter, int identifier) throws UnrecoverableKeyException, KeyManagementException, KeyStoreException, NoSuchAlgorithmException, CertificateException, FileNotFoundException, IOException, Exception {
+		PushedNotification pushedNotification = new PushedNotification(device, payload, identifier);
+		sendNotification(pushedNotification, closeAfter);
+		return pushedNotification;
+	}
+
+
+	/**
+	 * Actual action of sending a notification
+	 * 
+	 * @param notification the ready-to-push notification
+	 * @param closeAfter indicates if the connection should be closed after the payload has been sent
+	 * @return a pushed notification with details on transmission result and error (if any)
+	 * @throws UnrecoverableKeyException
+	 * @throws KeyManagementException
+	 * @throws KeyStoreException
+	 * @throws NoSuchAlgorithmException
+	 * @throws CertificateException
+	 * @throws FileNotFoundException
+	 * @throws IOException
+	 * @return TransmissionEnvelope an object that encapsulates all message transmission results
+	 */
+	private void sendNotification(PushedNotification notification, boolean closeAfter) throws UnrecoverableKeyException, KeyManagementException, KeyStoreException, NoSuchAlgorithmException, CertificateException, FileNotFoundException, IOException, Exception {
+		Device device = notification.getDevice();
+		Payload payload = notification.getPayload();
+		if (notification.getIdentifier() <= 0) notification.setIdentifier(newMessageIdentifier());
+		if (!pushedNotifications.containsKey(notification.getIdentifier())) pushedNotifications.put(notification.getIdentifier(), notification);
+		int identifier = notification.getIdentifier();
+
 		String token = device.getToken();
 		// even though the BasicDevice constructor validates the token, we revalidate it in case we were passed another implementation of Device
 		BasicDevice.validateTokenFormat(token);
-		PushedNotification pushedNotification = new PushedNotification(device, payload);
-		byte[] bytes = getMessage(token, payload, identifier, pushedNotification);
-		pushedNotifications.put(pushedNotification.getIdentifier(), pushedNotification);
+		//		PushedNotification pushedNotification = new PushedNotification(device, payload);
+		byte[] bytes = getMessage(token, payload, identifier, notification);
+		//		pushedNotifications.put(pushedNotification.getIdentifier(), pushedNotification);
 
 		/* Special simulation mode to skip actual streaming of message */
 		boolean simulationMode = payload.getExpiry() == 919191;
@@ -263,13 +340,13 @@ public class PushNotificationManager {
 		BufferedReader in = new BufferedReader(new InputStreamReader(this.socket.getInputStream()));
 		int socketTimeout = getSslSocketTimeout();
 		if (socketTimeout > 0) this.socket.setSoTimeout(socketTimeout);
-		pushedNotification.setTransmissionAttempts(0);
+		notification.setTransmissionAttempts(0);
 		// Keep trying until we have a success
 		while (!success) {
 			try {
 				logger.debug("Attempting to send notification: " + payload.toString() + "");
 				logger.debug("  to device: " + token + "");
-				pushedNotification.addTransmissionAttempt();
+				notification.addTransmissionAttempt();
 				try {
 					if (!simulationMode) {
 						this.socket.getOutputStream().write(bytes);
@@ -287,14 +364,14 @@ public class PushNotificationManager {
 				logger.debug("Flushing");
 				this.socket.getOutputStream().flush();
 				success = true;
-				logger.debug("Notification sent on " + pushedNotification.getLatestTransmissionAttempt());
-				pushedNotification.setTransmissionCompleted(true);
+				logger.debug("Notification sent on " + notification.getLatestTransmissionAttempt());
+				notification.setTransmissionCompleted(true);
 
 			} catch (IOException e) {
 				// throw exception if we surpassed the valid number of retry attempts
-				if (pushedNotification.getTransmissionAttempts() >= retryAttempts) {
+				if (notification.getTransmissionAttempts() >= retryAttempts) {
 					logger.error("Attempt to send Notification failed and beyond the maximum number of attempts permitted");
-					pushedNotification.setTransmissionCompleted(false);
+					notification.setTransmissionCompleted(false);
 					e.printStackTrace();
 					throw e;
 
@@ -316,7 +393,6 @@ public class PushNotificationManager {
 				}
 			}
 		}
-		return pushedNotification;
 	}
 
 
@@ -415,7 +491,6 @@ public class PushNotificationManager {
 		bao.write(b);
 
 		// 4 bytes identifier (which will match any error packet received later on)
-		if (identifier < 0) identifier = newMessageIdentifier();
 		bao.write(intTo4ByteArray(identifier));
 		message.setIdentifier(identifier);
 
