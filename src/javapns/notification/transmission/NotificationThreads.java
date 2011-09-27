@@ -210,4 +210,30 @@ public class NotificationThreads extends ThreadGroup {
 			thread.setThreadNumber(t++);
 	}
 
+
+	/**
+	 * Returns list of all notifications pushed by all threads.
+	 * 
+	 * @return a list of pushed notifications
+	 */
+	public List<PushedNotification> getPushedNotifications() {
+		int capacity = 0;
+		for (NotificationThread thread : threads)
+			capacity += thread.getPushedNotifications().size();
+		List<PushedNotification> all = new Vector<PushedNotification>(capacity);
+		for (NotificationThread thread : threads)
+			all.addAll(thread.getPushedNotifications());
+		return all;
+	}
+
+
+	/**
+	 * Returns list of all notifications that all threads attempted to push but that failed.
+	 * 
+	 * @return a list of failed notifications
+	 */
+	public List<PushedNotification> getFailedNotifications() {
+		return PushedNotification.findFailedNotifications(getPushedNotifications());
+	}
+
 }

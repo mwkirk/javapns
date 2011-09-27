@@ -1,5 +1,7 @@
 package javapns.notification;
 
+import java.util.*;
+
 import org.json.*;
 
 /**
@@ -113,17 +115,54 @@ public class PushNotificationPayload extends Payload {
 	}
 
 
-	/**
-	 * Add a custom alert message
-	 * @param alert
-	 * @throws JSONException
-	 */
-	public void addCustomAlert(PayLoadCustomAlert alert) throws JSONException {
-		logger.debug("Adding custom Alert");
-		this.apsDictionary.put("alert", alert);
+	private JSONObject getCustomAlert() throws JSONException {
+		JSONObject alert = this.apsDictionary.getJSONObject("alert");
+		if (alert == null) {
+			alert = new JSONObject();
+			this.apsDictionary.getJSONObject("alert");
+		}
+		return alert;
 	}
 
 
+	/**
+	 * Add a body, ie the alert message
+	 * @param body
+	 * @throws JSONException
+	 */
+	public void addCustomAlertBody(String body) throws JSONException {
+		getCustomAlert().put("body", body);
+	}
 
+
+	/**
+	 * Add a custom text for the right button of the popup
+	 * @param actionLocKey
+	 * @throws JSONException
+	 */
+	public void addCustomAlertActionLocKey(String actionLocKey) throws JSONException {
+		getCustomAlert().put("action-loc-key", actionLocKey);
+	}
+
+
+	/**
+	 * Add a custom alert message with possible parameters
+	 * See the Apple Push Notification Service programming guide page 21
+	 * @param locKey
+	 * @throws JSONException
+	 */
+	public void addCustomAlertLocKey(String locKey) throws JSONException {
+		getCustomAlert().put("loc-key", locKey);
+	}
+
+
+	/**
+	 * Add the parameters for the loc-key key
+	 * @param args
+	 * @throws JSONException
+	 */
+	public void addCustomAlertLocArgs(List args) throws JSONException {
+		getCustomAlert().put("loc-args", args);
+	}
 
 }

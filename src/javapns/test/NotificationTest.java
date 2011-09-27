@@ -60,12 +60,14 @@ public class NotificationTest extends TestFoundation {
 		if (simple) {
 
 			/* Push a Hello World! alert */
-			Push.alert("Hello World!", keystore, password, production, token);
+			List<PushedNotification> notifications = Push.alert("Hello World!", keystore, password, production, token);
+			printPushedNotifications(notifications);
 
 		} else if (complex) {
 
 			/* Push a more complex payload */
-			Push.payload(createComplexPayload(), keystore, password, production, token);
+			List<PushedNotification> notifications = Push.payload(createComplexPayload(), keystore, password, production, token);
+			printPushedNotifications(notifications);
 
 		} else if (threads) {
 
@@ -84,18 +86,16 @@ public class NotificationTest extends TestFoundation {
 	private static Payload createComplexPayload() {
 		PushNotificationPayload complexPayLoad = new PushNotificationPayload();
 		try {
-			PayLoadCustomAlert customAlert = new PayLoadCustomAlert();
 			// You can use addBody to add simple message, but we'll use
 			// a more complex alert message so let's comment it
-			//			customAlert.addBody("My alert message");
-			customAlert.addActionLocKey("Open App");
-			customAlert.addLocKey("javapns rocks %@ %@%@");
+			complexPayLoad.addCustomAlertBody("My alert message");
+			complexPayLoad.addCustomAlertActionLocKey("Open App");
+			complexPayLoad.addCustomAlertLocKey("javapns rocks %@ %@%@");
 			ArrayList parameters = new ArrayList();
 			parameters.add("Test1");
 			parameters.add("Test");
 			parameters.add(2);
-			customAlert.addLocArgs(parameters);
-			complexPayLoad.addCustomAlert(customAlert);
+			complexPayLoad.addCustomAlertLocArgs(parameters);
 			complexPayLoad.addBadge(45);
 			complexPayLoad.addSound("default");
 			complexPayLoad.addCustomDictionary("acme", "foo");
@@ -139,6 +139,15 @@ public class NotificationTest extends TestFoundation {
 			work.waitForAllThreads();
 			long timestamp2 = System.currentTimeMillis();
 			System.out.println("All threads finished in " + (timestamp2 - timestamp1) + " milliseconds");
+			List<PushedNotification> failedNotifications = work.getFailedNotifications();
+			if (failedNotifications.size() == 0) {
+				System.out.println("All notifications pushed successfully!");
+			} else {
+				System.out.println("Some notifications failed (" + failedNotifications.size() + "):");
+				for (PushedNotification failedNotification : failedNotifications) {
+					System.out.println("  " + failedNotification.toString());
+				}
+			}
 
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -171,5 +180,17 @@ public class NotificationTest extends TestFoundation {
 			System.out.println("   [EVENT]: all threads finished: " + notificationThreads.getThreads().size());
 		}
 	};
+
+
+	public static void printPushedNotifications(List<PushedNotification> notifications) {
+		System.out.println("Pushed notifications:");
+		for (PushedNotification notification : notifications) {
+			try {
+				System.out.println("  " + notification.toString());
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+		}
+	}
 
 }

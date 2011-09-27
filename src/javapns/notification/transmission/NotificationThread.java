@@ -32,6 +32,7 @@ public class NotificationThread extends Thread {
 	private NotificationProgressListener listener;
 	private int threadNumber = 1;
 	private int nextMessageIdentifier = 1;
+	private List<PushedNotification> notifications = new Vector<PushedNotification>();
 
 
 	/**
@@ -102,7 +103,8 @@ public class NotificationThread extends Thread {
 			for (int i = 0; i < total; i++) {
 				Device device = devices.get(i);
 				int message = newMessageIdentifier();
-				notificationManager.sendNotification(device, payload, false, message);
+				PushedNotification notification = notificationManager.sendNotification(device, payload, false, message);
+				notifications.add(notification);
 				if (sleepBetweenNotifications > 0) sleep(sleepBetweenNotifications);
 				if (i != 0 && i % maxNotificationsPerConnection == 0) {
 					if (listener != null) listener.eventConnectionRestarted(this);
@@ -240,6 +242,26 @@ public class NotificationThread extends Thread {
 	 */
 	public int getLastMessageIdentifier() {
 		return (threadNumber << 24) | devices.size();
+	}
+
+
+	/**
+	 * Returns list of all notifications pushed by this thread (successful or not).
+	 * 
+	 * @return a list of pushed notifications
+	 */
+	public List<PushedNotification> getPushedNotifications() {
+		return notifications;
+	}
+
+
+	/**
+	 * Returns list of all notifications that this thread attempted to push but that failed.
+	 * 
+	 * @return a list of failed notifications
+	 */
+	public List<PushedNotification> getFailedNotifications() {
+		return PushedNotification.findFailedNotifications(getPushedNotifications());
 	}
 
 }

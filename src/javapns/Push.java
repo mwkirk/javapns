@@ -8,10 +8,15 @@ import javapns.feedback.*;
 import javapns.notification.*;
 
 /**
- * Main class for easily interacting with the Apple Push Notification System.
+ * <p>Main class for easily interacting with the Apple Push Notification System</p>
  * 
- * This class uses basic (non-persistent) implementations of Device, AppleNotificationServer and AppleFeedbackServer.
- * To add persistence to these objects, see documentation about implementing those classes for JPA.
+ * <p>This is the best starting point for pushing simple or custom notifications,
+ * or for contacting the Feedback Service to cleanup your list of devices.</p>
+ * 
+ * <p>The <b>javapns</b> library also includes more advanced options such as
+ * multithreaded transmission, special payloads, JPA-support, and more.
+ * See the library's documentation at <a href="http://code.google.com/p/javapns/">http://code.google.com/p/javapns/</a>
+ * for more information.</p>
  * 
  * @author Sylvain Pedneault
  */
@@ -20,14 +25,14 @@ public class Push {
 	/**
 	 * Push a simple alert to one or more devices.
 	 * 
-	 * @param message The alert message to push.
-	 * @param keystore A PKCS12 keystore provided by Apple (File, InputStream, byte[] or String for a file path)
-	 * @param password The keystore's password.
-	 * @param production True to use Apple's production servers, false to use the sandbox servers.
-	 * @param tokens One or more device tokens to push to.
-	 * @return Returns a list of devices the notification was presumably sent to (see Feedback Service).
+	 * @param message the alert message to push.
+	 * @param keystore a PKCS12 keystore provided by Apple (File, InputStream, byte[] or String for a file path)
+	 * @param password the keystore's password.
+	 * @param production true to use Apple's production servers, false to use the sandbox servers.
+	 * @param tokens one or more device tokens to push to.
+	 * @return a list of pushed notifications, each with details on transmission results and error (if any)
 	 */
-	public static List<Device> alert(String message, Object keystore, String password, boolean production, String... tokens) {
+	public static List<PushedNotification> alert(String message, Object keystore, String password, boolean production, String... tokens) {
 		return payload(PushNotificationPayload.alert(message), keystore, password, production, tokens);
 	}
 
@@ -35,14 +40,14 @@ public class Push {
 	/**
 	 * Push a simple badge number to one or more devices.
 	 * 
-	 * @param badge The badge number to push.
-	 * @param keystore A PKCS12 keystore provided by Apple (File, InputStream, byte[] or String for a file path)
-	 * @param password The keystore's password.
-	 * @param production True to use Apple's production servers, false to use the sandbox servers.
-	 * @param tokens One or more device tokens to push to.
-	 * @return Returns a list of devices the notification was presumably sent to (see Feedback Service).
+	 * @param badge the badge number to push.
+	 * @param keystore a PKCS12 keystore provided by Apple (File, InputStream, byte[] or String for a file path)
+	 * @param password the keystore's password.
+	 * @param production true to use Apple's production servers, false to use the sandbox servers.
+	 * @param tokens one or more device tokens to push to.
+	 * @return a list of pushed notifications, each with details on transmission results and error (if any)
 	 */
-	public static List<Device> badge(int badge, Object keystore, String password, boolean production, String... tokens) {
+	public static List<PushedNotification> badge(int badge, Object keystore, String password, boolean production, String... tokens) {
 		return payload(PushNotificationPayload.badge(badge), keystore, password, production, tokens);
 	}
 
@@ -50,14 +55,14 @@ public class Push {
 	/**
 	 * Push a simple sound name to one or more devices.
 	 * 
-	 * @param sound The sound name (stored in the client app) to push.
-	 * @param keystore A PKCS12 keystore provided by Apple (File, InputStream, byte[] or String for a file path)
-	 * @param password The keystore's password.
-	 * @param production True to use Apple's production servers, false to use the sandbox servers.
-	 * @param tokens One or more device tokens to push to.
-	 * @return Returns a list of devices the notification was presumably sent to (see Feedback Service).
+	 * @param sound the sound name (stored in the client app) to push.
+	 * @param keystore a PKCS12 keystore provided by Apple (File, InputStream, byte[] or String for a file path)
+	 * @param password the keystore's password.
+	 * @param production true to use Apple's production servers, false to use the sandbox servers.
+	 * @param tokens one or more device tokens to push to.
+	 * @return a list of pushed notifications, each with details on transmission results and error (if any)
 	 */
-	public static List<Device> sound(String sound, Object keystore, String password, boolean production, String... tokens) {
+	public static List<PushedNotification> sound(String sound, Object keystore, String password, boolean production, String... tokens) {
 		return payload(PushNotificationPayload.sound(sound), keystore, password, production, tokens);
 	}
 
@@ -65,16 +70,16 @@ public class Push {
 	/**
 	 * Push a notification combining an alert, a badge and a sound. 
 	 * 
-	 * @param message The alert message to push (set to null to skip).
-	 * @param badge The badge number to push (set to -1 to skip).
-	 * @param sound The sound name to push (set to null to skip).
-	 * @param keystore A PKCS12 keystore provided by Apple (File, InputStream, byte[] or String for a file path)
-	 * @param password The keystore's password.
-	 * @param production True to use Apple's production servers, false to use the sandbox servers.
-	 * @param tokens One or more device tokens to push to.
-	 * @return Returns a list of devices the notification was presumably sent to (see Feedback Service).
+	 * @param message the alert message to push (set to null to skip).
+	 * @param badge the badge number to push (set to -1 to skip).
+	 * @param sound the sound name to push (set to null to skip).
+	 * @param keystore a PKCS12 keystore provided by Apple (File, InputStream, byte[] or String for a file path)
+	 * @param password the keystore's password.
+	 * @param production true to use Apple's production servers, false to use the sandbox servers.
+	 * @param tokens one or more device tokens to push to.
+	 * @return a list of pushed notifications, each with details on transmission results and error (if any)
 	 */
-	public static List<Device> combined(String message, int badge, String sound, Object keystore, String password, boolean production, String... tokens) {
+	public static List<PushedNotification> combined(String message, int badge, String sound, Object keystore, String password, boolean production, String... tokens) {
 		return payload(PushNotificationPayload.combined(message, badge, sound), keystore, password, production, tokens);
 	}
 
@@ -83,14 +88,14 @@ public class Push {
 	 * Push a preformatted payload.
 	 * This is a convenience method for passing a List of tokens instead of an array.
 	 * 
-	 * @param payload A simple or complex payload to push.
-	 * @param keystore A PKCS12 keystore provided by Apple (File, InputStream, byte[] or String for a file path)
-	 * @param password The keystore's password.
-	 * @param production True to use Apple's production servers, false to use the sandbox servers.
-	 * @param tokens One or more device tokens to push to.
-	 * @return Returns a list of devices the notification was presumably sent to (see Feedback Service).
+	 * @param payload a simple or complex payload to push.
+	 * @param keystore a PKCS12 keystore provided by Apple (File, InputStream, byte[] or String for a file path)
+	 * @param password the keystore's password.
+	 * @param production true to use Apple's production servers, false to use the sandbox servers.
+	 * @param tokens one or more device tokens to push to.
+	 * @return a list of pushed notifications, each with details on transmission results and error (if any)
 	 */
-	public static List<Device> payload(Payload payload, Object keystore, String password, boolean production, List<String> tokens) {
+	public static List<PushedNotification> payload(Payload payload, Object keystore, String password, boolean production, List<String> tokens) {
 		return payload(payload, keystore, password, production, tokens.toArray(new String[0]));
 	}
 
@@ -98,24 +103,24 @@ public class Push {
 	/**
 	 * Push a preformatted payload.
 	 * 
-	 * @param payload A simple or complex payload to push.
-	 * @param keystore A PKCS12 keystore provided by Apple (File, InputStream, byte[] or String for a file path)
-	 * @param password The keystore's password.
-	 * @param production True to use Apple's production servers, false to use the sandbox servers.
-	 * @param tokens One or more device tokens to push to.
-	 * @return Returns a list of devices the notification was presumably sent to (see Feedback Service).
+	 * @param payload a simple or complex payload to push.
+	 * @param keystore a PKCS12 keystore provided by Apple (File, InputStream, byte[] or String for a file path)
+	 * @param password the keystore's password.
+	 * @param production true to use Apple's production servers, false to use the sandbox servers.
+	 * @param tokens one or more device tokens to push to.
+	 * @return a list of pushed notifications, each with details on transmission results and error (if any)
 	 */
-	public static List<Device> payload(Payload payload, Object keystore, String password, boolean production, String... tokens) {
-		List<Device> devices = new Vector<Device>();
-		if (payload==null) return devices;
+	public static List<PushedNotification> payload(Payload payload, Object keystore, String password, boolean production, String... tokens) {
+		List<PushedNotification> devices = new Vector<PushedNotification>();
+		if (payload == null) return devices;
 		try {
 			PushNotificationManager pushManager = new PushNotificationManager();
 			AppleNotificationServer server = new AppleNotificationServerBasicImpl(keystore, password, production);
 			pushManager.initializeConnection(server);
 			for (String token : tokens) {
 				Device device = new BasicDevice(token);
-				pushManager.sendNotification(device, payload, false);
-				devices.add(device);
+				PushedNotification notification = pushManager.sendNotification(device, payload, false);
+				devices.add(notification);
 			}
 			pushManager.stopConnection();
 		} catch (Exception e) {
@@ -143,10 +148,15 @@ public class Push {
 	 * get listed after some number of notifications couldn't reach it, or some amount of
 	 * time has elapsed, or a combination of both.</p>
 	 * 
-	 * @param keystore A PKCS12 keystore provided by Apple (File, InputStream, byte[] or String for a file path)
-	 * @param password The keystore's password.
-	 * @param production True to use Apple's production servers, false to use the sandbox servers.
-	 * @return Returns a list of devices that are inactive.
+	 * <p>Further more, if you are using Apple's sandbox servers, the Feedback Service will
+	 * probably not list your device if you uninstalled your app and it was the last one
+	 * on your device that was configured to receive notifications from the sandbox.
+	 * See the library's wiki for more information.</p>
+	 * 
+	 * @param keystore a PKCS12 keystore provided by Apple (File, InputStream, byte[] or String for a file path)
+	 * @param password the keystore's password.
+	 * @param production true to use Apple's production servers, false to use the sandbox servers.
+	 * @return a list of devices that are inactive.
 	 */
 	public static List<Device> feedback(Object keystore, String password, boolean production) {
 		List<Device> devices = new Vector<Device>();

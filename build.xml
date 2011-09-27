@@ -8,7 +8,7 @@
 	<property name="java.target" value="1.5" />
 
 	<!-- javapns version id (no spaces allowed!) -->
-	<property name="javapns.version" value="2.0_Beta_4" />
+	<property name="javapns.version" value="2.0_Beta_5" />
 	<property name="javapns.revision" value=" r001" />
 
 	<property name="src" location="src" />
@@ -48,7 +48,7 @@
 	</target>
 
 	<target name="doc" description="Generate the javadocs">
-		<javadoc sourcepath="${src}" destdir="${doc}" classpathref="libpath" overview="src/javapns/overview.html" />
+		<javadoc sourcepath="${src}" destdir="${doc}" classpathref="libpath" overview="src/javapns/overview.html" access="public" />
 		<jar jarfile="${doc.jar}" basedir="${doc}">
 			<manifest>
 				<attribute name="Implementation-Title" value="javapns" />

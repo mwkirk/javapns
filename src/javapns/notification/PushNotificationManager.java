@@ -1,6 +1,7 @@
 package javapns.notification;
 
 import java.io.*;
+import java.net.*;
 import java.nio.*;
 import java.security.*;
 import java.security.cert.*;
@@ -11,6 +12,7 @@ import javapns.communication.exceptions.*;
 import javapns.devices.*;
 import javapns.devices.exceptions.*;
 import javapns.devices.implementations.basic.*;
+
 import javax.net.ssl.*;
 
 import org.apache.log4j.*;
@@ -34,7 +36,7 @@ public class PushNotificationManager {
 	public static final Logger logger = Logger.getLogger(PushNotificationManager.class);
 
 	/* Default retries for a connection */
-	public static final int DEFAULT_RETRIES = 3;
+	private static final int DEFAULT_RETRIES = 3;
 
 	/* Special identifier that tells the manager to generate a sequential identifier for each payload pushed */
 	private static final int SEQUENTIAL_IDENTIFIER = -1;
@@ -61,6 +63,8 @@ public class PushNotificationManager {
 
 	/* The DeviceFactory to use with this PushNotificationManager */
 	private DeviceFactory deviceFactory;
+
+	private Map<Integer, PushedNotification> pushedNotifications = new Hashtable<Integer, PushedNotification>();
 
 
 	/**
@@ -100,11 +104,16 @@ public class PushNotificationManager {
 
 
 	/**
-	 * Close the SSLSocket connection
+	 * Read and process any pending error-responses, and then close the connection.
+	 * 
 	 * @throws IOException
 	 */
 	public void stopConnection() throws IOException {
 		try {
+			logger.debug("Reading responses");
+			ResponsePacketReader.processResponses(this);
+			pushedNotifications.clear();
+
 			logger.debug("Closing connection");
 			this.socket.close();
 		} catch (Exception e) {
@@ -118,6 +127,7 @@ public class PushNotificationManager {
 	 * 
 	 * @param device the device to be notified
 	 * @param payload the payload to send
+	 * @return a pushed notification with details on transmission result and error (if any)
 	 * @throws UnrecoverableKeyException
 	 * @throws KeyManagementException
 	 * @throws KeyStoreException
@@ -127,8 +137,8 @@ public class PushNotificationManager {
 	 * @throws IOException
 	 * @throws Exception
 	 */
-	public void sendNotification(Device device, Payload payload) throws UnrecoverableKeyException, KeyManagementException, KeyStoreException, NoSuchAlgorithmException, CertificateException, FileNotFoundException, IOException, Exception {
-		sendNotification(device, payload, true);
+	public PushedNotification sendNotification(Device device, Payload payload) throws UnrecoverableKeyException, KeyManagementException, KeyStoreException, NoSuchAlgorithmException, CertificateException, FileNotFoundException, IOException, Exception {
+		return sendNotification(device, payload, true);
 	}
 
 
@@ -137,6 +147,7 @@ public class PushNotificationManager {
 	 * 
 	 * @param payload the payload to send
 	 * @param devices the device to be notified
+	 * @return a list of pushed notifications, each with details on transmission results and error (if any)
 	 * @throws UnrecoverableKeyException
 	 * @throws KeyManagementException
 	 * @throws KeyStoreException
@@ -146,10 +157,12 @@ public class PushNotificationManager {
 	 * @throws IOException
 	 * @throws Exception
 	 */
-	public void sendNotifications(Payload payload, List<Device> devices) throws UnrecoverableKeyException, KeyManagementException, KeyStoreException, NoSuchAlgorithmException, CertificateException, FileNotFoundException, IOException, Exception {
+	public List<PushedNotification> sendNotifications(Payload payload, List<Device> devices) throws UnrecoverableKeyException, KeyManagementException, KeyStoreException, NoSuchAlgorithmException, CertificateException, FileNotFoundException, IOException, Exception {
+		List<PushedNotification> envelopes = new Vector<PushedNotification>();
 		for (Device device : devices)
-			sendNotification(device, payload, false, SEQUENTIAL_IDENTIFIER);
+			envelopes.add(sendNotification(device, payload, false, SEQUENTIAL_IDENTIFIER));
 		stopConnection();
+		return envelopes;
 	}
 
 
@@ -158,6 +171,7 @@ public class PushNotificationManager {
 	 * 
 	 * @param payload the payload to send
 	 * @param devices the device to be notified
+	 * @return a list of pushed notifications, each with details on transmission results and error (if any)
 	 * @throws UnrecoverableKeyException
 	 * @throws KeyManagementException
 	 * @throws KeyStoreException
@@ -167,10 +181,12 @@ public class PushNotificationManager {
 	 * @throws IOException
 	 * @throws Exception
 	 */
-	public void sendNotifications(Payload payload, Device... devices) throws UnrecoverableKeyException, KeyManagementException, KeyStoreException, NoSuchAlgorithmException, CertificateException, FileNotFoundException, IOException, Exception {
+	public List<PushedNotification> sendNotifications(Payload payload, Device... devices) throws UnrecoverableKeyException, KeyManagementException, KeyStoreException, NoSuchAlgorithmException, CertificateException, FileNotFoundException, IOException, Exception {
+		List<PushedNotification> envelopes = new Vector<PushedNotification>();
 		for (Device device : devices)
-			sendNotification(device, payload, false, SEQUENTIAL_IDENTIFIER);
+			envelopes.add(sendNotification(device, payload, false, SEQUENTIAL_IDENTIFIER));
 		stopConnection();
+		return envelopes;
 	}
 
 
@@ -180,6 +196,7 @@ public class PushNotificationManager {
 	 * @param device the device to be notified
 	 * @param payload the payload to send
 	 * @param closeAfter indicates if the connection should be closed after the payload has been sent
+	 * @return a pushed notification with details on transmission result and error (if any)
 	 * @throws UnrecoverableKeyException
 	 * @throws KeyManagementException
 	 * @throws KeyStoreException
@@ -188,8 +205,8 @@ public class PushNotificationManager {
 	 * @throws FileNotFoundException
 	 * @throws IOException
 	 */
-	public void sendNotification(Device device, Payload payload, boolean closeAfter) throws UnrecoverableKeyException, KeyManagementException, KeyStoreException, NoSuchAlgorithmException, CertificateException, FileNotFoundException, IOException, Exception {
-		sendNotification(device, payload, closeAfter, SEQUENTIAL_IDENTIFIER);
+	public PushedNotification sendNotification(Device device, Payload payload, boolean closeAfter) throws UnrecoverableKeyException, KeyManagementException, KeyStoreException, NoSuchAlgorithmException, CertificateException, FileNotFoundException, IOException, Exception {
+		return sendNotification(device, payload, closeAfter, SEQUENTIAL_IDENTIFIER);
 	}
 
 
@@ -199,6 +216,7 @@ public class PushNotificationManager {
 	 * @param device the device to be notified
 	 * @param payload the payload to send
 	 * @param identifier a unique identifier which will match any error reported later (if any)
+	 * @return a pushed notification with details on transmission result and error (if any)
 	 * @throws UnrecoverableKeyException
 	 * @throws KeyManagementException
 	 * @throws KeyStoreException
@@ -207,8 +225,8 @@ public class PushNotificationManager {
 	 * @throws FileNotFoundException
 	 * @throws IOException
 	 */
-	public void sendNotification(Device device, Payload payload, int identifier) throws UnrecoverableKeyException, KeyManagementException, KeyStoreException, NoSuchAlgorithmException, CertificateException, FileNotFoundException, IOException, Exception {
-		sendNotification(device, payload, false, identifier);
+	public PushedNotification sendNotification(Device device, Payload payload, int identifier) throws UnrecoverableKeyException, KeyManagementException, KeyStoreException, NoSuchAlgorithmException, CertificateException, FileNotFoundException, IOException, Exception {
+		return sendNotification(device, payload, false, identifier);
 	}
 
 
@@ -219,6 +237,7 @@ public class PushNotificationManager {
 	 * @param payload the payload to send
 	 * @param closeAfter indicates if the connection should be closed after the payload has been sent
 	 * @param identifier a unique identifier which will match any error reported later (if any)
+	 * @return a pushed notification with details on transmission result and error (if any)
 	 * @throws UnrecoverableKeyException
 	 * @throws KeyManagementException
 	 * @throws KeyStoreException
@@ -226,13 +245,15 @@ public class PushNotificationManager {
 	 * @throws CertificateException
 	 * @throws FileNotFoundException
 	 * @throws IOException
+	 * @return TransmissionEnvelope an object that encapsulates all message transmission results
 	 */
-	public void sendNotification(Device device, Payload payload, boolean closeAfter, int identifier) throws UnrecoverableKeyException, KeyManagementException, KeyStoreException, NoSuchAlgorithmException, CertificateException, FileNotFoundException, IOException, Exception {
+	public PushedNotification sendNotification(Device device, Payload payload, boolean closeAfter, int identifier) throws UnrecoverableKeyException, KeyManagementException, KeyStoreException, NoSuchAlgorithmException, CertificateException, FileNotFoundException, IOException, Exception {
 		String token = device.getToken();
 		// even though the BasicDevice constructor validates the token, we revalidate it in case we were passed another implementation of Device
 		BasicDevice.validateTokenFormat(token);
-
-		byte[] message = getMessage(token, payload, identifier);
+		PushedNotification pushedNotification = new PushedNotification(device, payload);
+		byte[] bytes = getMessage(token, payload, identifier, pushedNotification);
+		pushedNotifications.put(pushedNotification.getIdentifier(), pushedNotification);
 
 		/* Special simulation mode to skip actual streaming of message */
 		boolean simulationMode = payload.getExpiry() == 919191;
@@ -242,18 +263,18 @@ public class PushNotificationManager {
 		BufferedReader in = new BufferedReader(new InputStreamReader(this.socket.getInputStream()));
 		int socketTimeout = getSslSocketTimeout();
 		if (socketTimeout > 0) this.socket.setSoTimeout(socketTimeout);
-		int attempts = 0;
+		pushedNotification.setTransmissionAttempts(0);
 		// Keep trying until we have a success
 		while (!success) {
 			try {
 				logger.debug("Attempting to send notification: " + payload.toString() + "");
 				logger.debug("  to device: " + token + "");
-				attempts++;
+				pushedNotification.addTransmissionAttempt();
 				try {
 					if (!simulationMode) {
-						this.socket.getOutputStream().write(message);
+						this.socket.getOutputStream().write(bytes);
 					} else {
-						logger.debug("* Simulation only: would have streamed " + message.length + "-bytes message now..");
+						logger.debug("* Simulation only: would have streamed " + bytes.length + "-bytes message now..");
 					}
 				} catch (Exception e) {
 					if (e != null) {
@@ -266,12 +287,14 @@ public class PushNotificationManager {
 				logger.debug("Flushing");
 				this.socket.getOutputStream().flush();
 				success = true;
-				logger.debug("Notification sent " + (attempts == 1 ? ("on first attempt") : ("on attempt #" + attempts)));
+				logger.debug("Notification sent on " + pushedNotification.getLatestTransmissionAttempt());
+				pushedNotification.setTransmissionCompleted(true);
 
 			} catch (IOException e) {
 				// throw exception if we surpassed the valid number of retry attempts
-				if (attempts >= retryAttempts) {
+				if (pushedNotification.getTransmissionAttempts() >= retryAttempts) {
 					logger.error("Attempt to send Notification failed and beyond the maximum number of attempts permitted");
+					pushedNotification.setTransmissionCompleted(false);
 					e.printStackTrace();
 					throw e;
 
@@ -293,6 +316,7 @@ public class PushNotificationManager {
 				}
 			}
 		}
+		return pushedNotification;
 	}
 
 
@@ -360,11 +384,16 @@ public class PushNotificationManager {
 	 * See page 30 of Apple Push Notification Service Programming Guide
 	 * @param deviceToken the deviceToken
 	 * @param payload the payload
+	 * @param message 
 	 * @return the byteArray to write to the SSLSocket OutputStream
 	 * @throws IOException
 	 */
-	private byte[] getMessage(String deviceToken, Payload payload, int identifier) throws IOException, Exception {
+	private byte[] getMessage(String deviceToken, Payload payload, int identifier, PushedNotification message) throws IOException, Exception {
 		logger.debug("Building Raw message from deviceToken and payload");
+
+		/* To test with a corrupted or invalid token, uncomment following line*/
+		//deviceToken = deviceToken.substring(0,10);
+
 		// First convert the deviceToken (in hexa form) to a binary format
 		byte[] deviceTokenAsBytes = new byte[deviceToken.length() / 2];
 		deviceToken = deviceToken.toUpperCase();
@@ -383,18 +412,19 @@ public class PushNotificationManager {
 		// 0 = simple
 		// 1 = enhanced
 		byte b = 1;
-		//bao.write( ByteBuffer.allocate( 1 ).put( 1 ).array() );
 		bao.write(b);
 
 		// 4 bytes identifier (which will match any error packet received later on)
 		if (identifier < 0) identifier = newMessageIdentifier();
 		bao.write(intTo4ByteArray(identifier));
+		message.setIdentifier(identifier);
 
 		// 4 bytes
 		long ctime = System.currentTimeMillis();
 		long ttl = payload.getExpiry() * 1000; // time-to-live in milliseconds
 		Long expiryDateInSeconds = ((ctime + ttl) / 1000L);
 		bao.write(intTo4ByteArray(expiryDateInSeconds.intValue()));
+		message.setExpiry(ctime + ttl);
 
 		// Write the TokenLength as a 16bits unsigned int, in big endian
 		int tl = deviceTokenAsBytes.length;
@@ -412,6 +442,8 @@ public class PushNotificationManager {
 		// Finally write the Payload
 		bao.write(payload.getPayloadAsBytes());
 
+		logger.debug("Built raw message ID " + identifier);
+
 		// Return the ByteArrayOutputStream as a Byte Array
 		return bao.toByteArray();
 	}
@@ -426,7 +458,7 @@ public class PushNotificationManager {
 	}
 
 
-	public static final byte[] intTo4ByteArray(int value) {
+	private static final byte[] intTo4ByteArray(int value) {
 		return ByteBuffer.allocate(4).putInt(value).array();
 	}
 
@@ -488,5 +520,15 @@ public class PushNotificationManager {
 		int id = nextMessageIdentifier;
 		nextMessageIdentifier++;
 		return id;
+	}
+
+
+	public Socket getActiveSocket() {
+		return socket;
+	}
+
+
+	public Map<Integer, PushedNotification> getPushedNotifications() {
+		return pushedNotifications;
 	}
 }
