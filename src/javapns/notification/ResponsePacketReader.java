@@ -56,7 +56,7 @@ class ResponsePacketReader {
 			}
 
 		} catch (Exception e) {
-			System.out.println(e);
+			/* Ignore exception, as we are expecting timeout exceptions because Apple might not reply anything */
 		}
 		/* Reset socket timeout, just in case */
 		try {
