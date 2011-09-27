@@ -42,7 +42,7 @@ public class PushNotificationManager {
 	private static final int SEQUENTIAL_IDENTIFIER = -1;
 
 	/* Connection helper */
-	private ConnectionToAppleServer connectionHelper;
+	private ConnectionToAppleServer connectionToAppleServer;
 
 	/* The always connected SSLSocket */
 	private SSLSocket socket;
@@ -91,8 +91,8 @@ public class PushNotificationManager {
 	 * @throws Exception 
 	 */
 	public void initializeConnection(AppleNotificationServer server) throws Exception {
-		this.connectionHelper = new ConnectionToNotificationServer(server);
-		this.socket = connectionHelper.getSSLSocket();
+		this.connectionToAppleServer = new ConnectionToNotificationServer(server);
+		this.socket = connectionToAppleServer.getSSLSocket();
 		logger.debug("Initialized Connection to Host: [" + server.getNotificationServerHost() + "] Port: [" + server.getNotificationServerPort() + "]: " + socket);
 	}
 
@@ -306,7 +306,7 @@ public class PushNotificationManager {
 					} catch (Exception e2) {
 						// do nothing
 					}
-					this.socket = connectionHelper.getSSLSocket();
+					this.socket = connectionToAppleServer.getSSLSocket();
 					if (socketTimeout > 0) this.socket.setSoTimeout(socketTimeout);
 				}
 			} finally {

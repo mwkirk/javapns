@@ -39,8 +39,8 @@ public abstract class ConnectionToAppleServer {
 
 	private KeyStore keyStore;
 	private SSLSocketFactory socketFactory;
-	private boolean proxySet = false;
 	private AppleServer server;
+
 
 	/**
 	 * Builds a connection to an Apple server.
@@ -54,7 +54,7 @@ public abstract class ConnectionToAppleServer {
 	 */
 	public ConnectionToAppleServer(AppleServer server) throws KeyStoreException, NoSuchAlgorithmException, CertificateException, IOException, Exception {
 		this.server = server;
-		
+
 		this.keyStore = KeystoreManager.loadKeystore(server);
 	}
 
@@ -66,7 +66,7 @@ public abstract class ConnectionToAppleServer {
 
 	public KeyStore getKeystore() throws KeyStoreException, NoSuchAlgorithmException, CertificateException, IOException, Exception {
 		return keyStore;
-//		return KeystoreManager.loadKeystore(server);
+		//		return KeystoreManager.loadKeystore(server);
 	}
 
 
@@ -139,7 +139,7 @@ public abstract class ConnectionToAppleServer {
 		logger.debug("Creating SSLSocket to " + getServerHost() + ":" + getServerPort());
 
 		try {
-			if (proxySet) {
+			if (isProxySet()) {
 				return tunnelThroughProxy(socketFactory);
 			} else {
 				return (SSLSocket) socketFactory.createSocket(getServerHost(), getServerPort());
@@ -147,6 +147,13 @@ public abstract class ConnectionToAppleServer {
 		} catch (Exception e) {
 			throw e;
 		}
+	}
+
+
+	private boolean isProxySet() {
+		String httpsHost = System.getProperty("https.proxyHost");
+		boolean isSet = httpsHost != null && httpsHost.length() > 0;
+		return isSet;
 	}
 
 

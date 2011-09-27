@@ -9,7 +9,7 @@
 
 	<!-- javapns version id (no spaces allowed!) -->
 	<property name="javapns.version" value="2.0_Beta_5" />
-	<property name="javapns.revision" value=" r001" />
+	<property name="javapns.revision" value=" r002" />
 
 	<property name="src" location="src" />
 	<property name="build" location="build" />
