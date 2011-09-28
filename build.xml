@@ -8,14 +8,16 @@
 	<property name="java.target" value="1.5" />
 
 	<!-- javapns version id (no spaces allowed!) -->
-	<property name="javapns.version" value="2.0_Beta_5" />
-	<property name="javapns.revision" value=" r004" />
+	<property name="javapns.level" value="2.0" />
+	<property name="javapns.status" value="_RC" />
+	<property name="javapns.revision" value=" r000" />
+	<property name="javapns.version" value="${javapns.level}${javapns.status}" />
 
 	<property name="src" location="src" />
 	<property name="build" location="build" />
 	<property name="doc" location="doc" />
 	<property name="dist.jar" location="javapns_${javapns.version}.jar" />
-	<property name="doc.jar" location="javapns_${javapns.version}_javadoc.jar" />
+	<property name="doc.zip" location="javapns_${javapns.version}_javadoc.zip" />
 
 
 	<path id="libpath">
@@ -49,13 +51,7 @@
 
 	<target name="doc" description="Generate the javadocs">
 		<javadoc sourcepath="${src}" destdir="${doc}" classpathref="libpath" overview="src/javapns/overview.html" access="public" />
-		<jar jarfile="${doc.jar}" basedir="${doc}">
-			<manifest>
-				<attribute name="Implementation-Title" value="javapns" />
-				<attribute name="Implementation-Version" value="${javapns.version}${javapns.revision}" />
-				<attribute name="Implementation-Reference" value="http://code.google.com/p/javapns/" />
-			</manifest>
-		</jar>
+		<zip destfile="${doc.zip}" basedir="${doc}" comment="JavaPNS ${javapns.version}${javapns.revision}" />
 	</target>
 
 	<target name="dist" depends="jar,doc" />
