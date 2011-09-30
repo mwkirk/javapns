@@ -75,16 +75,20 @@ public class NotificationThreads extends ThreadGroup {
 	 * @param threads the number of threads to group devices for
 	 * @return
 	 */
-	private List<List<Device>> groupDevices(List<Device> devices, int threads) {
-		List<List<Device>> groups = new Vector<List<Device>>();
+	private static List<List<Device>> groupDevices(List<Device> devices, int threads) {
+		List<List<Device>> groups = new Vector<List<Device>>(threads);
 		int total = devices.size();
 		int devicesPerThread = (total / threads);
 		if (total % threads > 0) devicesPerThread++;
+		System.out.println("Making "+threads+" groups of "+devicesPerThread+" devices out of "+total+" devices in total");
 		for (int i = 0; i < threads; i++) {
 			int firstDevice = i * devicesPerThread;
+			if (firstDevice>=total) break;
 			int lastDevice = firstDevice + devicesPerThread - 1;
 			if (lastDevice >= total) lastDevice = total - 1;
-			List<Device> threadDevices = devices.subList(firstDevice, lastDevice + 1);
+			lastDevice++;
+			System.out.println("Grouping together "+(lastDevice-firstDevice)+" devices (#"+firstDevice+" to "+lastDevice+")");
+			List<Device> threadDevices = devices.subList(firstDevice, lastDevice);
 			groups.add(threadDevices);
 		}
 		return groups;

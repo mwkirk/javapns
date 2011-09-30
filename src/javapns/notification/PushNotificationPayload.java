@@ -116,10 +116,14 @@ public class PushNotificationPayload extends Payload {
 
 
 	private JSONObject getCustomAlert() throws JSONException {
-		JSONObject alert = this.apsDictionary.getJSONObject("alert");
+		JSONObject alert = null;
+		try {
+			alert = this.apsDictionary.getJSONObject("alert");
+		} catch (Exception e) {
+		}
 		if (alert == null) {
 			alert = new JSONObject();
-			this.apsDictionary.getJSONObject("alert");
+			this.apsDictionary.put("alert", alert);
 		}
 		return alert;
 	}
