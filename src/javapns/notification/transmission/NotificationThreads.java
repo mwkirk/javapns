@@ -39,6 +39,23 @@ public class NotificationThreads extends ThreadGroup {
 
 
 	/**
+	 * Create the specified number of notification threads and spread the devices evenly between the threads.
+	 * Internally, this constructor uses a AppleNotificationServerBasicImpl to encapsulate the provided keystore, password and production parameters.
+	 * 
+	 * @param keystore the keystore to use (can be a File, an InputStream, a String for a file path, or a byte[] array)
+	 * @param password the keystore's password
+	 * @param production true to use Apple's production servers, false to use the sandbox
+	 * @param payload the payload to push
+	 * @param devices a very large list of devices
+	 * @param numberOfThreads the number of threads to create to share the work
+	 * @throws Exception 
+	 */
+	public NotificationThreads(Object keystore, String password, boolean production, Payload payload, List<Device> devices, int numberOfThreads) throws Exception {
+		this(new AppleNotificationServerBasicImpl(keystore, password, production), payload, devices, numberOfThreads);
+	}
+
+
+	/**
 	 * Spread the devices evenly between the provided threads.
 	 * 
 	 * @param server the server to push to
@@ -56,6 +73,23 @@ public class NotificationThreads extends ThreadGroup {
 
 
 	/**
+	 * Spread the devices evenly between the provided threads.
+	 * Internally, this constructor uses a AppleNotificationServerBasicImpl to encapsulate the provided keystore, password and production parameters.
+	 * 
+	 * @param keystore the keystore to use (can be a File, an InputStream, a String for a file path, or a byte[] array)
+	 * @param password the keystore's password
+	 * @param production true to use Apple's production servers, false to use the sandbox
+	 * @param payload the payload to push
+	 * @param devices a very large list of devices
+	 * @param threads a list of pre-built threads
+	 * @throws Exception 
+	 */
+	public NotificationThreads(Object keystore, String password, boolean production, Payload payload, List<Device> devices, List<NotificationThread> threads) throws Exception {
+		this(new AppleNotificationServerBasicImpl(keystore, password, production), payload, devices, threads);
+	}
+
+
+	/**
 	 * Use the provided threads which should already each have their group of devices to work with.
 	 * 
 	 * @param server the server to push to
@@ -65,6 +99,22 @@ public class NotificationThreads extends ThreadGroup {
 	public NotificationThreads(AppleNotificationServer server, Payload payload, List<NotificationThread> threads) {
 		super("javapns notification threads (" + threads.size() + " threads)");
 		this.threads = threads;
+	}
+
+
+	/**
+	 * Use the provided threads which should already each have their group of devices to work with.
+	 * Internally, this constructor uses a AppleNotificationServerBasicImpl to encapsulate the provided keystore, password and production parameters.
+	 * 
+	 * @param keystore the keystore to use (can be a File, an InputStream, a String for a file path, or a byte[] array)
+	 * @param password the keystore's password
+	 * @param production true to use Apple's production servers, false to use the sandbox
+	 * @param payload the payload to push
+	 * @param threads a list of pre-built threads
+	 * @throws Exception 
+	 */
+	public NotificationThreads(Object keystore, String password, boolean production, Payload payload, List<NotificationThread> threads) throws Exception {
+		this(new AppleNotificationServerBasicImpl(keystore, password, production), payload, threads);
 	}
 
 
@@ -83,7 +133,7 @@ public class NotificationThreads extends ThreadGroup {
 		//System.out.println("Making "+threads+" groups of "+devicesPerThread+" devices out of "+total+" devices in total");
 		for (int i = 0; i < threads; i++) {
 			int firstDevice = i * devicesPerThread;
-			if (firstDevice>=total) break;
+			if (firstDevice >= total) break;
 			int lastDevice = firstDevice + devicesPerThread - 1;
 			if (lastDevice >= total) lastDevice = total - 1;
 			lastDevice++;
@@ -97,6 +147,9 @@ public class NotificationThreads extends ThreadGroup {
 
 	/**
 	 * Start all notification threads.
+	 * 
+	 * This method returns immediately, as all threads start working on their own.
+	 * To wait until all threads are finished, use the waitForAllThreads() method.
 	 */
 	public final synchronized NotificationThreads start() {
 		if (threadsRunning > 0) throw new IllegalStateException("NotificationThreads already started (" + threadsRunning + " still running)");
@@ -125,7 +178,7 @@ public class NotificationThreads extends ThreadGroup {
 
 
 	/**
-	 * Configure the number of milliseconds that threads should wait between each notification.
+	 * Configure in all threads the number of milliseconds that threads should wait between each notification.
 	 * 
 	 * This feature is intended to alleviate intense resource usage that can occur when
 	 * sending large quantities of notifications very quickly.
@@ -138,11 +191,20 @@ public class NotificationThreads extends ThreadGroup {
 	}
 
 
+	/**
+	 * Get a list of threads created to push notifications.
+	 * 
+	 * @return a list of threads
+	 */
 	public List<NotificationThread> getThreads() {
 		return threads;
 	}
 
 
+	/**
+	 * Get the progress listener, if any is attached.
+	 * @return
+	 */
 	public NotificationProgressListener getListener() {
 		return listener;
 	}
@@ -216,7 +278,7 @@ public class NotificationThreads extends ThreadGroup {
 
 
 	/**
-	 * Returns list of all notifications pushed by all threads.
+	 * Get a list of all notifications pushed by all threads.
 	 * 
 	 * @return a list of pushed notifications
 	 */
@@ -232,7 +294,7 @@ public class NotificationThreads extends ThreadGroup {
 
 
 	/**
-	 * Returns list of all notifications that all threads attempted to push but that failed.
+	 * Get a list of all notifications that all threads attempted to push but that failed.
 	 * 
 	 * @return a list of failed notifications
 	 */
@@ -242,7 +304,7 @@ public class NotificationThreads extends ThreadGroup {
 
 
 	/**
-	 * Returns list of all notifications that all threads attempted to push and succeeded.
+	 * Get a list of all notifications that all threads attempted to push and succeeded.
 	 * 
 	 * @return a list of successful notifications
 	 */

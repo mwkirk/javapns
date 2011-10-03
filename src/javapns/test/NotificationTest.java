@@ -41,7 +41,7 @@ public class NotificationTest extends TestFoundation {
 
 
 	/**
-	 * Pushes a test notification to a device, given command-line parameters.
+	 * Push a test notification to a device, given command-line parameters.
 	 * 
 	 * @param args
 	 */
@@ -79,36 +79,36 @@ public class NotificationTest extends TestFoundation {
 
 
 	/**
-	 * Creates a complex payload for test purposes.
+	 * Create a complex payload for test purposes.
 	 * @return
 	 */
 	@SuppressWarnings("unchecked")
 	private static Payload createComplexPayload() {
-		PushNotificationPayload complexPayLoad = new PushNotificationPayload();
+		PushNotificationPayload complexPayload = PushNotificationPayload.complex();
 		try {
 			// You can use addBody to add simple message, but we'll use
 			// a more complex alert message so let's comment it
-			complexPayLoad.addCustomAlertBody("My alert message");
-			complexPayLoad.addCustomAlertActionLocKey("Open App");
-			complexPayLoad.addCustomAlertLocKey("javapns rocks %@ %@%@");
+			complexPayload.addCustomAlertBody("My alert message");
+			complexPayload.addCustomAlertActionLocKey("Open App");
+			complexPayload.addCustomAlertLocKey("javapns rocks %@ %@%@");
 			ArrayList parameters = new ArrayList();
 			parameters.add("Test1");
 			parameters.add("Test");
 			parameters.add(2);
-			complexPayLoad.addCustomAlertLocArgs(parameters);
-			complexPayLoad.addBadge(45);
-			complexPayLoad.addSound("default");
-			complexPayLoad.addCustomDictionary("acme", "foo");
-			complexPayLoad.addCustomDictionary("acme2", 42);
+			complexPayload.addCustomAlertLocArgs(parameters);
+			complexPayload.addBadge(45);
+			complexPayload.addSound("default");
+			complexPayload.addCustomDictionary("acme", "foo");
+			complexPayload.addCustomDictionary("acme2", 42);
 			ArrayList values = new ArrayList();
 			values.add("value1");
 			values.add(2);
-			complexPayLoad.addCustomDictionary("acme3", values);
+			complexPayload.addCustomDictionary("acme3", values);
 		} catch (JSONException e) {
 			System.out.println("Error creating complex payload:");
 			e.printStackTrace();
 		}
-		return complexPayLoad;
+		return complexPayload;
 	}
 
 
