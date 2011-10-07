@@ -9,8 +9,8 @@
 
 	<!-- javapns version id (no spaces allowed!) -->
 	<property name="javapns.level" value="2.0" />
-	<property name="javapns.status" value="_RC" />
-	<property name="javapns.revision" value=" r002" />
+	<property name="javapns.status" value="" />
+	<property name="javapns.revision" value="" />
 	<property name="javapns.version" value="${javapns.level}${javapns.status}" />
 
 	<property name="src" location="src" />
