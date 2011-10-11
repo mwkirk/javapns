@@ -1,46 +1,47 @@
 package javapns.test;
 
-import java.util.LinkedList;
-import java.util.ListIterator;
+import java.util.*;
 
-import javapns.back.FeedbackServiceManager;
-import javapns.back.SSLConnectionHelper;
-import javapns.data.Device;
+import javapns.*;
+import javapns.devices.*;
 
-public class FeedbackTest {
+/**
+ * A command-line test facility for the Feedback Service.
+ * <p>Example:  <code>java -cp "[required libraries]" javapns.test.FeedbackTest keystore.p12 mypass</code></p>
+ * 
+ * <p>By default, this test uses the sandbox service.  To switch, add "production" as a third parameter:</p>
+ * <p>Example:  <code>java -cp "[required libraries]" javapns.test.FeedbackTest keystore.p12 mypass production</code></p>
+ * 
+ * @author Sylvain Pedneault
+ */
+public class FeedbackTest extends TestFoundation {
 
-	// APNs Server Host & port
-	private static final String HOST = "feedback.push.apple.com";
-	private static final int PORT = 2196;
+	public static void main(String[] args) {
 
-	// Vars that will be set from system.properties
-	private static String certificate = "/tmp/HereMePushProd.p12";
-	private static String passwd = "here123";
+		/* Verify that the test is being invoked  */
+		if (!verifyCorrectUsage(FeedbackTest.class, args, "keystore-path", "keystore-password", "[production|sandbox]")) return;
 
-	public static void main( String[] args ) throws Exception {
+		/* Initialize Log4j to print logs to console */
+		configureBasicLogging();
 
-		System.out.println( "Setting up Push notification" );
-
-		try {	
-
-			// Get PushNotification Instance
-			FeedbackServiceManager feedbackManager = FeedbackServiceManager.getInstance();
-
-			// Initialize connection
-			LinkedList<Device> list = feedbackManager.getDevices( HOST, PORT, certificate, passwd, SSLConnectionHelper.KEYSTORE_TYPE_PKCS12 );
-			System.out.println( "Connection initialized..." );
-
-			ListIterator<Device> itr = list.listIterator();
-
-			while( itr.hasNext() ) {
-				Device device = itr.next();
-				System.out.println( "Device: id=[" + device.getId() + " token=[" + device.getToken() + "]" );
-			}
-
-			System.out.println( "done" );
-
-		} catch (Exception e) {
-			e.printStackTrace();
-		} 		
+		/* Get a list of inactive devices */
+		feedbackTest(args);
 	}
+
+
+	/**
+	 * Retrieves a list of inactive devices from the Feedback service.
+	 * @param args
+	 */
+	private static void feedbackTest(String[] args) {
+		String keystore = args[0];
+		String password = args[1];
+		boolean production = args.length >= 3 ? args[2].equalsIgnoreCase("production") : false;
+		List<Device> devices = Push.feedback(keystore, password, production);
+
+		for (Device device : devices) {
+			System.out.println("Inactive device: " + device.getToken());
+		}
+	}
+
 }
