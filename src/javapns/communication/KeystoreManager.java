@@ -48,23 +48,12 @@ class KeystoreManager {
 			KeyStore keyStore;
 			try {
 				keyStore = KeyStore.getInstance(server.getKeystoreType());
-				if (server.getKeystorePassword() == null) {
-					keyStore.load(server.getKeystoreStream(), null);
-
-				} else {
-					try {
-						keyStore.load(keystoreStream, server.getKeystorePassword().toCharArray());
-					} catch (Exception e) {
-						if (e != null) {
-							if (e.toString().contains("javax.crypto.BadPaddingException")) {
-								throw new InvalidKeystorePasswordException();
-							}
-							if (e.toString().contains("DerInputStream.getLength(): lengthTag=127, too big")) {
-								throw new InvalidKeystoreFormatException();
-							}
-						}
-						throw e;
-					}
+				try {
+					char[] password = KeystoreManager.getKeystorePasswordForSSL(server);
+					keyStore.load(keystoreStream, password);
+				} catch (Exception e) {
+					e = getSimplerSSLException(e);
+					throw e;
 				}
 			} finally {
 				try {
@@ -74,6 +63,32 @@ class KeystoreManager {
 			}
 			return keyStore;
 		}
+	}
+
+
+	static char[] getKeystorePasswordForSSL(AppleServer server) {
+		String password = server.getKeystorePassword();
+		if (password == null) password = "";
+		//		if (password != null && password.length() == 0) password = null;
+		char[] passchars = password != null ? password.toCharArray() : null;
+		return passchars;
+	}
+
+
+	static Exception getSimplerSSLException(Exception e) {
+		if (e != null) {
+			String msg = e.toString();
+			if (msg.contains("javax.crypto.BadPaddingException")) {
+				return new InvalidKeystorePasswordException();
+			}
+			if (msg.contains("DerInputStream.getLength(): lengthTag=127, too big")) {
+				return new InvalidKeystoreFormatException();
+			}
+			if (msg.contains("java.lang.ArithmeticException: / by zero") || msg.contains("java.security.UnrecoverableKeyException: Get Key failed: / by zero")) {
+				return new InvalidKeystorePasswordException("Blank passwords not supported (#38).  You must create your keystore with a non-empty password.");
+			}
+		}
+		return e;
 	}
 
 
