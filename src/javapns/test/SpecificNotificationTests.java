@@ -84,7 +84,20 @@ public class SpecificNotificationTests extends TestFoundation {
 			e.printStackTrace();
 		}
 	}
+	
+	private static void test_Issue75(String keystore, String password, String token, boolean production) throws Exception {
+		try {
+			System.out.println("");
+			System.out.println("TESTING 257-BYTES PAYLOAD WITH SIZE ESTIMATION ENABLED");
+			NewsstandNotificationPayload payload = NewsstandNotificationPayload.contentAvailable();
+			debugPayload(payload);
 
+			List<PushedNotification> notifications = Push.payload(payload, keystore, password, production, token);
+			NotificationTest.printPushedNotifications(notifications);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
 
 	public static void pushSpecificPayloadSize(String keystore, String password, String token, boolean production, boolean checkWhenAdding, int targetPayloadSize) throws JSONException {
 		StringBuilder buf = new StringBuilder();
