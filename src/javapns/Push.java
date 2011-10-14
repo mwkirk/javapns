@@ -85,6 +85,20 @@ public class Push {
 
 
 	/**
+	 * Push a content-available notification for Newsstand.
+	 * 
+	 * @param keystore a PKCS12 keystore provided by Apple (File, InputStream, byte[] or String for a file path)
+	 * @param password the keystore's password.
+	 * @param production true to use Apple's production servers, false to use the sandbox servers.
+	 * @param tokens one or more device tokens to push to.
+	 * @return a list of pushed notifications, each with details on transmission results and error (if any)
+	 */
+	public static List<PushedNotification> contentAvailable(Object keystore, String password, boolean production, String... tokens) {
+		return payload(NewsstandNotificationPayload.contentAvailable(), keystore, password, production, tokens);
+	}
+
+
+	/**
 	 * Push a preformatted payload.
 	 * This is a convenience method for passing a List of tokens instead of an array.
 	 * 
