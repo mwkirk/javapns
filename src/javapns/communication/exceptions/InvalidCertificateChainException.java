@@ -6,31 +6,22 @@ package javapns.communication.exceptions;
  *
  */
 @SuppressWarnings("serial")
-public class InvalidCertificateChainException extends Exception{
-	
-	/* Custom message for this exception */
-	private String message;
-	
+public class InvalidCertificateChainException extends Exception {
+
 	/**
 	 * Constructor
 	 */
-	public InvalidCertificateChainException(){
-		this.message = "Invalid certificate chain!  Verify that the keystore you provided was produced according to specs...";
+	public InvalidCertificateChainException() {
+		super("Invalid certificate chain!  Verify that the keystore you provided was produced according to specs...");
 	}
-	
+
+
 	/**
 	 * Constructor with custom message
 	 * @param message
 	 */
-	public InvalidCertificateChainException(String message){
-		this.message = "Invalid certificate chain ("+message+")!  Verify that the keystore you provided was produced according to specs...";
-//		this.message = message;
+	public InvalidCertificateChainException(String message) {
+		super("Invalid certificate chain (" + message + ")!  Verify that the keystore you provided was produced according to specs...");
 	}
-	
-	/**
-	 * String representation
-	 */
-	public String toString(){
-		return this.message;
-	}
+
 }

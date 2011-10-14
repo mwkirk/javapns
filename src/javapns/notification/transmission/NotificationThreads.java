@@ -203,7 +203,7 @@ public class NotificationThreads extends ThreadGroup {
 
 	/**
 	 * Get the progress listener, if any is attached.
-	 * @return
+	 * @return a progress listener
 	 */
 	public NotificationProgressListener getListener() {
 		return listener;

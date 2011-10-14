@@ -319,78 +319,86 @@ public class PushNotificationManager {
 	 * @return TransmissionEnvelope an object that encapsulates all message transmission results
 	 */
 	private void sendNotification(PushedNotification notification, boolean closeAfter) throws UnrecoverableKeyException, KeyManagementException, KeyStoreException, NoSuchAlgorithmException, CertificateException, FileNotFoundException, IOException, Exception {
-		Device device = notification.getDevice();
-		Payload payload = notification.getPayload();
-		if (notification.getIdentifier() <= 0) notification.setIdentifier(newMessageIdentifier());
-		if (!pushedNotifications.containsKey(notification.getIdentifier())) pushedNotifications.put(notification.getIdentifier(), notification);
-		int identifier = notification.getIdentifier();
+		try {
+			Device device = notification.getDevice();
+			Payload payload = notification.getPayload();
+			if (notification.getIdentifier() <= 0) notification.setIdentifier(newMessageIdentifier());
+			if (!pushedNotifications.containsKey(notification.getIdentifier())) pushedNotifications.put(notification.getIdentifier(), notification);
+			int identifier = notification.getIdentifier();
 
-		String token = device.getToken();
-		// even though the BasicDevice constructor validates the token, we revalidate it in case we were passed another implementation of Device
-		BasicDevice.validateTokenFormat(token);
-		//		PushedNotification pushedNotification = new PushedNotification(device, payload);
-		byte[] bytes = getMessage(token, payload, identifier, notification);
-		//		pushedNotifications.put(pushedNotification.getIdentifier(), pushedNotification);
+			String token = device.getToken();
+			// even though the BasicDevice constructor validates the token, we revalidate it in case we were passed another implementation of Device
+			BasicDevice.validateTokenFormat(token);
+			//		PushedNotification pushedNotification = new PushedNotification(device, payload);
+			byte[] bytes = getMessage(token, payload, identifier, notification);
+			//		pushedNotifications.put(pushedNotification.getIdentifier(), pushedNotification);
 
-		/* Special simulation mode to skip actual streaming of message */
-		boolean simulationMode = payload.getExpiry() == 919191;
+			/* Special simulation mode to skip actual streaming of message */
+			boolean simulationMode = payload.getExpiry() == 919191;
 
-		boolean success = false;
+			boolean success = false;
 
-		BufferedReader in = new BufferedReader(new InputStreamReader(this.socket.getInputStream()));
-		int socketTimeout = getSslSocketTimeout();
-		if (socketTimeout > 0) this.socket.setSoTimeout(socketTimeout);
-		notification.setTransmissionAttempts(0);
-		// Keep trying until we have a success
-		while (!success) {
-			try {
-				logger.debug("Attempting to send notification: " + payload.toString() + "");
-				logger.debug("  to device: " + token + "");
-				notification.addTransmissionAttempt();
+			BufferedReader in = new BufferedReader(new InputStreamReader(this.socket.getInputStream()));
+			int socketTimeout = getSslSocketTimeout();
+			if (socketTimeout > 0) this.socket.setSoTimeout(socketTimeout);
+			notification.setTransmissionAttempts(0);
+			// Keep trying until we have a success
+			while (!success) {
 				try {
-					if (!simulationMode) {
-						this.socket.getOutputStream().write(bytes);
-					} else {
-						logger.debug("* Simulation only: would have streamed " + bytes.length + "-bytes message now..");
-					}
-				} catch (Exception e) {
-					if (e != null) {
-						if (e.toString().contains("certificate_unknown")) {
-							throw new InvalidCertificateChainException(e.getMessage());
-						}
-					}
-					throw e;
-				}
-				logger.debug("Flushing");
-				this.socket.getOutputStream().flush();
-				success = true;
-				logger.debug("Notification sent on " + notification.getLatestTransmissionAttempt());
-				notification.setTransmissionCompleted(true);
-
-			} catch (IOException e) {
-				// throw exception if we surpassed the valid number of retry attempts
-				if (notification.getTransmissionAttempts() >= retryAttempts) {
-					logger.error("Attempt to send Notification failed and beyond the maximum number of attempts permitted");
-					notification.setTransmissionCompleted(false);
-					e.printStackTrace();
-					throw e;
-
-				} else {
-					logger.info("Attempt failed (" + e.getMessage() + ")... trying again");
-					//Try again
+					logger.debug("Attempting to send notification: " + payload.toString() + "");
+					logger.debug("  to device: " + token + "");
+					notification.addTransmissionAttempt();
 					try {
-						this.socket.close();
-					} catch (Exception e2) {
-						// do nothing
+						if (!simulationMode) {
+							this.socket.getOutputStream().write(bytes);
+						} else {
+							logger.debug("* Simulation only: would have streamed " + bytes.length + "-bytes message now..");
+						}
+					} catch (Exception e) {
+						if (e != null) {
+							if (e.toString().contains("certificate_unknown")) {
+								throw new InvalidCertificateChainException(e.getMessage());
+							}
+						}
+						throw e;
 					}
-					this.socket = connectionToAppleServer.getSSLSocket();
-					if (socketTimeout > 0) this.socket.setSoTimeout(socketTimeout);
+					logger.debug("Flushing");
+					this.socket.getOutputStream().flush();
+					success = true;
+					logger.debug("Notification sent on " + notification.getLatestTransmissionAttempt());
+					notification.setTransmissionCompleted(true);
+
+				} catch (IOException e) {
+					// throw exception if we surpassed the valid number of retry attempts
+					if (notification.getTransmissionAttempts() >= retryAttempts) {
+						logger.error("Attempt to send Notification failed and beyond the maximum number of attempts permitted");
+						notification.setTransmissionCompleted(false);
+						notification.setException(e);
+						logger.error("Delivery error", e);
+						throw e;
+
+					} else {
+						logger.info("Attempt failed (" + e.getMessage() + ")... trying again");
+						//Try again
+						try {
+							this.socket.close();
+						} catch (Exception e2) {
+							// do nothing
+						}
+						this.socket = connectionToAppleServer.getSSLSocket();
+						if (socketTimeout > 0) this.socket.setSoTimeout(socketTimeout);
+					}
 				}
-			} finally {
+			}
+		} catch (Exception ex) {
+			notification.setException(ex);
+			logger.error("Delivery error", ex);
+			try {
 				if (closeAfter) {
-					logger.error("Closing connection after last payload");
-					this.socket.close();
+					logger.error("Closing connection after error");
+					stopConnection();
 				}
+			} catch (Exception e) {
 			}
 		}
 	}
@@ -481,7 +489,8 @@ public class PushNotificationManager {
 		}
 
 		// Create the ByteArrayOutputStream which will contain the raw interface
-		int size = (Byte.SIZE / Byte.SIZE) + (Character.SIZE / Byte.SIZE) + deviceTokenAsBytes.length + (Character.SIZE / Byte.SIZE) + payload.getPayloadAsBytes().length;
+		byte[] payloadAsBytes = payload.getPayloadAsBytes();
+		int size = (Byte.SIZE / Byte.SIZE) + (Character.SIZE / Byte.SIZE) + deviceTokenAsBytes.length + (Character.SIZE / Byte.SIZE) + payloadAsBytes.length;
 		ByteArrayOutputStream bao = new ByteArrayOutputStream(size);
 
 		// Write command to ByteArrayOutputStream
@@ -503,19 +512,21 @@ public class PushNotificationManager {
 
 		// Write the TokenLength as a 16bits unsigned int, in big endian
 		int tl = deviceTokenAsBytes.length;
-		bao.write((byte) (tl & 0xFF00) >> 8);
+		bao.write((byte) ((tl & 0xFF00) >> 8));
 		bao.write((byte) (tl & 0xFF));
 
 		// Write the Token in bytes
 		bao.write(deviceTokenAsBytes);
 
 		// Write the PayloadLength as a 16bits unsigned int, in big endian
-		int pl = payload.getPayloadAsBytes().length;
-		bao.write((byte) (pl & 0xFF00) >> 8);
-		bao.write((byte) (pl & 0xFF));
+		int pl = payloadAsBytes.length;
+		int s1 = (pl & 0xFF00) >> 8;
+		int s2 = pl & 0xFF;
+		bao.write(s1);
+		bao.write(s2);
 
 		// Finally write the Payload
-		bao.write(payload.getPayloadAsBytes());
+		bao.write(payloadAsBytes);
 
 		logger.debug("Built raw message ID " + identifier);
 

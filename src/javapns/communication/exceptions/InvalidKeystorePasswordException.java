@@ -8,15 +8,11 @@ package javapns.communication.exceptions;
 @SuppressWarnings("serial")
 public class InvalidKeystorePasswordException extends Exception {
 
-	/* Custom message for this exception */
-	private String message;
-
-
 	/**
 	 * Constructor
 	 */
 	public InvalidKeystorePasswordException() {
-		this.message = "Invalid keystore password!  Verify settings for connecting to Apple...";
+		super("Invalid keystore password!  Verify settings for connecting to Apple...");
 	}
 
 
@@ -25,14 +21,7 @@ public class InvalidKeystorePasswordException extends Exception {
 	 * @param message
 	 */
 	public InvalidKeystorePasswordException(String message) {
-		this.message = message;
+		super(message);
 	}
 
-
-	/**
-	 * String representation
-	 */
-	public String toString() {
-		return this.message;
-	}
 }

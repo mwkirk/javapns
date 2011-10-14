@@ -23,6 +23,7 @@ public class PushedNotification {
 	private int transmissionAttempts;
 	private boolean transmissionCompleted;
 
+	private Exception exception;
 
 	protected PushedNotification(Device device, Payload payload) {
 		this.device = device;
@@ -186,6 +187,7 @@ public class PushedNotification {
 	 * @return true if push was successful, false otherwise
 	 */
 	public boolean isSuccessful() {
+		if (!transmissionCompleted) return false;
 		if (response == null) return true;
 		if (response.getCommand() != 8) return true;
 		if (response.getStatus() == 0) return true;
@@ -248,6 +250,16 @@ public class PushedNotification {
 		if (newResponse != null) this.setResponse(newResponse);
 		this.setTransmissionAttempts(repushedNotification.getTransmissionAttempts());
 		this.setTransmissionCompleted(repushedNotification.isTransmissionCompleted());
+	}
+
+
+	public void setException(Exception exception) {
+		this.exception = exception;
+	}
+
+
+	public Exception getException() {
+		return exception;
 	}
 
 }

@@ -8,15 +8,11 @@ package javapns.communication.exceptions;
 @SuppressWarnings("serial")
 public class InvalidKeystoreFormatException extends Exception {
 
-	/* Custom message for this exception */
-	private String message;
-
-
 	/**
 	 * Constructor
 	 */
 	public InvalidKeystoreFormatException() {
-		this.message = "Invalid keystore format!  Make sure it is PKCS12...";
+		super("Invalid keystore format!  Make sure it is PKCS12...");
 	}
 
 
@@ -25,14 +21,7 @@ public class InvalidKeystoreFormatException extends Exception {
 	 * @param message
 	 */
 	public InvalidKeystoreFormatException(String message) {
-		this.message = message;
+		super(message);
 	}
 
-
-	/**
-	 * String representation
-	 */
-	public String toString() {
-		return this.message;
-	}
 }

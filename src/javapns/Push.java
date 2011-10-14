@@ -113,8 +113,8 @@ public class Push {
 	public static List<PushedNotification> payload(Payload payload, Object keystore, String password, boolean production, String... tokens) {
 		List<PushedNotification> devices = new Vector<PushedNotification>();
 		if (payload == null) return devices;
+		PushNotificationManager pushManager = new PushNotificationManager();
 		try {
-			PushNotificationManager pushManager = new PushNotificationManager();
 			AppleNotificationServer server = new AppleNotificationServerBasicImpl(keystore, password, production);
 			pushManager.initializeConnection(server);
 			for (String token : tokens) {
@@ -122,10 +122,14 @@ public class Push {
 				PushedNotification notification = pushManager.sendNotification(device, payload, false);
 				devices.add(notification);
 			}
-			pushManager.stopConnection();
 		} catch (Exception e) {
 			System.out.println("Error pushing notification(s):");
 			e.printStackTrace();
+		} finally {
+			try {
+				pushManager.stopConnection();
+			} catch (Exception e) {
+			}
 		}
 		return devices;
 	}

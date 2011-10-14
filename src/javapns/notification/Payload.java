@@ -3,6 +3,7 @@ package javapns.notification;
 import java.util.*;
 
 import javapns.devices.*;
+import javapns.notification.exceptions.*;
 
 import org.apache.log4j.*;
 import org.json.*;
@@ -19,9 +20,6 @@ import org.json.*;
  */
 public abstract class Payload {
 
-	/* Maximum total length (serialized) of a payload */
-	private static final int MAXIMUM_PAYLOAD_LENGTH = 256;
-
 	/* Character encoding specified by Apple documentation */
 	private static final String DEFAULT_CHARACTER_ENCODING = "UTF-8";
 
@@ -35,6 +33,8 @@ public abstract class Payload {
 
 	/* Number of seconds after which this payload should expire */
 	private int expiry = 1 * 24 * 60 * 60;
+
+	private boolean payloadSizeEstimatedWhenAdding = false;
 
 
 	/**
@@ -59,7 +59,7 @@ public abstract class Payload {
 	 */
 	public void addCustomDictionary(String name, String value) throws JSONException {
 		logger.debug("Adding custom Dictionary [" + name + "] = [" + value + "]");
-		this.payload.put(name, value);
+		put(name, value, payload, false);
 	}
 
 
@@ -71,7 +71,7 @@ public abstract class Payload {
 	 */
 	public void addCustomDictionary(String name, int value) throws JSONException {
 		logger.debug("Adding custom Dictionary [" + name + "] = [" + value + "]");
-		this.payload.put(name, value);
+		put(name, value, payload, false);
 	}
 
 
@@ -83,7 +83,7 @@ public abstract class Payload {
 	 */
 	public void addCustomDictionary(String name, List values) throws JSONException {
 		logger.debug("Adding custom Dictionary [" + name + "] = (list)");
-		this.payload.put(name, values);
+		put(name, values, payload, false);
 	}
 
 
@@ -101,18 +101,179 @@ public abstract class Payload {
 	 * @return byte[] bytes ready to be streamed directly to Apple servers
 	 */
 	public byte[] getPayloadAsBytes() throws Exception {
-		byte[] payload = null;
-		try {
-			payload = toString().getBytes(characterEncoding);
-		} catch (Exception ex) {
-			payload = toString().getBytes();
-		}
-
-		if (payload.length > MAXIMUM_PAYLOAD_LENGTH) {
-			throw new Exception("Payload too large...[256 Bytes is the limit]");
-		}
-
+		byte[] payload = getPayloadAsBytesUnchecked();
+		validateMaximumPayloadSize(payload.length);
 		return payload;
+	}
+
+
+	/**
+	 * Get this payload as a byte array using the preconfigured character encoding.
+	 * This method does NOT check if the payload exceeds the maximum payload length.
+	 * 
+	 * @return byte[] bytes ready to be streamed directly to Apple servers (but that might exceed the maximum size limit)
+	 */
+	private byte[] getPayloadAsBytesUnchecked() throws Exception {
+		byte[] bytes = null;
+		try {
+			bytes = toString().getBytes(characterEncoding);
+		} catch (Exception ex) {
+			bytes = toString().getBytes();
+		}
+		return bytes;
+	}
+
+
+	/**
+	 * Get the number of bytes that the payload will occupy when streamed.
+	 * 
+	 * @return a number of bytes
+	 * @throws Exception
+	 */
+	public int getPayloadSize() throws Exception {
+		return getPayloadAsBytesUnchecked().length;
+	}
+
+
+	/**
+	 * Check if the payload exceeds the maximum size allowed.
+	 * The maximum size allowed is returned by the getMaximumPayloadSize() method.
+	 * 
+	 * @return true if the payload exceeds the maximum size allowed, false otherwise
+	 */
+	private boolean isPayloadTooLong() {
+		try {
+			byte[] bytes = getPayloadAsBytesUnchecked();
+			if (bytes.length > getMaximumPayloadSize()) return true;
+		} catch (Exception e) {
+		}
+		return false;
+	}
+
+
+	/**
+	 * Estimate the size that this payload will take after adding a given property.
+	 * For performance reasons, this estimate is not as reliable as actually adding 
+	 * the property and checking the payload size afterwards.
+	 * 
+	 * Currently works well with strings and numbers.
+	 * 
+	 * @param propertyName the name of the property to use for calculating the estimation
+	 * @param propertyValue the value of the property to use for calculating the estimation
+	 * @return an estimated payload size if the property were to be added to the payload
+	 */
+	public int estimatePayloadSizeAfterAdding(String propertyName, Object propertyValue) {
+		try {
+			int maximumPayloadSize = getMaximumPayloadSize();
+			int currentPayloadSize = getPayloadAsBytesUnchecked().length;
+			int estimatedSize = currentPayloadSize;
+			if (propertyName != null && propertyValue != null) {
+				estimatedSize += 5; // "":""
+				estimatedSize += propertyName.getBytes(getCharacterEncoding()).length;
+				int estimatedValueSize = 0;
+
+				if (propertyValue instanceof String || propertyValue instanceof Number) estimatedValueSize = propertyValue.toString().getBytes(getCharacterEncoding()).length;
+
+				estimatedSize += estimatedValueSize;
+			}
+			return estimatedSize;
+		} catch (Exception e) {
+			try {
+				return getPayloadSize();
+			} catch (Exception e1) {
+				return 0;
+			}
+		}
+	}
+
+
+	/**
+	 * Validate if the estimated payload size after adding a given property will be allowed.
+	 * For performance reasons, this estimate is not as reliable as actually adding 
+	 * the property and checking the payload size afterwards.
+	 * 
+	 * @param propertyName the name of the property to use for calculating the estimation
+	 * @param propertyValue the value of the property to use for calculating the estimation
+	 * @return true if the payload size is not expected to exceed the maximum allowed, false if it might be too big
+	 */
+	public boolean isEstimatedPayloadSizeAllowedAfterAdding(String propertyName, Object propertyValue) {
+		int maximumPayloadSize = getMaximumPayloadSize();
+		int estimatedPayloadSize = estimatePayloadSizeAfterAdding(propertyName, propertyValue);
+		boolean estimatedToBeAllowed = estimatedPayloadSize <= maximumPayloadSize;
+		return estimatedToBeAllowed;
+	}
+
+
+	/**
+	 * Validate that the payload does not exceed the maximum size allowed.
+	 * If the limit is exceeded, a PayloadMaxSizeExceededException is thrown.
+	 *  
+	 * @param currentPayloadSize the total size of the payload in bytes
+	 * @throws PayloadMaxSizeExceededException if the payload exceeds the maximum size allowed
+	 */
+	private void validateMaximumPayloadSize(int currentPayloadSize) throws PayloadMaxSizeExceededException {
+		int maximumPayloadSize = getMaximumPayloadSize();
+		if (currentPayloadSize > maximumPayloadSize) {
+			throw new PayloadMaxSizeExceededException(maximumPayloadSize, currentPayloadSize);
+		}
+	}
+
+
+	/**
+	 * Puts a property in a JSONObject, while possibly checking for estimated payload size violation.
+	 * 
+	 * @param propertyName the name of the property to use for calculating the estimation
+	 * @param propertyValue the value of the property to use for calculating the estimation
+	 * @param object the JSONObject to put the property in
+	 * @param opt true to use putOpt, false to use put
+	 * @throws JSONException
+	 */
+	protected void put(String propertyName, Object propertyValue, JSONObject object, boolean opt) throws JSONException {
+		try {
+			if (isPayloadSizeEstimatedWhenAdding()) {
+				int maximumPayloadSize = getMaximumPayloadSize();
+				int estimatedPayloadSize = estimatePayloadSizeAfterAdding(propertyName, propertyValue);
+				boolean estimatedToExceed = estimatedPayloadSize > maximumPayloadSize;
+				if (estimatedToExceed) throw new PayloadMaxSizeProbablyExceededException(maximumPayloadSize, estimatedPayloadSize);
+			}
+		} catch (PayloadMaxSizeProbablyExceededException e) {
+			throw e;
+		} catch (Exception e) {
+
+		}
+		if (opt) object.putOpt(propertyName, propertyValue);
+		else object.put(propertyName, propertyValue);
+	}
+
+
+	/**
+	 * Indicates if payload size is estimated and controlled when adding properties (default is false).
+	 * 
+	 * @return true to throw an exception if the estimated size is too big when adding a property, false otherwise
+	 */
+	public boolean isPayloadSizeEstimatedWhenAdding() {
+		return payloadSizeEstimatedWhenAdding;
+	}
+
+
+	/**
+	 * Indicate if payload size should be estimated and controlled when adding properties (default is false).
+	 * @param checked true to throw an exception if the estimated size is too big when adding a property, false otherwise
+	 */
+	public void setPayloadSizeEstimatedWhenAdding(boolean checked) {
+		this.payloadSizeEstimatedWhenAdding = checked;
+	}
+
+
+	/**
+	 * Return the maximum payload size in bytes.
+	 * By default, this method returns Integer.MAX_VALUE.
+	 * Subclasses should override this method to provide their own limit.
+	 * 
+	 * @return the maximum payload size in bytes
+	 */
+	public int getMaximumPayloadSize() {
+		return Integer.MAX_VALUE;
 	}
 
 

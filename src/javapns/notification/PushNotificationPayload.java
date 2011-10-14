@@ -2,6 +2,8 @@ package javapns.notification;
 
 import java.util.*;
 
+import javapns.notification.exceptions.*;
+
 import org.json.*;
 
 /**
@@ -11,6 +13,10 @@ import org.json.*;
  * @author Sylvain Pedneault
  */
 public class PushNotificationPayload extends Payload {
+
+	/* Maximum total length (serialized) of a payload */
+	private static final int MAXIMUM_PAYLOAD_LENGTH = 256;
+
 
 	/**
 	 * Create a pre-defined payload with a simple alert message.
@@ -66,7 +72,7 @@ public class PushNotificationPayload extends Payload {
 	 * @param message the alert message
 	 * @param badge the badge
 	 * @param sound the name of the sound
-	 * @return
+	 * @return a ready-to-send payload
 	 */
 	public static Payload combined(String message, int badge, String sound) {
 		PushNotificationPayload payload = complex();
@@ -86,8 +92,7 @@ public class PushNotificationPayload extends Payload {
 	 * Note: the payload actually contains the default "aps"
 	 * dictionary required by APNS.
 	 * 
-	 * @param message the alert's message
-	 * @return a ready-to-send payload
+	 * @return a blank payload that can be customized
 	 */
 	public static PushNotificationPayload complex() {
 		PushNotificationPayload payload = new PushNotificationPayload();
@@ -137,7 +142,7 @@ public class PushNotificationPayload extends Payload {
 	 */
 	public void addBadge(int badge) throws JSONException {
 		logger.debug("Adding badge [" + badge + "]");
-		this.apsDictionary.putOpt("badge", badge);
+		put("badge", badge, this.apsDictionary, true);
 	}
 
 
@@ -149,7 +154,7 @@ public class PushNotificationPayload extends Payload {
 	 */
 	public void addSound(String sound) throws JSONException {
 		logger.debug("Adding sound [" + sound + "]");
-		this.apsDictionary.putOpt("sound", sound);
+		put("sound", sound, this.apsDictionary, true);
 	}
 
 
@@ -157,13 +162,13 @@ public class PushNotificationPayload extends Payload {
 	 * Add a simple alert message.
 	 * Note: you cannot add a simple and a custom alert in the same payload.
 	 * 
-	 * @param alert the alert's message
+	 * @param alertMessage the alert's message
 	 * @throws JSONException
 	 */
 	public void addAlert(String alertMessage) throws JSONException {
 		String previousAlert = getCompatibleProperty("alert", String.class, "A custom alert (\"%s\") was already added to this payload");
 		logger.debug("Adding alert [" + alertMessage + "]" + (previousAlert != null ? " replacing previous alert [" + previousAlert + "]" : ""));
-		this.apsDictionary.put("alert", alertMessage);
+		put("alert", alertMessage, this.apsDictionary, false);
 	}
 
 
@@ -177,7 +182,7 @@ public class PushNotificationPayload extends Payload {
 		JSONObject alert = getCompatibleProperty("alert", JSONObject.class, "A simple alert (\"%s\") was already added to this payload");
 		if (alert == null) {
 			alert = new JSONObject();
-			this.apsDictionary.put("alert", alert);
+			put("alert", alert, this.apsDictionary, false);
 		}
 		return alert;
 	}
@@ -232,7 +237,7 @@ public class PushNotificationPayload extends Payload {
 			exceptionMessage = String.format(exceptionMessage, propertyValue);
 		} catch (Exception e) {
 		}
-		throw new JSONException(exceptionMessage);
+		throw new PayloadAlertAlreadyExistsException(exceptionMessage);
 
 	}
 
@@ -244,7 +249,7 @@ public class PushNotificationPayload extends Payload {
 	 * @throws JSONException if the custom alert cannot be added because a simple alert already exists
 	 */
 	public void addCustomAlertBody(String body) throws JSONException {
-		getOrAddCustomAlert().put("body", body);
+		put("body", body, getOrAddCustomAlert(), false);
 	}
 
 
@@ -255,7 +260,7 @@ public class PushNotificationPayload extends Payload {
 	 * @throws JSONException if the custom alert cannot be added because a simple alert already exists
 	 */
 	public void addCustomAlertActionLocKey(String actionLocKey) throws JSONException {
-		getOrAddCustomAlert().put("action-loc-key", actionLocKey);
+		put("action-loc-key", actionLocKey, getOrAddCustomAlert(), false);
 	}
 
 
@@ -266,7 +271,7 @@ public class PushNotificationPayload extends Payload {
 	 * @throws JSONException if the custom alert cannot be added because a simple alert already exists
 	 */
 	public void addCustomAlertLocKey(String locKey) throws JSONException {
-		getOrAddCustomAlert().put("loc-key", locKey);
+		put("loc-key", locKey, getOrAddCustomAlert(), false);
 	}
 
 
@@ -277,7 +282,19 @@ public class PushNotificationPayload extends Payload {
 	 * @throws JSONException if the custom alert cannot be added because a simple alert already exists
 	 */
 	public void addCustomAlertLocArgs(List args) throws JSONException {
-		getOrAddCustomAlert().put("loc-args", args);
+		put("loc-args", args, getOrAddCustomAlert(), false);
+	}
+
+
+	/**
+	 * Return the maximum payload size in bytes.
+	 * For APNS payloads, this method returns 256.
+	 * 
+	 * @return the maximum payload size in bytes (256)
+	 */
+	@Override
+	public int getMaximumPayloadSize() {
+		return MAXIMUM_PAYLOAD_LENGTH;
 	}
 
 }
