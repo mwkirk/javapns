@@ -150,6 +150,41 @@ public class Push {
 
 
 	/**
+	 * Push a different preformatted payload for each device.
+	 * 
+	 * @param keystore a PKCS12 keystore provided by Apple (File, InputStream, byte[] or String for a file path)
+	 * @param password the keystore's password.
+	 * @param production true to use Apple's production servers, false to use the sandbox servers.
+	 * @param payloadDevicePairs a list of joint payloads and devices to push
+	 * @return a list of pushed notifications, each with details on transmission results and error (if any)
+	 */
+	public static List<PushedNotification> payloads(Object keystore, String password, boolean production, PayloadPerDevice... payloadDevicePairs) {
+		List<PushedNotification> devices = new Vector<PushedNotification>();
+		if (payloadDevicePairs == null) return devices;
+		PushNotificationManager pushManager = new PushNotificationManager();
+		try {
+			AppleNotificationServer server = new AppleNotificationServerBasicImpl(keystore, password, production);
+			pushManager.initializeConnection(server);
+			for (PayloadPerDevice ppd : payloadDevicePairs) {
+				Device device = ppd.getDevice();
+				Payload payload = ppd.getPayload();
+				PushedNotification notification = pushManager.sendNotification(device, payload, false);
+				devices.add(notification);
+			}
+		} catch (Exception e) {
+			System.out.println("Error pushing notification(s):");
+			e.printStackTrace();
+		} finally {
+			try {
+				pushManager.stopConnection();
+			} catch (Exception e) {
+			}
+		}
+		return devices;
+	}
+
+
+	/**
 	 * <p>Retrieve a list of devices that should be removed from future notification lists.</p>
 	 * 
 	 * <p>Devices in this list are ones that you previously tried to push a notification to,
