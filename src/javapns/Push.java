@@ -151,6 +151,21 @@ public class Push {
 
 	/**
 	 * Push a different preformatted payload for each device.
+	 * This is a convenience method for passing a List of PayloadPerDevice instead of an array.
+	 * 
+	 * @param keystore a PKCS12 keystore provided by Apple (File, InputStream, byte[] or String for a file path)
+	 * @param password the keystore's password.
+	 * @param production true to use Apple's production servers, false to use the sandbox servers.
+	 * @param payloadDevicePairs a list of joint payloads and devices to push
+	 * @return a list of pushed notifications, each with details on transmission results and error (if any)
+	 */
+	public static List<PushedNotification> payloads(Object keystore, String password, boolean production, List<PayloadPerDevice> payloadDevicePairs) {
+		return payloads(keystore, password, production, payloadDevicePairs.toArray(new PayloadPerDevice[0]));
+	}
+
+
+	/**
+	 * Push a different preformatted payload for each device.
 	 * 
 	 * @param keystore a PKCS12 keystore provided by Apple (File, InputStream, byte[] or String for a file path)
 	 * @param password the keystore's password.
