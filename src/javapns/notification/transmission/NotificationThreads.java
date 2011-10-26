@@ -136,12 +136,39 @@ public class NotificationThreads extends ThreadGroup {
 	/**
 	 * Add a message to the next available thread's queue.
 	 * 
+	 * This method has no effect if the thread is not in QUEUE mode.
+	 * 
+	 * @param payload a payload
+	 * @param token a device token
+	 * @return the thread to which the message queued
+	 * @throws Exception 
+	 */
+	public NotificationThread queue(Payload payload, String token) throws Exception {
+		return queue(new PayloadPerDevice(payload, token));
+	}
+
+
+	/**
+	 * Add a message to the next available thread's queue.
+	 * 
+	 * @param payload a payload
+	 * @param device a device
+	 * @return the thread to which the message queued
+	 */
+	public NotificationThread queue(Payload payload, Device device) {
+		return queue(new PayloadPerDevice(payload, device));
+	}
+
+
+	/**
+	 * Add a message to the next available thread's queue.
+	 * 
 	 * @param message the message to queue
 	 * @return the thread to which the message queued
 	 */
-	public NotificationThread addMessageToQueue(PayloadPerDevice message) {
+	public NotificationThread queue(PayloadPerDevice message) {
 		NotificationThread targetThread = getNextAvailableThread();
-		targetThread.addMessageToQueue(message);
+		targetThread.queue(message);
 		return targetThread;
 	}
 

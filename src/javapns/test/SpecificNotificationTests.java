@@ -120,7 +120,7 @@ public class SpecificNotificationTests extends TestFoundation {
 
 			for (int i = 1; i <= 4; i++) {
 				Payload payload = PushNotificationPayload.alert("Test " + i);
-				NotificationThread threadForPayload = pool.addMessageToQueue(new PayloadPerDevice(payload, device));
+				NotificationThread threadForPayload = pool.queue(new PayloadPerDevice(payload, device));
 				System.out.println("Queued payload " + i + " to " + threadForPayload.getThreadNumber());
 				System.out.println("Sleeping 10 seconds before queuing another payload...");
 				Thread.sleep(10 * 1000);

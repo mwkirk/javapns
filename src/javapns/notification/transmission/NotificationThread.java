@@ -290,9 +290,36 @@ public class NotificationThread extends Thread {
 	 * 
 	 * This method has no effect if the thread is not in QUEUE mode.
 	 * 
-	 * @param message
+	 * @param payload a payload
+	 * @param token a device token
+	 * @throws Exception 
 	 */
-	public void addMessageToQueue(PayloadPerDevice message) {
+	public void queue(Payload payload, String token) throws Exception {
+		queue(new PayloadPerDevice(payload, token));
+	}
+
+
+	/**
+	 * Add a message to this thread's queue.  The thread will pick it up and push it asynchroneously.
+	 * 
+	 * This method has no effect if the thread is not in QUEUE mode.
+	 * 
+	 * @param payload a payload
+	 * @param device a device
+	 */
+	public void queue(Payload payload, Device device) {
+		queue(new PayloadPerDevice(payload, device));
+	}
+
+
+	/**
+	 * Add a message to this thread's queue.  The thread will pick it up and push it asynchroneously.
+	 * 
+	 * This method has no effect if the thread is not in QUEUE mode.
+	 * 
+	 * @param message a payload/device pair
+	 */
+	public void queue(PayloadPerDevice message) {
 		if (mode != MODE.QUEUE) return;
 		try {
 			messages.add(message);
