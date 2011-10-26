@@ -20,6 +20,7 @@ public class NotificationThreads extends ThreadGroup {
 	private List<NotificationThread> threads = new Vector<NotificationThread>();
 	private NotificationProgressListener listener;
 	private int threadsRunning = 0;
+	private int nextThread = 0;
 	private Object finishPoint = new Object();
 
 
@@ -115,6 +116,60 @@ public class NotificationThreads extends ThreadGroup {
 	 */
 	public NotificationThreads(Object keystore, String password, boolean production, Payload payload, List<NotificationThread> threads) throws Exception {
 		this(new AppleNotificationServerBasicImpl(keystore, password, production), payload, threads);
+	}
+
+
+	/**
+	 * Create a pool of notification threads in QUEUE mode.
+	 * 
+	 * @param server the server to push to
+	 * @param numberOfThreads the number of threads to create in the pool
+	 */
+	public NotificationThreads(AppleNotificationServer server, int numberOfThreads) {
+		super("javapns notification thread pool (" + numberOfThreads + " threads)");
+		for (int i = 0; i < numberOfThreads; i++) {
+			threads.add(new NotificationThread(this, new PushNotificationManager(), server));
+		}
+	}
+
+
+	/**
+	 * Add a message to the next available thread's queue.
+	 * 
+	 * @param message the message to queue
+	 * @return the thread to which the message queued
+	 */
+	public NotificationThread addMessageToQueue(PayloadPerDevice message) {
+		NotificationThread targetThread = getNextAvailableThread();
+		targetThread.addMessageToQueue(message);
+		return targetThread;
+	}
+
+
+	/**
+	 * Get the next available thread.
+	 * 
+	 * @return a thread potentially available to work
+	 */
+	protected NotificationThread getNextAvailableThread() {
+		for (int i = 0; i < threads.size(); i++) {
+			NotificationThread thread = getNextThread();
+			boolean busy = thread.isBusy();
+			if (!busy) return thread;
+		}
+		return threads.get(++nextThread); /* All threads are busy, return the next one regardless of its busy status */
+	}
+
+
+	/**
+	 * Get the next thread to use.
+	 * 
+	 * @return a thread
+	 */
+	protected NotificationThread getNextThread() {
+		NotificationThread thread = threads.get(nextThread++);
+		if (nextThread >= threads.size()) nextThread = 0;
+		return thread;
 	}
 
 
@@ -251,6 +306,8 @@ public class NotificationThreads extends ThreadGroup {
 	 * Wait for all threads to complete their work.
 	 * 
 	 * This method blocks and returns only when all threads are done.
+	 * 
+	 * This method should not be used in QUEUE mode, as threads stay idle and never end.
 	 * 
 	 * @throws InterruptedException
 	 */

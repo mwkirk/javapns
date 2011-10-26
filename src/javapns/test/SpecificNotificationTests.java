@@ -3,7 +3,10 @@ package javapns.test;
 import java.util.*;
 
 import javapns.*;
+import javapns.devices.*;
+import javapns.devices.implementations.basic.*;
 import javapns.notification.*;
+import javapns.notification.transmission.*;
 
 import org.json.*;
 
@@ -84,7 +87,8 @@ public class SpecificNotificationTests extends TestFoundation {
 			e.printStackTrace();
 		}
 	}
-	
+
+
 	private static void test_Issue75(String keystore, String password, String token, boolean production) throws Exception {
 		try {
 			System.out.println("");
@@ -98,6 +102,36 @@ public class SpecificNotificationTests extends TestFoundation {
 			e.printStackTrace();
 		}
 	}
+
+
+	private static void test_ThreadPoolFeature(String keystore, String password, String token, boolean production) throws Exception {
+		try {
+			System.out.println("");
+			System.out.println("TESTING THREAD POOL FEATURE");
+
+			AppleNotificationServer server = new AppleNotificationServerBasicImpl(keystore, password, production);
+			NotificationThreads pool = new NotificationThreads(server, 3).start();
+			Device device = new BasicDevice(token);
+
+			System.out.println("Thread pool started and waiting...");
+
+			System.out.println("Sleeping 5 seconds before queuing payloads...");
+			Thread.sleep(5 * 1000);
+
+			for (int i = 1; i <= 4; i++) {
+				Payload payload = PushNotificationPayload.alert("Test " + i);
+				NotificationThread threadForPayload = pool.addMessageToQueue(new PayloadPerDevice(payload, device));
+				System.out.println("Queued payload " + i + " to " + threadForPayload.getThreadNumber());
+				System.out.println("Sleeping 10 seconds before queuing another payload...");
+				Thread.sleep(10 * 1000);
+			}
+			System.out.println("Sleeping 10 more seconds let threads enough times to push the latest payload...");
+			Thread.sleep(10 * 1000);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+
 
 	public static void pushSpecificPayloadSize(String keystore, String password, String token, boolean production, boolean checkWhenAdding, int targetPayloadSize) throws JSONException {
 		StringBuilder buf = new StringBuilder();
