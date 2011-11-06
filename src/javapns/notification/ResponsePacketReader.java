@@ -73,7 +73,6 @@ class ResponsePacketReader {
 		Map<Integer, PushedNotification> envelopes = notificationManager.getPushedNotifications();
 		for (ResponsePacket response : responses) {
 			response.linkToPushedNotification(notificationManager);
-			handleResponse(response, notificationManager);
 		}
 	}
 
@@ -94,23 +93,6 @@ class ResponsePacketReader {
 		if (identifier_byte4 < 0) return null;
 		int identifier = (identifier_byte1 << 24) + (identifier_byte2 << 16) + (identifier_byte3 << 8) + (identifier_byte4);
 		return new ResponsePacket(command, status, identifier);
-	}
-
-
-	@Deprecated
-	private static void handleResponse(ResponsePacket response, PushNotificationManager notificationManager) {
-		//System.out.println("Received response packet: " + response.getMessage());
-		if (response.getCommand() == 8) handleErrorResponse(response, notificationManager);
-	}
-
-
-	@Deprecated
-	private static void handleErrorResponse(ResponsePacket response, PushNotificationManager notificationManager) {
-		//System.out.println("Received error-response packet: " + response.getMessage());
-		//		ErrorResponseListener listener = notificationManager.getErrorResponseListener();
-		//		if (listener != null) {
-		//			listener.handleError(response, notificationManager);
-		//		}
 	}
 
 }

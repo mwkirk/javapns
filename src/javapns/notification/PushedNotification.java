@@ -3,6 +3,7 @@ package javapns.notification;
 import java.util.*;
 
 import javapns.devices.*;
+import javapns.notification.exceptions.*;
 
 /**
  * <p>An object representing the result of a push notification to a specific payload to a single device.</p>
@@ -24,6 +25,7 @@ public class PushedNotification {
 	private boolean transmissionCompleted;
 
 	private Exception exception;
+
 
 	protected PushedNotification(Device device, Payload payload) {
 		this.device = device;
@@ -159,6 +161,7 @@ public class PushedNotification {
 
 	protected void setResponse(ResponsePacket response) {
 		this.response = response;
+		if (response != null && exception == null) exception = new ErrorResponsePacketReceivedException(response);
 	}
 
 
@@ -240,16 +243,6 @@ public class PushedNotification {
 			msg.append("  " + response.getMessage());
 		}
 		return msg.toString();
-	}
-
-
-	public void updateTo(PushedNotification repushedNotification) {
-		//		this.setIdentifier(repushedNotification.getIdentifier());
-		ResponsePacket newResponse = repushedNotification.getResponse();
-		System.out.println(response + " >>> " + newResponse);
-		if (newResponse != null) this.setResponse(newResponse);
-		this.setTransmissionAttempts(repushedNotification.getTransmissionAttempts());
-		this.setTransmissionCompleted(repushedNotification.isTransmissionCompleted());
 	}
 
 

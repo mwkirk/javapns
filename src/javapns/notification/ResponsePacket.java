@@ -87,7 +87,7 @@ public class ResponsePacket {
 	 */
 	public String getMessage() {
 		if (command == 8) {
-			String prefix = "APNS: ["+identifier+"] "; //APNS ERROR FOR MESSAGE ID #" + identifier + ": ";
+			String prefix = "APNS: [" + identifier + "] "; //APNS ERROR FOR MESSAGE ID #" + identifier + ": ";
 			if (status == 0) return prefix + "No errors encountered";
 			if (status == 1) return prefix + "Processing error";
 			if (status == 2) return prefix + "Missing device token";
