@@ -68,8 +68,8 @@ public class NotificationTest extends TestFoundation {
 
 		if (simple) {
 
-			/* Push a Hello World! alert */
-			List<PushedNotification> notifications = Push.alert("Hello World!", keystore, password, production, token);
+			/* Push a test alert */
+			List<PushedNotification> notifications = Push.test(keystore, password, production, token);
 			printPushedNotifications(notifications);
 
 		} else if (complex) {

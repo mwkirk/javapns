@@ -36,6 +36,8 @@ public abstract class Payload {
 
 	private boolean payloadSizeEstimatedWhenAdding = false;
 
+	private int preSendConfiguration = 0;
+
 
 	/**
 	 * Construct a Payload object with a blank root JSONObject
@@ -335,6 +337,16 @@ public abstract class Payload {
 	public Payload asSimulationOnly() {
 		setExpiry(919191);
 		return this;
+	}
+
+
+	protected void setPreSendConfiguration(int preSendConfiguration) {
+		this.preSendConfiguration = preSendConfiguration;
+	}
+
+
+	protected int getPreSendConfiguration() {
+		return preSendConfiguration;
 	}
 
 }

@@ -87,6 +87,18 @@ public class PushNotificationPayload extends Payload {
 
 
 	/**
+	 * Create a special payload with a useful debugging alert message.
+	 * 
+	 * @return a ready-to-send payload
+	 */
+	public static Payload test() {
+		PushNotificationPayload payload = complex();
+		payload.setPreSendConfiguration(1);
+		return payload;
+	}
+
+
+	/**
 	 * Create an empty payload which you can configure later.
 	 * This method is usually used to create complex or custom payloads.
 	 * Note: the payload actually contains the default "aps"

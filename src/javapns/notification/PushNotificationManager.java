@@ -4,8 +4,9 @@ import java.io.*;
 import java.net.*;
 import java.nio.*;
 import java.security.*;
-import java.security.cert.*;
 import java.security.cert.Certificate;
+import java.security.cert.CertificateException;
+import java.text.*;
 import java.util.*;
 
 import javapns.communication.*;
@@ -13,6 +14,7 @@ import javapns.communication.exceptions.*;
 import javapns.devices.*;
 import javapns.devices.exceptions.*;
 import javapns.devices.implementations.basic.*;
+import javapns.notification.exceptions.*;
 
 import javax.net.ssl.*;
 import javax.security.cert.X509Certificate;
@@ -99,6 +101,7 @@ public class PushNotificationManager {
 	public void initializeConnection(AppleNotificationServer server) throws Exception {
 		this.connectionToAppleServer = new ConnectionToNotificationServer(server);
 		this.socket = connectionToAppleServer.getSSLSocket();
+
 		if (heavyDebugMode) {
 			dumpCertificateChainDescription();
 		}
@@ -122,18 +125,35 @@ public class PushNotificationManager {
 		StringBuilder buf = new StringBuilder();
 		try {
 			SSLSession session = socket.getSession();
+
 			for (Certificate certificate : session.getLocalCertificates())
 				buf.append(certificate.toString());
 
 			buf.append("\n--------------------------------------------------------------------------\n");
+
 			for (X509Certificate certificate : session.getPeerCertificateChain())
 				buf.append(certificate.toString());
+
 		} catch (Exception e) {
 			buf.append(e);
 		}
 		return buf.toString();
 	}
 
+
+	//	private boolean isCertificateForSelectedServer() {
+	//		try {
+	//			String serverToLookFor = "CN=" + this.connectionToAppleServer.getServerHost();
+	//			SSLSession session = socket.getSession();
+	//			for (X509Certificate certificate : session.getPeerCertificateChain()) {
+	//				String subject = certificate.getSubjectDN().getName();
+	//				if (subject.contains(serverToLookFor)) return true;
+	//			}
+	//			return false;
+	//		} catch (Exception e) {
+	//		}
+	//		return true;
+	//	}
 
 	/**
 	 * Initialize a connection using server settings from the previous connection.
@@ -404,9 +424,11 @@ public class PushNotificationManager {
 					logger.debug("Attempting to send notification: " + payload.toString() + "");
 					logger.debug("  to device: " + token + "");
 					notification.addTransmissionAttempt();
+					boolean streamConfirmed = false;
 					try {
 						if (!simulationMode) {
 							this.socket.getOutputStream().write(bytes);
+							streamConfirmed = true;
 						} else {
 							logger.debug("* Simulation only: would have streamed " + bytes.length + "-bytes message now..");
 						}
@@ -420,6 +442,8 @@ public class PushNotificationManager {
 					}
 					logger.debug("Flushing");
 					this.socket.getOutputStream().flush();
+					if (streamConfirmed) logger.debug("At this point, the entire " + bytes.length + "-bytes message has been streamed out successfully through the SSL connection");
+
 					success = true;
 					logger.debug("Notification sent on " + notification.getLatestTransmissionAttempt());
 					notification.setTransmissionCompleted(true);
@@ -538,12 +562,16 @@ public class PushNotificationManager {
 		byte[] deviceTokenAsBytes = new byte[deviceToken.length() / 2];
 		deviceToken = deviceToken.toUpperCase();
 		int j = 0;
-		for (int i = 0; i < deviceToken.length(); i += 2) {
-			String t = deviceToken.substring(i, i + 2);
-			int tmp = Integer.parseInt(t, 16);
-			deviceTokenAsBytes[j++] = (byte) tmp;
+		try {
+			for (int i = 0; i < deviceToken.length(); i += 2) {
+				String t = deviceToken.substring(i, i + 2);
+				int tmp = Integer.parseInt(t, 16);
+				deviceTokenAsBytes[j++] = (byte) tmp;
+			}
+		} catch (NumberFormatException e1) {
+			throw new InvalidDeviceTokenFormatException(deviceToken, e1.getMessage());
 		}
-
+		preconfigurePayload(payload, identifier, deviceToken);
 		// Create the ByteArrayOutputStream which will contain the raw interface
 		byte[] payloadAsBytes = payload.getPayloadAsBytes();
 		int size = (Byte.SIZE / Byte.SIZE) + (Character.SIZE / Byte.SIZE) + deviceTokenAsBytes.length + (Character.SIZE / Byte.SIZE) + payloadAsBytes.length;
@@ -748,4 +776,36 @@ public class PushNotificationManager {
 		heavyDebugMode = enabled;
 	}
 
+
+	private void preconfigurePayload(Payload payload, int identifier, String deviceToken) {
+		try {
+			int config = payload.getPreSendConfiguration();
+			if (payload instanceof PushNotificationPayload) {
+				PushNotificationPayload pnpayload = (PushNotificationPayload) payload;
+				if (config == 1) pnpayload.addAlert(buildDebugAlert(payload, identifier, deviceToken));
+			}
+		} catch (Exception e) {
+		}
+	}
+
+
+	private String buildDebugAlert(Payload payload, int identifier, String deviceToken) {
+		StringBuilder alert = new StringBuilder();
+		alert.append("JAVAPNS DEBUG ALERT\n");
+
+		/* Current date & time */
+		alert.append(new SimpleDateFormat("yyyy/MM/dd HH:mm:ss").format(System.currentTimeMillis()) + "\n");
+
+		/* Selected Apple server */
+		alert.append(this.connectionToAppleServer.getServerHost() + "\n");
+
+		/* Device token (shortened), Identifier and expiry */
+		int l = useEnhancedNotificationFormat ? 4 : 8;
+		alert.append("" + deviceToken.substring(0, l) + "É" + deviceToken.substring(64 - l, 64) + (useEnhancedNotificationFormat ? " [Id:" + identifier + "] " + (payload.getExpiry() <= 0 ? "No-store" : "Exp:T+" + payload.getExpiry()) : "") + "\n");
+
+		/* Format & encoding */
+		alert.append((useEnhancedNotificationFormat ? "Enhanced" : "Simple") + " format / " + payload.getCharacterEncoding() + "" + "");
+
+		return alert.toString();
+	}
 }
