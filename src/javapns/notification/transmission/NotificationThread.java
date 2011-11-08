@@ -24,7 +24,10 @@ import javapns.notification.*;
  * @author Sylvain Pedneault
  */
 public class NotificationThread extends Thread {
-
+	
+	/**
+	 * Working modes supported by Notification Threads.
+	 */
 	public static enum MODE {
 		/**
 		 * In LIST mode, the thread is given a predefined list of devices and pushes all notifications as soon as it is started.  Its work is complete and the thread ends as soon as all notifications have been sent.

@@ -38,7 +38,7 @@ public abstract class Payload {
 
 
 	/**
-	 * Constructor, instantiate the the root JSONObject
+	 * Construct a Payload object with a blank root JSONObject
 	 */
 	public Payload() {
 		super();
@@ -46,6 +46,10 @@ public abstract class Payload {
 	}
 
 
+	/**
+	 * Get the actual JSON object backing this payload.
+	 * @return a JSONObject
+	 */
 	public JSONObject getPayload() {
 		return this.payload;
 	}

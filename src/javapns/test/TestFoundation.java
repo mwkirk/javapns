@@ -46,7 +46,10 @@ class TestFoundation {
 	}
 
 
-	static void configureBasicLogging() {
+	/**
+	 * Enable Log4J with a basic default configuration (console only).
+	 */
+	public static void configureBasicLogging() {
 		try {
 			BasicConfigurator.configure();
 		} catch (Exception e) {

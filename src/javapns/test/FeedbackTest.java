@@ -16,6 +16,11 @@ import javapns.devices.*;
  */
 public class FeedbackTest extends TestFoundation {
 
+	/**
+	 * Execute this class from the command line to run tests.
+	 * 
+	 * @param args
+	 */
 	public static void main(String[] args) {
 
 		/* Verify that the test is being invoked  */
@@ -26,6 +31,10 @@ public class FeedbackTest extends TestFoundation {
 
 		/* Get a list of inactive devices */
 		feedbackTest(args);
+	}
+
+
+	private FeedbackTest() {
 	}
 
 

@@ -8,6 +8,8 @@ import javapns.notification.exceptions.*;
 /**
  * <p>An object representing the result of a push notification to a specific payload to a single device.</p>
  * 
+ * <p>If any error occurred while trying to push the notification, an exception is attached.</p>
+ * 
  * <p>If Apple's Push Notification Service returned an error-response packet, it is linked to the related PushedNotification
  * so you can find out what the actual error was.</p>
  * 
@@ -184,6 +186,8 @@ public class PushedNotification {
 	 * <p>Returns false if an error-response packet is attached and has
 	 * a non-zero status code.</p>
 	 * 
+	 * <p>Returns false if an exception is attached.</p>
+	 * 
 	 * <p>Make sure you use the Feedback Service to cleanup your list of
 	 * invalid device tokens, as Apple's documentation says.</p>
 	 * 
@@ -246,11 +250,15 @@ public class PushedNotification {
 	}
 
 
-	public void setException(Exception exception) {
+	void setException(Exception exception) {
 		this.exception = exception;
 	}
 
 
+	/**
+	 * Get the exception that occurred while trying to push this notification, if any.
+	 * @return an exception (if any was thrown)
+	 */
 	public Exception getException() {
 		return exception;
 	}

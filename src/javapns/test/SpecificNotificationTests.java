@@ -17,6 +17,11 @@ import org.json.*;
  */
 public class SpecificNotificationTests extends TestFoundation {
 
+	/**
+	 * Execute this class from the command line to run tests.
+	 * 
+	 * @param args
+	 */
 	public static void main(String[] args) {
 
 		/* Verify that the test is being invoked  */
@@ -27,6 +32,10 @@ public class SpecificNotificationTests extends TestFoundation {
 
 		/* Push an alert */
 		runTest(args);
+	}
+
+
+	private SpecificNotificationTests() {
 	}
 
 
@@ -133,7 +142,7 @@ public class SpecificNotificationTests extends TestFoundation {
 	}
 
 
-	public static void pushSpecificPayloadSize(String keystore, String password, String token, boolean production, boolean checkWhenAdding, int targetPayloadSize) throws JSONException {
+	private static void pushSpecificPayloadSize(String keystore, String password, String token, boolean production, boolean checkWhenAdding, int targetPayloadSize) throws JSONException {
 		StringBuilder buf = new StringBuilder();
 		for (int i = 0; i < targetPayloadSize - 20; i++)
 			buf.append('x');

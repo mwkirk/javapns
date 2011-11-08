@@ -5,6 +5,7 @@ import java.net.*;
 import java.nio.*;
 import java.security.*;
 import java.security.cert.*;
+import java.security.cert.Certificate;
 import java.util.*;
 
 import javapns.communication.*;
@@ -14,6 +15,7 @@ import javapns.devices.exceptions.*;
 import javapns.devices.implementations.basic.*;
 
 import javax.net.ssl.*;
+import javax.security.cert.X509Certificate;
 
 import org.apache.log4j.*;
 
@@ -40,6 +42,10 @@ public class PushNotificationManager {
 
 	/* Special identifier that tells the manager to generate a sequential identifier for each payload pushed */
 	private static final int SEQUENTIAL_IDENTIFIER = -1;
+
+	private static boolean useEnhancedNotificationFormat = true;
+
+	private static boolean heavyDebugMode = false;
 
 	/* Connection helper */
 	private ConnectionToAppleServer connectionToAppleServer;
@@ -86,28 +92,73 @@ public class PushNotificationManager {
 
 
 	/**
-	 * Initialize the connection and create a SSLSocket
-	 * @param server The Apple Server to connect to.
+	 * Initialize a connection and create a SSLSocket
+	 * @param server The Apple server to connect to.
 	 * @throws Exception 
 	 */
 	public void initializeConnection(AppleNotificationServer server) throws Exception {
 		this.connectionToAppleServer = new ConnectionToNotificationServer(server);
 		this.socket = connectionToAppleServer.getSSLSocket();
+		if (heavyDebugMode) {
+			dumpCertificateChainDescription();
+		}
 		logger.debug("Initialized Connection to Host: [" + server.getNotificationServerHost() + "] Port: [" + server.getNotificationServerPort() + "]: " + socket);
 	}
 
 
+	private void dumpCertificateChainDescription() {
+		try {
+			File file = new File("apns-certificatechain.txt");
+			FileOutputStream outf = new FileOutputStream(file);
+			DataOutputStream outd = new DataOutputStream(outf);
+			outd.writeBytes(getCertificateChainDescription());
+			outd.close();
+		} catch (Exception e) {
+		}
+	}
+
+
+	private String getCertificateChainDescription() {
+		StringBuilder buf = new StringBuilder();
+		try {
+			SSLSession session = socket.getSession();
+			for (Certificate certificate : session.getLocalCertificates())
+				buf.append(certificate.toString());
+
+			buf.append("\n--------------------------------------------------------------------------\n");
+			for (X509Certificate certificate : session.getPeerCertificateChain())
+				buf.append(certificate.toString());
+		} catch (Exception e) {
+			buf.append(e);
+		}
+		return buf.toString();
+	}
+
+
+	/**
+	 * Initialize a connection using server settings from the previous connection.
+	 * @throws Exception
+	 */
 	public void initializePreviousConnection() throws Exception {
 		initializeConnection((AppleNotificationServer) this.connectionToAppleServer.getServer());
 	}
 
 
+	/**
+	 * Stop and restart the current connection to the Apple server
+	 * @param server
+	 * @throws Exception
+	 */
 	public void restartConnection(AppleNotificationServer server) throws Exception {
 		stopConnection();
 		initializeConnection(server);
 	}
 
 
+	/**
+	 * Stop and restart the current connection to the Apple server using server settings from the previous connection.
+	 * @throws Exception
+	 */
 	private void restartPreviousConnection() throws Exception {
 		try {
 			logger.debug("Closing connection to restart previous one");
@@ -136,38 +187,43 @@ public class PushNotificationManager {
 
 
 	private int processedFailedNotifications() throws Exception {
-		logger.debug("Reading responses");
-		int responsesReceived = ResponsePacketReader.processResponses(this);
-		while (responsesReceived > 0) {
-			PushedNotification skippedNotification = null;
-			List<PushedNotification> notificationsToResend = new ArrayList<PushedNotification>();
-			boolean foundFirstFail = false;
-			for (PushedNotification notification : pushedNotifications.values()) {
-				if (foundFirstFail || !notification.isSuccessful()) {
-					if (foundFirstFail) notificationsToResend.add(notification);
-					else {
-						foundFirstFail = true;
-						skippedNotification = notification;
+		if (useEnhancedNotificationFormat) {
+			logger.debug("Reading responses");
+			int responsesReceived = ResponsePacketReader.processResponses(this);
+			while (responsesReceived > 0) {
+				PushedNotification skippedNotification = null;
+				List<PushedNotification> notificationsToResend = new ArrayList<PushedNotification>();
+				boolean foundFirstFail = false;
+				for (PushedNotification notification : pushedNotifications.values()) {
+					if (foundFirstFail || !notification.isSuccessful()) {
+						if (foundFirstFail) notificationsToResend.add(notification);
+						else {
+							foundFirstFail = true;
+							skippedNotification = notification;
+						}
 					}
 				}
-			}
-			pushedNotifications.clear();
-			int toResend = notificationsToResend.size();
-			logger.debug("Found " + toResend + " notifications that must be re-sent");
-			if (toResend > 0) {
-				logger.debug("Restarting connection to resend notifications");
-				restartPreviousConnection();
-				for (PushedNotification pushedNotification : notificationsToResend) {
-					sendNotification(pushedNotification, false);
+				pushedNotifications.clear();
+				int toResend = notificationsToResend.size();
+				logger.debug("Found " + toResend + " notifications that must be re-sent");
+				if (toResend > 0) {
+					logger.debug("Restarting connection to resend notifications");
+					restartPreviousConnection();
+					for (PushedNotification pushedNotification : notificationsToResend) {
+						sendNotification(pushedNotification, false);
+					}
+				}
+				int remaining = responsesReceived = ResponsePacketReader.processResponses(this);
+				if (remaining == 0) {
+					logger.debug("No notifications remaining to be resent");
+					return 0;
 				}
 			}
-			int remaining = responsesReceived = ResponsePacketReader.processResponses(this);
-			if (remaining == 0) {
-				logger.debug("No notifications remaining to be resent");
-				return 0;
-			}
+			return responsesReceived;
+		} else {
+			logger.debug("Not reading responses because using simple notification format");
+			return 0;
 		}
-		return responsesReceived;
 	}
 
 
@@ -496,48 +552,60 @@ public class PushNotificationManager {
 		// Write command to ByteArrayOutputStream
 		// 0 = simple
 		// 1 = enhanced
-		byte b = 1;
-		bao.write(b);
-
-		// 4 bytes identifier (which will match any error packet received later on)
-		bao.write(intTo4ByteArray(identifier));
-		message.setIdentifier(identifier);
-
-		// 4 bytes
-		int requestedExpiry = payload.getExpiry();
-		if (requestedExpiry <= 0) {
-			bao.write(intTo4ByteArray(requestedExpiry));
-			message.setExpiry(0);
+		if (useEnhancedNotificationFormat) {
+			byte b = 1;
+			bao.write(b);
 		} else {
-			long ctime = System.currentTimeMillis();
-			long ttl = requestedExpiry * 1000; // time-to-live in milliseconds
-			Long expiryDateInSeconds = ((ctime + ttl) / 1000L);
-			bao.write(intTo4ByteArray(expiryDateInSeconds.intValue()));
-			message.setExpiry(ctime + ttl);
+			byte b = 0;
+			bao.write(b);
 		}
 
+		if (useEnhancedNotificationFormat) {
+			// 4 bytes identifier (which will match any error packet received later on)
+			bao.write(intTo4ByteArray(identifier));
+			message.setIdentifier(identifier);
+
+			// 4 bytes
+			int requestedExpiry = payload.getExpiry();
+			if (requestedExpiry <= 0) {
+				bao.write(intTo4ByteArray(requestedExpiry));
+				message.setExpiry(0);
+			} else {
+				long ctime = System.currentTimeMillis();
+				long ttl = requestedExpiry * 1000; // time-to-live in milliseconds
+				Long expiryDateInSeconds = ((ctime + ttl) / 1000L);
+				bao.write(intTo4ByteArray(expiryDateInSeconds.intValue()));
+				message.setExpiry(ctime + ttl);
+			}
+		}
 		// Write the TokenLength as a 16bits unsigned int, in big endian
 		int tl = deviceTokenAsBytes.length;
-		bao.write((byte) ((tl & 0xFF00) >> 8));
-		bao.write((byte) (tl & 0xFF));
+		bao.write(intTo2ByteArray(tl));
 
 		// Write the Token in bytes
 		bao.write(deviceTokenAsBytes);
 
 		// Write the PayloadLength as a 16bits unsigned int, in big endian
 		int pl = payloadAsBytes.length;
-		int s1 = (pl & 0xFF00) >> 8;
-		int s2 = pl & 0xFF;
-		bao.write(s1);
-		bao.write(s2);
+		bao.write(intTo2ByteArray(pl));
 
 		// Finally write the Payload
 		bao.write(payloadAsBytes);
+		bao.flush();
 
-		logger.debug("Built raw message ID " + identifier);
+		byte[] bytes = bao.toByteArray();
 
-		// Return the ByteArrayOutputStream as a Byte Array
-		return bao.toByteArray();
+		if (heavyDebugMode) {
+			try {
+				FileOutputStream outf = new FileOutputStream("apns-message.bytes");
+				outf.write(bytes);
+				outf.close();
+			} catch (Exception e) {
+			}
+		}
+
+		logger.debug("Built raw message ID " + identifier + " of total length " + bytes.length);
+		return bytes;
 	}
 
 
@@ -552,6 +620,13 @@ public class PushNotificationManager {
 
 	private static final byte[] intTo4ByteArray(int value) {
 		return ByteBuffer.allocate(4).putInt(value).array();
+	}
+
+
+	private static final byte[] intTo2ByteArray(int value) {
+		int s1 = (value & 0xFF00) >> 8;
+		int s2 = value & 0xFF;
+		return new byte[] { (byte) s1, (byte) s2 };
 	}
 
 
@@ -583,29 +658,44 @@ public class PushNotificationManager {
 	}
 
 
+	/**
+	 * Set the SSL socket timeout to use.
+	 * @param sslSocketTimeout
+	 */
 	public void setSslSocketTimeout(int sslSocketTimeout) {
 		this.sslSocketTimeout = sslSocketTimeout;
 	}
 
 
+	/**
+	 * Get the SSL socket timeout currently in use.
+	 * @return the current SSL socket timeout value.
+	 */
 	public int getSslSocketTimeout() {
 		return sslSocketTimeout;
 	}
 
 
+	/**
+	 * Set whether or not to enable the "trust all server certificates" feature to simplify SSL communications.
+	 * @param trustAllServerCertificates
+	 */
 	public void setTrustAllServerCertificates(boolean trustAllServerCertificates) {
 		this.trustAllServerCertificates = trustAllServerCertificates;
 	}
 
 
-	public boolean isTrustAllServerCertificates() {
+	/**
+	 * Get the status of the "trust all server certificates" feature to simplify SSL communications.
+	 * @return the status of the "trust all server certificates" feature
+	 */
+	protected boolean isTrustAllServerCertificates() {
 		return trustAllServerCertificates;
 	}
 
 
 	/**
 	 * Return a new sequential message identifier.
-	 * 
 	 * @return a message identifier unique to this PushNotificationManager
 	 */
 	private int newMessageIdentifier() {
@@ -615,12 +705,47 @@ public class PushNotificationManager {
 	}
 
 
-	public Socket getActiveSocket() {
+	Socket getActiveSocket() {
 		return socket;
 	}
 
 
-	public Map<Integer, PushedNotification> getPushedNotifications() {
+	/**
+	 * Get the internal list of pushed notifications.
+	 * 
+	 * @return
+	 */
+	Map<Integer, PushedNotification> getPushedNotifications() {
 		return pushedNotifications;
 	}
+
+
+	/**
+	 * Enable or disable the enhanced notification format (enabled by default).
+	 * @param enabled true to enable, false to disable
+	 */
+	public static void setEnhancedNotificationFormatEnabled(boolean enabled) {
+		useEnhancedNotificationFormat = enabled;
+	}
+
+
+	/**
+	 * Check if the enhanced notification format is currently enabled.
+	 * @return the status of the enhanced notification format
+	 */
+	protected static boolean isEnhancedNotificationFormatEnabled() {
+		return useEnhancedNotificationFormat;
+	}
+
+
+	/**
+	 * Enable or disable a special heavy debug mode which causes verbose details to be written to local files.
+	 * The last raw APSN message will be written to a "apns-message.bytes" file in the working directory.
+	 * A detailed description of local and peer SSL certificates will be written to a "apns-certificatechain.txt" file in the working directory.
+	 * @param enabled true to enable, false to disable
+	 */
+	public static void setHeavyDebugMode(boolean enabled) {
+		heavyDebugMode = enabled;
+	}
+
 }

@@ -27,6 +27,11 @@ import org.json.*;
  */
 public class NotificationTest extends TestFoundation {
 
+	/**
+	 * Execute this class from the command line to run tests.
+	 * 
+	 * @param args
+	 */
 	public static void main(String[] args) {
 
 		/* Verify that the test is being invoked  */
@@ -37,6 +42,10 @@ public class NotificationTest extends TestFoundation {
 
 		/* Push an alert */
 		pushTest(args);
+	}
+
+
+	private NotificationTest() {
 	}
 
 
@@ -151,6 +160,9 @@ public class NotificationTest extends TestFoundation {
 		}
 	}
 
+	/**
+	 * A NotificationProgressListener you can use to debug NotificationThreads.
+	 */
 	public static final NotificationProgressListener DEBUGGING_PROGRESS_LISTENER = new NotificationProgressListener() {
 
 		public void eventThreadStarted(NotificationThread notificationThread) {
@@ -179,11 +191,17 @@ public class NotificationTest extends TestFoundation {
 	};
 
 
+	/**
+	 * Print to the console a comprehensive report of all pushed notifications and results.
+	 * @param notifications a raw list of pushed notifications
+	 */
 	public static void printPushedNotifications(List<PushedNotification> notifications) {
 		List<PushedNotification> failedNotifications = PushedNotification.findFailedNotifications(notifications);
 		List<PushedNotification> succesfulNotifications = PushedNotification.findSuccessfulNotifications(notifications);
 		if (failedNotifications.size() == 0) {
 			printPushedNotifications("All notifications pushed successfully (" + succesfulNotifications.size() + "):", succesfulNotifications);
+		} else if (succesfulNotifications.size() == 0) {
+			printPushedNotifications("All notifications failed (" + failedNotifications.size() + "):", failedNotifications);
 		} else {
 			printPushedNotifications("Some notifications failed (" + failedNotifications.size() + "):", failedNotifications);
 			printPushedNotifications("Others succeeded (" + succesfulNotifications.size() + "):", succesfulNotifications);
@@ -191,6 +209,11 @@ public class NotificationTest extends TestFoundation {
 	}
 
 
+	/**
+	 * Print to the console a list of pushed notifications.
+	 * @param description a title for this list of notifications
+	 * @param notifications a list of pushed notifications to print
+	 */
 	public static void printPushedNotifications(String description, List<PushedNotification> notifications) {
 		System.out.println(description);
 		for (PushedNotification notification : notifications) {
