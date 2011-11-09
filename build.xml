@@ -8,16 +8,18 @@
 	<property name="java.target" value="1.5" />
 
 	<!-- javapns version id (no spaces allowed!) -->
+	<property name="javapns.name" value="JavaPNS" />
 	<property name="javapns.level" value="2.1" />
-	<property name="javapns.status" value="_Beta_1" />
-	<property name="javapns.revision" value=" r002" />
+	<property name="javapns.status" value="_Beta_2" />
+	<property name="javapns.revision" value=" r000" />
 	<property name="javapns.version" value="${javapns.level}${javapns.status}" />
 
 	<property name="src" location="src" />
 	<property name="build" location="build" />
 	<property name="doc" location="doc" />
-	<property name="dist.jar" location="javapns_${javapns.version}.jar" />
-	<property name="doc.zip" location="javapns_${javapns.version}_javadoc.zip" />
+	<property name="dist.jar" location="${javapns.name}_${javapns.version}.jar" />
+	<property name="doc.zip" location="${javapns.name}_${javapns.version}_javadoc.zip" />
+	<property name="combined.zip" location="${javapns.name}_${javapns.version}_complete.zip" />
 
 
 	<path id="libpath">
@@ -41,7 +43,7 @@
 		<delete file="${dist.jar}" />
 		<jar jarfile="${dist.jar}" basedir="${build}">
 			<manifest>
-				<attribute name="Implementation-Title" value="javapns" />
+				<attribute name="Implementation-Title" value="${javapns.name}" />
 				<attribute name="Implementation-Version" value="${javapns.version}${javapns.revision}" />
 				<attribute name="Implementation-Reference" value="http://code.google.com/p/javapns/" />
 			</manifest>
@@ -51,8 +53,15 @@
 
 	<target name="doc" description="Generate the javadocs">
 		<javadoc sourcepath="${src}" destdir="${doc}" classpathref="libpath" overview="src/javapns/overview.html" access="public" />
-		<zip destfile="${doc.zip}" basedir="${doc}" comment="JavaPNS ${javapns.version}${javapns.revision}" />
+		<zip destfile="${doc.zip}" basedir="${doc}" comment="${javapns.name} ${javapns.version}${javapns.revision}" />
 	</target>
 
-	<target name="dist" depends="jar,doc" />
+	<target name="combine" description="Generate the combined distribution">
+		<zip destfile="${combined.zip}" comment="${javapns.name} ${javapns.version}${javapns.revision}">
+		    <fileset dir="./" includes="doc/**,src/**,lib/**"/>
+		    <fileset file="${dist.jar}"/>
+		</zip>
+	</target>
+
+	<target name="dist" depends="jar,doc,combine" />
 </project>

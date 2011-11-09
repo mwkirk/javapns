@@ -7,7 +7,6 @@ import javapns.devices.*;
 import javapns.devices.exceptions.*;
 import javapns.notification.*;
 
-import org.apache.commons.lang.*;
 import org.apache.log4j.*;
 
 /**
@@ -56,7 +55,7 @@ public class BasicDeviceFactory implements DeviceFactory {
 			throw new NullDeviceTokenException();
 		} else {
 			if (!this.devices.containsKey(id)) {
-				token = StringUtils.deleteWhitespace(token);
+				token = token.trim().replace(" ", "");
 				BasicDevice device = new BasicDevice(id, token, new Timestamp(Calendar.getInstance().getTime().getTime()));
 				this.devices.put(id, device);
 				return device;
