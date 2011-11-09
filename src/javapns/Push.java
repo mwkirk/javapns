@@ -2,7 +2,9 @@ package javapns;
 
 import java.util.*;
 
+import javapns.communication.exceptions.*;
 import javapns.devices.*;
+import javapns.devices.exceptions.*;
 import javapns.devices.implementations.basic.*;
 import javapns.feedback.*;
 import javapns.notification.*;
@@ -31,8 +33,10 @@ public class Push {
 	 * @param production true to use Apple's production servers, false to use the sandbox servers.
 	 * @param tokens one or more device tokens to push to.
 	 * @return a list of pushed notifications, each with details on transmission results and error (if any)
+	 * @throws KeystoreException thrown if an error occurs when loading the keystore
+	 * @throws CommunicationException thrown if an unrecoverable error occurs while trying to communicate with Apple servers
 	 */
-	public static List<PushedNotification> alert(String message, Object keystore, String password, boolean production, String... tokens) {
+	public static List<PushedNotification> alert(String message, Object keystore, String password, boolean production, String... tokens) throws CommunicationException, KeystoreException {
 		return payload(PushNotificationPayload.alert(message), keystore, password, production, tokens);
 	}
 
@@ -46,8 +50,10 @@ public class Push {
 	 * @param production true to use Apple's production servers, false to use the sandbox servers.
 	 * @param tokens one or more device tokens to push to.
 	 * @return a list of pushed notifications, each with details on transmission results and error (if any)
+	 * @throws KeystoreException thrown if an error occurs when loading the keystore
+	 * @throws CommunicationException thrown if an unrecoverable error occurs while trying to communicate with Apple servers
 	 */
-	public static List<PushedNotification> badge(int badge, Object keystore, String password, boolean production, String... tokens) {
+	public static List<PushedNotification> badge(int badge, Object keystore, String password, boolean production, String... tokens) throws CommunicationException, KeystoreException {
 		return payload(PushNotificationPayload.badge(badge), keystore, password, production, tokens);
 	}
 
@@ -61,8 +67,10 @@ public class Push {
 	 * @param production true to use Apple's production servers, false to use the sandbox servers.
 	 * @param tokens one or more device tokens to push to.
 	 * @return a list of pushed notifications, each with details on transmission results and error (if any)
+	 * @throws KeystoreException thrown if an error occurs when loading the keystore
+	 * @throws CommunicationException thrown if an unrecoverable error occurs while trying to communicate with Apple servers
 	 */
-	public static List<PushedNotification> sound(String sound, Object keystore, String password, boolean production, String... tokens) {
+	public static List<PushedNotification> sound(String sound, Object keystore, String password, boolean production, String... tokens) throws CommunicationException, KeystoreException {
 		return payload(PushNotificationPayload.sound(sound), keystore, password, production, tokens);
 	}
 
@@ -78,8 +86,10 @@ public class Push {
 	 * @param production true to use Apple's production servers, false to use the sandbox servers.
 	 * @param tokens one or more device tokens to push to.
 	 * @return a list of pushed notifications, each with details on transmission results and error (if any)
+	 * @throws KeystoreException thrown if an error occurs when loading the keystore
+	 * @throws CommunicationException thrown if an unrecoverable error occurs while trying to communicate with Apple servers
 	 */
-	public static List<PushedNotification> combined(String message, int badge, String sound, Object keystore, String password, boolean production, String... tokens) {
+	public static List<PushedNotification> combined(String message, int badge, String sound, Object keystore, String password, boolean production, String... tokens) throws CommunicationException, KeystoreException {
 		return payload(PushNotificationPayload.combined(message, badge, sound), keystore, password, production, tokens);
 	}
 
@@ -92,8 +102,10 @@ public class Push {
 	 * @param production true to use Apple's production servers, false to use the sandbox servers.
 	 * @param tokens one or more device tokens to push to.
 	 * @return a list of pushed notifications, each with details on transmission results and error (if any)
+	 * @throws KeystoreException thrown if an error occurs when loading the keystore
+	 * @throws CommunicationException thrown if an unrecoverable error occurs while trying to communicate with Apple servers
 	 */
-	public static List<PushedNotification> contentAvailable(Object keystore, String password, boolean production, String... tokens) {
+	public static List<PushedNotification> contentAvailable(Object keystore, String password, boolean production, String... tokens) throws CommunicationException, KeystoreException {
 		return payload(NewsstandNotificationPayload.contentAvailable(), keystore, password, production, tokens);
 	}
 
@@ -106,8 +118,10 @@ public class Push {
 	 * @param production true to use Apple's production servers, false to use the sandbox servers.
 	 * @param tokens one or more device tokens to push to.
 	 * @return a list of pushed notifications, each with details on transmission results and error (if any)
+	 * @throws KeystoreException thrown if an error occurs when loading the keystore
+	 * @throws CommunicationException thrown if an unrecoverable error occurs while trying to communicate with Apple servers
 	 */
-	public static List<PushedNotification> test(Object keystore, String password, boolean production, String... tokens) {
+	public static List<PushedNotification> test(Object keystore, String password, boolean production, String... tokens) throws CommunicationException, KeystoreException {
 		return payload(PushNotificationPayload.test(), keystore, password, production, tokens);
 	}
 
@@ -122,8 +136,10 @@ public class Push {
 	 * @param production true to use Apple's production servers, false to use the sandbox servers.
 	 * @param tokens one or more device tokens to push to.
 	 * @return a list of pushed notifications, each with details on transmission results and error (if any)
+	 * @throws KeystoreException thrown if an error occurs when loading the keystore
+	 * @throws CommunicationException thrown if an unrecoverable error occurs while trying to communicate with Apple servers
 	 */
-	public static List<PushedNotification> payload(Payload payload, Object keystore, String password, boolean production, List<String> tokens) {
+	public static List<PushedNotification> payload(Payload payload, Object keystore, String password, boolean production, List<String> tokens) throws CommunicationException, KeystoreException {
 		return payload(payload, keystore, password, production, tokens.toArray(new String[0]));
 	}
 
@@ -137,8 +153,10 @@ public class Push {
 	 * @param production true to use Apple's production servers, false to use the sandbox servers.
 	 * @param tokens one or more device tokens to push to.
 	 * @return a list of pushed notifications, each with details on transmission results and error (if any)
+	 * @throws KeystoreException thrown if an error occurs when loading the keystore
+	 * @throws CommunicationException thrown if an unrecoverable error occurs while trying to communicate with Apple servers
 	 */
-	public static List<PushedNotification> payload(Payload payload, Object keystore, String password, boolean production, String... tokens) {
+	public static List<PushedNotification> payload(Payload payload, Object keystore, String password, boolean production, String... tokens) throws CommunicationException, KeystoreException {
 		List<PushedNotification> devices = new Vector<PushedNotification>();
 		if (payload == null) return devices;
 		PushNotificationManager pushManager = new PushNotificationManager();
@@ -146,13 +164,16 @@ public class Push {
 			AppleNotificationServer server = new AppleNotificationServerBasicImpl(keystore, password, production);
 			pushManager.initializeConnection(server);
 			for (String token : tokens) {
-				Device device = new BasicDevice(token);
-				PushedNotification notification = pushManager.sendNotification(device, payload, false);
-				devices.add(notification);
+				BasicDevice device = new BasicDevice();
+				device.setToken(token);
+				try {
+					device.validateTokenFormat();
+					PushedNotification notification = pushManager.sendNotification(device, payload, false);
+					devices.add(notification);
+				} catch (InvalidDeviceTokenFormatException e) {
+					devices.add(new PushedNotification(device, payload, e));
+				}
 			}
-		} catch (Exception e) {
-			System.out.println("Error pushing notification(s):");
-			e.printStackTrace();
 		} finally {
 			try {
 				pushManager.stopConnection();
@@ -172,8 +193,10 @@ public class Push {
 	 * @param production true to use Apple's production servers, false to use the sandbox servers.
 	 * @param payloadDevicePairs a list of joint payloads and devices to push
 	 * @return a list of pushed notifications, each with details on transmission results and error (if any)
+	 * @throws KeystoreException thrown if an error occurs when loading the keystore
+	 * @throws CommunicationException thrown if an unrecoverable error occurs while trying to communicate with Apple servers
 	 */
-	public static List<PushedNotification> payloads(Object keystore, String password, boolean production, List<PayloadPerDevice> payloadDevicePairs) {
+	public static List<PushedNotification> payloads(Object keystore, String password, boolean production, List<PayloadPerDevice> payloadDevicePairs) throws CommunicationException, KeystoreException {
 		return payloads(keystore, password, production, payloadDevicePairs.toArray(new PayloadPerDevice[0]));
 	}
 
@@ -186,8 +209,10 @@ public class Push {
 	 * @param production true to use Apple's production servers, false to use the sandbox servers.
 	 * @param payloadDevicePairs a list of joint payloads and devices to push
 	 * @return a list of pushed notifications, each with details on transmission results and error (if any)
+	 * @throws KeystoreException thrown if an error occurs when loading the keystore
+	 * @throws CommunicationException thrown if an unrecoverable error occurs while trying to communicate with Apple servers
 	 */
-	public static List<PushedNotification> payloads(Object keystore, String password, boolean production, PayloadPerDevice... payloadDevicePairs) {
+	public static List<PushedNotification> payloads(Object keystore, String password, boolean production, PayloadPerDevice... payloadDevicePairs) throws CommunicationException, KeystoreException {
 		List<PushedNotification> devices = new Vector<PushedNotification>();
 		if (payloadDevicePairs == null) return devices;
 		PushNotificationManager pushManager = new PushNotificationManager();
@@ -197,12 +222,13 @@ public class Push {
 			for (PayloadPerDevice ppd : payloadDevicePairs) {
 				Device device = ppd.getDevice();
 				Payload payload = ppd.getPayload();
-				PushedNotification notification = pushManager.sendNotification(device, payload, false);
-				devices.add(notification);
+				try {
+					PushedNotification notification = pushManager.sendNotification(device, payload, false);
+					devices.add(notification);
+				} catch (Exception e) {
+					devices.add(new PushedNotification(device, payload, e));
+				}
 			}
-		} catch (Exception e) {
-			System.out.println("Error pushing notification(s):");
-			e.printStackTrace();
 		} finally {
 			try {
 				pushManager.stopConnection();

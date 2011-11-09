@@ -1,10 +1,7 @@
 package javapns.feedback;
 
-import java.io.*;
-import java.security.*;
-import java.security.cert.*;
-
 import javapns.communication.*;
+import javapns.communication.exceptions.*;
 
 /**
  * Class representing a connection to a specific Feedback Server.
@@ -13,7 +10,7 @@ import javapns.communication.*;
  */
 public class ConnectionToFeedbackServer extends ConnectionToAppleServer {
 
-	public ConnectionToFeedbackServer(AppleFeedbackServer feedbackServer) throws KeyStoreException, NoSuchAlgorithmException, CertificateException, IOException, Exception {
+	public ConnectionToFeedbackServer(AppleFeedbackServer feedbackServer) throws KeystoreException {
 		super(feedbackServer);
 	}
 

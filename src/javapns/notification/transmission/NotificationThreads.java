@@ -333,6 +333,7 @@ public class NotificationThreads extends ThreadGroup {
 	 * Wait for all threads to complete their work.
 	 * 
 	 * This method blocks and returns only when all threads are done.
+	 * When using this method, you need to check critical exceptions manually to make sure that all threads were able to do their work.
 	 * 
 	 * This method should not be used in QUEUE mode, as threads stay idle and never end.
 	 * 
@@ -345,6 +346,25 @@ public class NotificationThreads extends ThreadGroup {
 			}
 		} catch (IllegalMonitorStateException e) {
 			/* All threads are most likely already done, so we ignore this */
+		}
+	}
+
+
+	/**
+	 * Wait for all threads to complete their work, but throw any critical exception that occurs in a thread.
+	 * 
+	 * This method blocks and returns only when all threads are done.
+	 * 
+	 * This method should not be used in QUEUE mode, as threads stay idle and never end.
+	 * 
+	 * @param throwCriticalExceptions If true, this method will throw the first critical exception that occured in a thread (if any).  If false, critical exceptions will not be checked.
+	 * @throws Exception if throwCriticalExceptions is true and a critical exception did occur in a thread
+	 */
+	public void waitForAllThreads(boolean throwCriticalExceptions) throws Exception {
+		waitForAllThreads();
+		if (throwCriticalExceptions) {
+			List<Exception> exceptions = getCriticalExceptions();
+			if (exceptions.size() > 0) throw exceptions.get(0);
 		}
 	}
 
@@ -394,6 +414,24 @@ public class NotificationThreads extends ThreadGroup {
 	 */
 	public List<PushedNotification> getSuccessfulNotifications() {
 		return PushedNotification.findSuccessfulNotifications(getPushedNotifications());
+	}
+
+
+	/**
+	 * Get a list of critical exceptions that threads experienced.
+	 * Critical exceptions include CommunicationException and KeystoreException.
+	 * Exceptions related to tokens, payloads and such are *not* included here,
+	 * as they are noted in individual PushedNotification objects.
+	 * 
+	 * @return a list of critical exceptions
+	 */
+	public List<Exception> getCriticalExceptions() {
+		List<Exception> exceptions = new Vector<Exception>();
+		for (NotificationThread thread : threads) {
+			Exception exception = thread.getCriticalException();
+			if (exception != null) exceptions.add(exception);
+		}
+		return exceptions;
 	}
 
 }

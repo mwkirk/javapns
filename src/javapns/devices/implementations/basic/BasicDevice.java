@@ -1,8 +1,9 @@
 package javapns.devices.implementations.basic;
 
-import java.sql.Timestamp;
+import java.sql.*;
 
 import javapns.devices.*;
+import javapns.devices.exceptions.*;
 
 /**
  * This class is used to represent a Device (iPhone)
@@ -32,38 +33,54 @@ public class BasicDevice implements Device {
 	 * Default constructor.
 	 * @param token The device token
 	 */
-	public BasicDevice(String token) throws Exception {
+	public BasicDevice(String token) throws InvalidDeviceTokenFormatException {
+		this(token, true);
+	}
+
+
+	public BasicDevice(String token, boolean validate) throws InvalidDeviceTokenFormatException {
 		super();
 		this.deviceId = token;
 		this.token = token;
-		this.lastRegister = new Timestamp(System.currentTimeMillis());
-		
-		validateTokenFormat(token);
-		
+		try {
+			this.lastRegister = new Timestamp(System.currentTimeMillis());
+		} catch (Exception e) {
+		}
+		if (validate) validateTokenFormat(token);
+	}
+	
+	public BasicDevice() {
 	}
 
-	public static void validateTokenFormat(String token) throws IllegalArgumentException {
-		if (token==null) {
-			throw new IllegalArgumentException("Device Token is null, and not the required 64 bytes...");
+
+	public void validateTokenFormat() throws InvalidDeviceTokenFormatException {
+		validateTokenFormat(token);
+	}
+
+
+	public static void validateTokenFormat(String token) throws InvalidDeviceTokenFormatException {
+		if (token == null) {
+			throw new InvalidDeviceTokenFormatException("Device Token is null, and not the required 64 bytes...");
 		}
 		if (token.getBytes().length != 64) {
-			throw new IllegalArgumentException("Device Token has a length of [" + token.getBytes().length + "] and not the required 64 bytes!");
+			throw new InvalidDeviceTokenFormatException("Device Token has a length of [" + token.getBytes().length + "] and not the required 64 bytes!");
 		}
 	}
+
 
 	/**
 	 * Constructor
 	 * @param id The device id
 	 * @param token The device token
 	 */
-	public BasicDevice(String id, String token, Timestamp register) throws Exception {
+	public BasicDevice(String id, String token, Timestamp register) throws InvalidDeviceTokenFormatException {
 		super();
 		this.deviceId = id;
 		this.token = token;
 		this.lastRegister = register;
-		
+
 		validateTokenFormat(token);
-		
+
 	}
 
 
@@ -101,6 +118,7 @@ public class BasicDevice implements Device {
 	public void setDeviceId(String id) {
 		this.deviceId = id;
 	}
+
 
 	/**
 	 * Setter the device token

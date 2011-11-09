@@ -1,6 +1,7 @@
 package javapns.notification;
 
 import javapns.devices.*;
+import javapns.devices.exceptions.*;
 import javapns.devices.implementations.basic.*;
 
 /**
@@ -15,7 +16,7 @@ public class PayloadPerDevice {
 	private Device device;
 
 
-	public PayloadPerDevice(Payload payload, String token) throws Exception {
+	public PayloadPerDevice(Payload payload, String token) throws InvalidDeviceTokenFormatException {
 		super();
 		this.payload = payload;
 		this.device = new BasicDevice(token);

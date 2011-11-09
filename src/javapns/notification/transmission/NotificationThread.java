@@ -2,7 +2,9 @@ package javapns.notification.transmission;
 
 import java.util.*;
 
+import javapns.communication.exceptions.*;
 import javapns.devices.*;
+import javapns.devices.exceptions.*;
 import javapns.notification.*;
 
 /**
@@ -24,7 +26,7 @@ import javapns.notification.*;
  * @author Sylvain Pedneault
  */
 public class NotificationThread extends Thread {
-	
+
 	/**
 	 * Working modes supported by Notification Threads.
 	 */
@@ -58,6 +60,8 @@ public class NotificationThread extends Thread {
 
 	/* Individual payload per device */
 	private List<PayloadPerDevice> messages = new Vector<PayloadPerDevice>();
+
+	private Exception exception;
 
 
 	/**
@@ -230,17 +234,23 @@ public class NotificationThread extends Thread {
 				}
 				int message = newMessageIdentifier();
 				PushedNotification notification = notificationManager.sendNotification(device, payload, false, message);
-				System.out.println(notification);
 				notifications.add(notification);
-				if (sleepBetweenNotifications > 0) sleep(sleepBetweenNotifications);
+				try {
+					if (sleepBetweenNotifications > 0) sleep(sleepBetweenNotifications);
+				} catch (InterruptedException e) {
+				}
 				if (i != 0 && i % maxNotificationsPerConnection == 0) {
 					if (listener != null) listener.eventConnectionRestarted(this);
 					notificationManager.restartConnection(server);
 				}
 			}
 			notificationManager.stopConnection();
-		} catch (Exception e) {
-			e.printStackTrace();
+		} catch (KeystoreException e) {
+			this.exception = e;
+			if (listener != null) listener.eventCriticalException(this, e);
+		} catch (CommunicationException e) {
+			this.exception = e;
+			if (listener != null) listener.eventCriticalException(this, e);
 		}
 		busy = false;
 		if (listener != null) listener.eventThreadFinished(this);
@@ -257,19 +267,19 @@ public class NotificationThread extends Thread {
 			while (mode == MODE.QUEUE) {
 				while (!messages.isEmpty()) {
 					busy = true;
+					PayloadPerDevice message = messages.get(0);
+					messages.remove(message);
+					notificationsPushed++;
+					int messageId = newMessageIdentifier();
+					PushedNotification notification = notificationManager.sendNotification(message.getDevice(), message.getPayload(), false, messageId);
+					notifications.add(notification);
 					try {
-						PayloadPerDevice message = messages.get(0);
-						messages.remove(message);
-						notificationsPushed++;
-						int messageId = newMessageIdentifier();
-						PushedNotification notification = notificationManager.sendNotification(message.getDevice(), message.getPayload(), false, messageId);
-						notifications.add(notification);
 						if (sleepBetweenNotifications > 0) sleep(sleepBetweenNotifications);
-						if (notificationsPushed != 0 && notificationsPushed % maxNotificationsPerConnection == 0) {
-							if (listener != null) listener.eventConnectionRestarted(this);
-							notificationManager.restartConnection(server);
-						}
-					} catch (Exception e) {
+					} catch (InterruptedException e) {
+					}
+					if (notificationsPushed != 0 && notificationsPushed % maxNotificationsPerConnection == 0) {
+						if (listener != null) listener.eventConnectionRestarted(this);
+						notificationManager.restartConnection(server);
 					}
 					busy = false;
 				}
@@ -279,8 +289,12 @@ public class NotificationThread extends Thread {
 				}
 			}
 			notificationManager.stopConnection();
-		} catch (Exception e) {
-			e.printStackTrace();
+		} catch (KeystoreException e) {
+			this.exception = e;
+			if (listener != null) listener.eventCriticalException(this, e);
+		} catch (CommunicationException e) {
+			this.exception = e;
+			if (listener != null) listener.eventCriticalException(this, e);
 		}
 		if (listener != null) listener.eventThreadFinished(this);
 		/* Also notify the parent NotificationThreads, so that it can determine when all threads have finished working */
@@ -295,9 +309,9 @@ public class NotificationThread extends Thread {
 	 * 
 	 * @param payload a payload
 	 * @param token a device token
-	 * @throws Exception 
+	 * @throws InvalidDeviceTokenFormatException 
 	 */
-	public void queue(Payload payload, String token) throws Exception {
+	public void queue(Payload payload, String token) throws InvalidDeviceTokenFormatException {
 		queue(new PayloadPerDevice(payload, token));
 	}
 
@@ -370,11 +384,16 @@ public class NotificationThread extends Thread {
 	}
 
 
-	public void setDevices(List<Device> devices) {
+	void setDevices(List<Device> devices) {
 		this.devices = devices;
 	}
 
 
+	/**
+	 * Get the list of devices associated with this thread.
+	 * 
+	 * @return a list of devices
+	 */
 	public List<Device> getDevices() {
 		return devices;
 	}
@@ -486,18 +505,40 @@ public class NotificationThread extends Thread {
 	}
 
 
-	public void setMessages(List<PayloadPerDevice> messages) {
+	/**
+	 * Set the messages associated with this thread.
+	 * @param messages
+	 */
+	void setMessages(List<PayloadPerDevice> messages) {
 		this.messages = messages;
 	}
 
 
+	/**
+	 * Get the messages associated with this thread, if any.
+	 * 
+	 * @return messages
+	 */
 	public List<PayloadPerDevice> getMessages() {
 		return messages;
 	}
 
 
+	/**
+	 * Determine if this thread is busy.
+	 * @return if the thread is busy or not
+	 */
 	public boolean isBusy() {
 		return busy;
+	}
+
+
+	/**
+	 * If this thread experienced a critical exception (communication error, keystore issue, etc.), this method returns the exception.
+	 * @return a critical exception, if one occurred in this thread
+	 */
+	public Exception getCriticalException() {
+		return exception;
 	}
 
 }

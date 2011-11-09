@@ -41,6 +41,12 @@ public class PushedNotification {
 		this.identifier = identifier;
 	}
 
+	public PushedNotification(Device device, Payload payload, Exception exception) {
+		this.device = device;
+		this.payload = payload;
+		this.exception = exception;
+	}
+
 
 	/**
 	 * Returns the payload that was pushed.

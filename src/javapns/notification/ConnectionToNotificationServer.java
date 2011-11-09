@@ -1,10 +1,7 @@
 package javapns.notification;
 
-import java.io.*;
-import java.security.*;
-import java.security.cert.*;
-
 import javapns.communication.*;
+import javapns.communication.exceptions.*;
 
 /**
  * Connection details specific to the Notification Service.
@@ -13,7 +10,7 @@ import javapns.communication.*;
  */
 public class ConnectionToNotificationServer extends ConnectionToAppleServer {
 
-	public ConnectionToNotificationServer(AppleNotificationServer server) throws KeyStoreException, NoSuchAlgorithmException, CertificateException, IOException, Exception {
+	public ConnectionToNotificationServer(AppleNotificationServer server) throws KeystoreException {
 		super(server);
 	}
 

@@ -6,7 +6,7 @@ package javapns.communication.exceptions;
  *
  */
 @SuppressWarnings("serial")
-public class InvalidKeystoreFormatException extends Exception {
+public class InvalidKeystoreFormatException extends KeystoreException {
 
 	/**
 	 * Constructor

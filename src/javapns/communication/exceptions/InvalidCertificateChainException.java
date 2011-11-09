@@ -6,7 +6,7 @@ package javapns.communication.exceptions;
  *
  */
 @SuppressWarnings("serial")
-public class InvalidCertificateChainException extends Exception {
+public class InvalidCertificateChainException extends KeystoreException {
 
 	/**
 	 * Constructor

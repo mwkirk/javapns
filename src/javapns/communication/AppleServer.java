@@ -2,6 +2,8 @@ package javapns.communication;
 
 import java.io.*;
 
+import javapns.communication.exceptions.*;
+
 /**
  * Common interface of all classes representing a connection to any Apple server.
  * Use AppleNotificationServer and AppleFeedbackServer interfaces for specific connections.
@@ -14,7 +16,7 @@ public interface AppleServer {
 	 * Returns a stream to a keystore.
 	 * @return an InputStream
 	 */
-	public InputStream getKeystoreStream();
+	public InputStream getKeystoreStream() throws InvalidKeystoreReferenceException;
 
 
 	/**

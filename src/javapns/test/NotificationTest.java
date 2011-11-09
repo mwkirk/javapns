@@ -3,6 +3,7 @@ package javapns.test;
 import java.util.*;
 
 import javapns.*;
+import javapns.communication.exceptions.*;
 import javapns.devices.*;
 import javapns.devices.implementations.basic.*;
 import javapns.notification.*;
@@ -41,7 +42,13 @@ public class NotificationTest extends TestFoundation {
 		configureBasicLogging();
 
 		/* Push an alert */
-		pushTest(args);
+		try {
+			pushTest(args);
+		} catch (CommunicationException e) {
+			e.printStackTrace();
+		} catch (KeystoreException e) {
+			e.printStackTrace();
+		}
 	}
 
 
@@ -53,8 +60,10 @@ public class NotificationTest extends TestFoundation {
 	 * Push a test notification to a device, given command-line parameters.
 	 * 
 	 * @param args
+	 * @throws KeystoreException 
+	 * @throws CommunicationException 
 	 */
-	private static void pushTest(String[] args) {
+	private static void pushTest(String[] args) throws CommunicationException, KeystoreException {
 		String keystore = args[0];
 		String password = args[1];
 		String token = args[2];
@@ -127,7 +136,8 @@ public class NotificationTest extends TestFoundation {
 			System.out.println("Creating PushNotificationManager and AppleNotificationServer");
 			AppleNotificationServer server = new AppleNotificationServerBasicImpl(keystore, password, production);
 			System.out.println("Creating payload (simulation mode)");
-			Payload payload = PushNotificationPayload.alert("Hello World!");
+			//			Payload payload = PushNotificationPayload.alert("Hello World!");
+			Payload payload = PushNotificationPayload.test();
 
 			System.out.println("Generating " + devices + " fake devices");
 			List<Device> deviceList = new ArrayList<Device>(devices);
@@ -188,6 +198,11 @@ public class NotificationTest extends TestFoundation {
 		public void eventAllThreadsFinished(NotificationThreads notificationThreads) {
 			System.out.println("   [EVENT]: all threads finished: " + notificationThreads.getThreads().size());
 		}
+
+
+		public void eventCriticalException(NotificationThread notificationThread, Exception exception) {
+			System.out.println("   [EVENT]: critical exception occurred: " + exception);
+		}
 	};
 
 
@@ -197,14 +212,19 @@ public class NotificationTest extends TestFoundation {
 	 */
 	public static void printPushedNotifications(List<PushedNotification> notifications) {
 		List<PushedNotification> failedNotifications = PushedNotification.findFailedNotifications(notifications);
-		List<PushedNotification> succesfulNotifications = PushedNotification.findSuccessfulNotifications(notifications);
-		if (failedNotifications.size() == 0) {
-			printPushedNotifications("All notifications pushed successfully (" + succesfulNotifications.size() + "):", succesfulNotifications);
-		} else if (succesfulNotifications.size() == 0) {
+		List<PushedNotification> successfulNotifications = PushedNotification.findSuccessfulNotifications(notifications);
+		int failed = failedNotifications.size();
+		int successful = successfulNotifications.size();
+
+		if (successful > 0 && failed == 0) {
+			printPushedNotifications("All notifications pushed successfully (" + successfulNotifications.size() + "):", successfulNotifications);
+		} else if (successful == 0 && failed > 0) {
 			printPushedNotifications("All notifications failed (" + failedNotifications.size() + "):", failedNotifications);
+		} else if (successful == 0 && failed == 0) {
+			System.out.println("No notifications could be sent, probably because of a critical error");
 		} else {
 			printPushedNotifications("Some notifications failed (" + failedNotifications.size() + "):", failedNotifications);
-			printPushedNotifications("Others succeeded (" + succesfulNotifications.size() + "):", succesfulNotifications);
+			printPushedNotifications("Others succeeded (" + successfulNotifications.size() + "):", successfulNotifications);
 		}
 	}
 

@@ -6,7 +6,7 @@ package javapns.communication.exceptions;
  *
  */
 @SuppressWarnings("serial")
-public class InvalidKeystorePasswordException extends Exception {
+public class InvalidKeystorePasswordException extends KeystoreException {
 
 	/**
 	 * Constructor

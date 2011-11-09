@@ -3,7 +3,8 @@ package javapns.communication;
 import java.io.*;
 import java.net.*;
 import java.security.*;
-import java.security.cert.*;
+
+import javapns.communication.exceptions.*;
 
 import javax.net.ssl.*;
 
@@ -46,15 +47,10 @@ public abstract class ConnectionToAppleServer {
 	 * Builds a connection to an Apple server.
 	 * 
 	 * @param server
-	 * @throws KeyStoreException
-	 * @throws NoSuchAlgorithmException
-	 * @throws CertificateException
-	 * @throws IOException
-	 * @throws Exception
+	 * @throws KeystoreException
 	 */
-	public ConnectionToAppleServer(AppleServer server) throws KeyStoreException, NoSuchAlgorithmException, CertificateException, IOException, Exception {
+	public ConnectionToAppleServer(AppleServer server) throws KeystoreException {
 		this.server = server;
-
 		this.keyStore = KeystoreManager.loadKeystore(server);
 	}
 
@@ -64,9 +60,8 @@ public abstract class ConnectionToAppleServer {
 	}
 
 
-	public KeyStore getKeystore() throws KeyStoreException, NoSuchAlgorithmException, CertificateException, IOException, Exception {
+	public KeyStore getKeystore() {
 		return keyStore;
-		//		return KeystoreManager.loadKeystore(server);
 	}
 
 
@@ -80,27 +75,31 @@ public abstract class ConnectionToAppleServer {
 	 * 
 	 * @param trustManagers
 	 * @return SSLSocketFactory
-	 * @throws Exception 
+	 * @throws KeystoreException 
 	 */
-	protected SSLSocketFactory createSSLSocketFactoryWithTrustManagers(TrustManager[] trustManagers) throws Exception {
+	protected SSLSocketFactory createSSLSocketFactoryWithTrustManagers(TrustManager[] trustManagers) throws KeystoreException {
 
 		logger.debug("Creating SSLSocketFactory");
 		// Get a KeyManager and initialize it 
-		KeyStore keystore = getKeystore();
-		KeyManagerFactory kmf = KeyManagerFactory.getInstance(ALGORITHM);
 		try {
-			char[] password = KeystoreManager.getKeystorePasswordForSSL(server);
-			kmf.init(keystore, password);
+			KeyStore keystore = getKeystore();
+			KeyManagerFactory kmf = KeyManagerFactory.getInstance(ALGORITHM);
+			try {
+				char[] password = KeystoreManager.getKeystorePasswordForSSL(server);
+				kmf.init(keystore, password);
+			} catch (Exception e) {
+				e = KeystoreManager.wrapKeystoreException(e);
+				throw e;
+			}
+
+			// Get the SSLContext to help create SSLSocketFactory			
+			SSLContext sslc = SSLContext.getInstance(PROTOCOL);
+			sslc.init(kmf.getKeyManagers(), trustManagers, null);
+
+			return sslc.getSocketFactory();
 		} catch (Exception e) {
-			e = KeystoreManager.getSimplerSSLException(e);
-			throw e;
+			throw new KeystoreException("Keystore exception: " + e.getMessage(), e);
 		}
-
-		// Get the SSLContext to help create SSLSocketFactory			
-		SSLContext sslc = SSLContext.getInstance(PROTOCOL);
-		sslc.init(kmf.getKeyManagers(), trustManagers, null);
-
-		return sslc.getSocketFactory();
 	}
 
 
@@ -114,21 +113,14 @@ public abstract class ConnectionToAppleServer {
 	 * Return a SSLSocketFactory for creating sockets to communicate with Apple.
 	 * 
 	 * @return SSLSocketFactory
-	 * @throws KeyStoreException
-	 * @throws NoSuchProviderException
-	 * @throws CertificateException
-	 * @throws NoSuchAlgorithmException
-	 * @throws IOException
-	 * @throws UnrecoverableKeyException
-	 * @throws KeyManagementException
-	 * @throws Exception
+	 * @throws KeystoreException
 	 */
-	public SSLSocketFactory createSSLSocketFactory() throws KeyStoreException, NoSuchProviderException, CertificateException, NoSuchAlgorithmException, IOException, UnrecoverableKeyException, KeyManagementException, Exception {
+	public SSLSocketFactory createSSLSocketFactory() throws KeystoreException {
 		return createSSLSocketFactoryWithTrustManagers(new TrustManager[] { new ServerTrustingTrustManager() });
 	}
 
 
-	public SSLSocketFactory getSSLSocketFactory() throws Exception {
+	public SSLSocketFactory getSSLSocketFactory() throws KeystoreException {
 		if (socketFactory == null) socketFactory = createSSLSocketFactory();
 		return socketFactory;
 	}
@@ -137,10 +129,10 @@ public abstract class ConnectionToAppleServer {
 	/**
 	 * Create a SSLSocket which will be used to send data to Apple
 	 * @return the SSLSocket
-	 * @throws Exception 
-	 * @throws FileNotFoundException
+	 * @throws KeystoreException 
+	 * @throws CommunicationException 
 	 */
-	public SSLSocket getSSLSocket() throws Exception {
+	public SSLSocket getSSLSocket() throws KeystoreException, CommunicationException {
 		SSLSocketFactory socketFactory = getSSLSocketFactory();
 		logger.debug("Creating SSLSocket to " + getServerHost() + ":" + getServerPort());
 
@@ -151,7 +143,7 @@ public abstract class ConnectionToAppleServer {
 				return (SSLSocket) socketFactory.createSocket(getServerHost(), getServerPort());
 			}
 		} catch (Exception e) {
-			throw e;
+			throw new CommunicationException("Communication exception: " + e, e);
 		}
 	}
 

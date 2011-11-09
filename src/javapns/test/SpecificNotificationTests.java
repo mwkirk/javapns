@@ -3,6 +3,7 @@ package javapns.test;
 import java.util.*;
 
 import javapns.*;
+import javapns.communication.exceptions.*;
 import javapns.devices.*;
 import javapns.devices.implementations.basic.*;
 import javapns.notification.*;
@@ -64,13 +65,13 @@ public class SpecificNotificationTests extends TestFoundation {
 	}
 
 
-	private static void test_PushHelloWorld(String keystore, String password, String token, boolean production) {
+	private static void test_PushHelloWorld(String keystore, String password, String token, boolean production) throws CommunicationException, KeystoreException {
 		List<PushedNotification> notifications = Push.alert("Hello World!", keystore, password, production, token);
 		NotificationTest.printPushedNotifications(notifications);
 	}
 
 
-	private static void test_Issue74(String keystore, String password, String token, boolean production) throws Exception {
+	private static void test_Issue74(String keystore, String password, String token, boolean production) {
 		try {
 			System.out.println("");
 			System.out.println("TESTING 257-BYTES PAYLOAD WITH SIZE ESTIMATION ENABLED");
@@ -98,7 +99,7 @@ public class SpecificNotificationTests extends TestFoundation {
 	}
 
 
-	private static void test_Issue75(String keystore, String password, String token, boolean production) throws Exception {
+	private static void test_Issue75(String keystore, String password, String token, boolean production) {
 		try {
 			System.out.println("");
 			System.out.println("TESTING 257-BYTES PAYLOAD WITH SIZE ESTIMATION ENABLED");
@@ -142,7 +143,7 @@ public class SpecificNotificationTests extends TestFoundation {
 	}
 
 
-	private static void pushSpecificPayloadSize(String keystore, String password, String token, boolean production, boolean checkWhenAdding, int targetPayloadSize) throws JSONException {
+	private static void pushSpecificPayloadSize(String keystore, String password, String token, boolean production, boolean checkWhenAdding, int targetPayloadSize) throws CommunicationException, KeystoreException, JSONException {
 		StringBuilder buf = new StringBuilder();
 		for (int i = 0; i < targetPayloadSize - 20; i++)
 			buf.append('x');

@@ -21,4 +21,7 @@ public interface NotificationProgressListener {
 
 	public void eventAllThreadsFinished(NotificationThreads notificationThreads);
 
+
+	public void eventCriticalException(NotificationThread notificationThread, Exception exception);
+
 }

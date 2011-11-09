@@ -1,13 +1,12 @@
 package javapns.feedback;
 
 import java.io.*;
-import java.security.*;
-import java.security.cert.*;
 import java.util.*;
 
+import javapns.communication.exceptions.*;
 import javapns.devices.*;
-import javapns.devices.exceptions.*;
 import javapns.devices.implementations.basic.*;
+
 import javax.net.ssl.*;
 
 import org.apache.log4j.*;
@@ -60,13 +59,12 @@ public class FeedbackServiceManager {
 	 * @throws UnrecoverableKeyException 
 	 */
 	/**
+	 * @throws KeystoreException 
+	 * @throws CommunicationException 
 	 */
-	public LinkedList<Device> getDevices(AppleFeedbackServer server) throws UnrecoverableKeyException, KeyManagementException, KeyStoreException, NoSuchAlgorithmException, CertificateException, FileNotFoundException, IOException, NoSuchProviderException, Exception {
-		//		logger.debug( "Retrieving Devices from Host: [" + appleHost + "] Port: [" + applePort + "] with KeyStorePath [" + keyStorePath + "]/[" + keyStoreType + "]" );
-		// Create the connection and open a socket
+	public LinkedList<Device> getDevices(AppleFeedbackServer server) throws KeystoreException, CommunicationException {
 		ConnectionToFeedbackServer connectionHelper = new ConnectionToFeedbackServer(server);
 		SSLSocket socket = connectionHelper.getSSLSocket();
-
 		return getDevices(socket);
 	}
 
@@ -76,12 +74,9 @@ public class FeedbackServiceManager {
 	 * 
 	 * @param socket
 	 * @return Devices
-	 * @throws Exception 
-	 * @throws NullDeviceTokenException 
-	 * @throws NullIdException 
-	 * @throws DuplicateDeviceException 
+	 * @throws CommunicationException 
 	 */
-	private LinkedList<Device> getDevices(SSLSocket socket) throws Exception {
+	private LinkedList<Device> getDevices(SSLSocket socket) throws CommunicationException {
 
 		// Compute
 		LinkedList<Device> listDev = null;
@@ -133,7 +128,8 @@ public class FeedbackServiceManager {
 
 				// Build device and add to list
 				/* Create a basic device, as we do not want to go through the factory and create a device in the actual database... */
-				Device device = new BasicDevice(deviceToken);
+				Device device = new BasicDevice();
+				device.setToken(deviceToken);
 				listDev.add(device);
 				logger.info("FeedbackManager retrieves one device :  " + new Date(anUnsignedInt * 1000) + ";" + deviceTokenLength + ";" + deviceToken + ".");
 			}
@@ -142,11 +138,14 @@ public class FeedbackServiceManager {
 
 		} catch (Exception e) {
 			logger.debug("Caught exception fetching devices from Feedback Service");
-			throw e;
+			throw new CommunicationException("Problem communicating with Feedback service", e);
 		}
 
 		finally {
-			socket.close();
+			try {
+				socket.close();
+			} catch (Exception e) {
+			}
 		}
 		return listDev;
 	}

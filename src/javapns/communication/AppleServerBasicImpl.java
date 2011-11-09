@@ -2,6 +2,8 @@ package javapns.communication;
 
 import java.io.*;
 
+import javapns.communication.exceptions.*;
+
 /**
  * A basic and abstract implementation of the AppleServer interface
  * intended to facilitate rapid deployment.
@@ -21,23 +23,19 @@ public abstract class AppleServerBasicImpl implements AppleServer {
 	 * @param keystore The keystore to use (can be a File, an InputStream, a String for a file path, or a byte[] array)
 	 * @param password The keystore's password
 	 * @param type The keystore type (typically PKCS12)
+	 * @throws InvalidKeystoreReferenceException 
 	 * @throws FileNotFoundException
 	 */
-	public AppleServerBasicImpl(Object keystore, String password, String type) throws FileNotFoundException {
-		//this.input = KeystoreManager.streamKeystore(keystore);
+	public AppleServerBasicImpl(Object keystore, String password, String type) throws InvalidKeystoreReferenceException {
+		KeystoreManager.validateKeystore(keystore);
 		this.keystore = keystore;
 		this.password = password;
 		this.type = type;
 	}
 
 
-	public InputStream getKeystoreStream() {
-		try {
-			return KeystoreManager.streamKeystore(keystore);
-		} catch (FileNotFoundException e) {
-			e.printStackTrace();
-			return null;
-		}
+	public InputStream getKeystoreStream() throws InvalidKeystoreReferenceException {
+		return KeystoreManager.streamKeystore(keystore);
 	}
 
 
