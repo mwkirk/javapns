@@ -8,6 +8,7 @@ import javapns.devices.exceptions.*;
 import javapns.devices.implementations.basic.*;
 import javapns.feedback.*;
 import javapns.notification.*;
+import javapns.notification.transmission.*;
 
 /**
  * <p>Main class for easily interacting with the Apple Push Notification System</p>
@@ -15,29 +16,35 @@ import javapns.notification.*;
  * <p>This is the best starting point for pushing simple or custom notifications,
  * or for contacting the Feedback Service to cleanup your list of devices.</p>
  * 
- * <p>The <b>javapns</b> library also includes more advanced options such as
- * multithreaded transmission, special payloads, JPA-support, and more.
+ * <p>The <b>JavaPNS</b> library also includes more advanced options such as
+ * multithreaded transmission, special payloads, and more.
  * See the library's documentation at <a href="http://code.google.com/p/javapns/">http://code.google.com/p/javapns/</a>
  * for more information.</p>
  * 
  * @author Sylvain Pedneault
+ * @see NotificationThreads
  */
 public class Push {
+
+	private Push() {
+
+	}
+
 
 	/**
 	 * Push a simple alert to one or more devices.
 	 * 
 	 * @param message the alert message to push.
-	 * @param keystore a PKCS12 keystore provided by Apple (File, InputStream, byte[] or String for a file path)
+	 * @param keystore a keystore containing your private key and the certificate signed by Apple ({@link java.io.File}, {@link java.io.InputStream}, byte[], {@link java.security.KeyStore} or {@link java.lang.String} for a file path)
 	 * @param password the keystore's password.
 	 * @param production true to use Apple's production servers, false to use the sandbox servers.
-	 * @param tokens one or more device tokens to push to.
+	 * @param devices a list or an array of tokens or devices: {@link java.lang.String String[]}, {@link java.util.List}<{@link java.lang.String}>, {@link javapns.devices.Device Device[]}, {@link java.util.List}<{@link javapns.devices.Device}>, {@link java.lang.String} or {@link javapns.devices.Device}
 	 * @return a list of pushed notifications, each with details on transmission results and error (if any)
 	 * @throws KeystoreException thrown if an error occurs when loading the keystore
 	 * @throws CommunicationException thrown if an unrecoverable error occurs while trying to communicate with Apple servers
 	 */
-	public static List<PushedNotification> alert(String message, Object keystore, String password, boolean production, String... tokens) throws CommunicationException, KeystoreException {
-		return payload(PushNotificationPayload.alert(message), keystore, password, production, tokens);
+	public static List<PushedNotification> alert(String message, Object keystore, String password, boolean production, Object devices) throws CommunicationException, KeystoreException {
+		return sendPayload(PushNotificationPayload.alert(message), keystore, password, production, devices);
 	}
 
 
@@ -45,16 +52,16 @@ public class Push {
 	 * Push a simple badge number to one or more devices.
 	 * 
 	 * @param badge the badge number to push.
-	 * @param keystore a PKCS12 keystore provided by Apple (File, InputStream, byte[] or String for a file path)
+	 * @param keystore a keystore containing your private key and the certificate signed by Apple ({@link java.io.File}, {@link java.io.InputStream}, byte[], {@link java.security.KeyStore} or {@link java.lang.String} for a file path)
 	 * @param password the keystore's password.
 	 * @param production true to use Apple's production servers, false to use the sandbox servers.
-	 * @param tokens one or more device tokens to push to.
+	 * @param devices a list or an array of tokens or devices: {@link java.lang.String String[]}, {@link java.util.List}<{@link java.lang.String}>, {@link javapns.devices.Device Device[]}, {@link java.util.List}<{@link javapns.devices.Device}>, {@link java.lang.String} or {@link javapns.devices.Device}
 	 * @return a list of pushed notifications, each with details on transmission results and error (if any)
 	 * @throws KeystoreException thrown if an error occurs when loading the keystore
 	 * @throws CommunicationException thrown if an unrecoverable error occurs while trying to communicate with Apple servers
 	 */
-	public static List<PushedNotification> badge(int badge, Object keystore, String password, boolean production, String... tokens) throws CommunicationException, KeystoreException {
-		return payload(PushNotificationPayload.badge(badge), keystore, password, production, tokens);
+	public static List<PushedNotification> badge(int badge, Object keystore, String password, boolean production, Object devices) throws CommunicationException, KeystoreException {
+		return sendPayload(PushNotificationPayload.badge(badge), keystore, password, production, devices);
 	}
 
 
@@ -62,16 +69,16 @@ public class Push {
 	 * Push a simple sound name to one or more devices.
 	 * 
 	 * @param sound the sound name (stored in the client app) to push.
-	 * @param keystore a PKCS12 keystore provided by Apple (File, InputStream, byte[] or String for a file path)
+	 * @param keystore a keystore containing your private key and the certificate signed by Apple ({@link java.io.File}, {@link java.io.InputStream}, byte[], {@link java.security.KeyStore} or {@link java.lang.String} for a file path)
 	 * @param password the keystore's password.
 	 * @param production true to use Apple's production servers, false to use the sandbox servers.
-	 * @param tokens one or more device tokens to push to.
+	 * @param devices a list or an array of tokens or devices: {@link java.lang.String String[]}, {@link java.util.List}<{@link java.lang.String}>, {@link javapns.devices.Device Device[]}, {@link java.util.List}<{@link javapns.devices.Device}>, {@link java.lang.String} or {@link javapns.devices.Device}
 	 * @return a list of pushed notifications, each with details on transmission results and error (if any)
 	 * @throws KeystoreException thrown if an error occurs when loading the keystore
 	 * @throws CommunicationException thrown if an unrecoverable error occurs while trying to communicate with Apple servers
 	 */
-	public static List<PushedNotification> sound(String sound, Object keystore, String password, boolean production, String... tokens) throws CommunicationException, KeystoreException {
-		return payload(PushNotificationPayload.sound(sound), keystore, password, production, tokens);
+	public static List<PushedNotification> sound(String sound, Object keystore, String password, boolean production, Object devices) throws CommunicationException, KeystoreException {
+		return sendPayload(PushNotificationPayload.sound(sound), keystore, password, production, devices);
 	}
 
 
@@ -81,97 +88,95 @@ public class Push {
 	 * @param message the alert message to push (set to null to skip).
 	 * @param badge the badge number to push (set to -1 to skip).
 	 * @param sound the sound name to push (set to null to skip).
-	 * @param keystore a PKCS12 keystore provided by Apple (File, InputStream, byte[] or String for a file path)
+	 * @param keystore a keystore containing your private key and the certificate signed by Apple ({@link java.io.File}, {@link java.io.InputStream}, byte[], {@link java.security.KeyStore} or {@link java.lang.String} for a file path)
 	 * @param password the keystore's password.
 	 * @param production true to use Apple's production servers, false to use the sandbox servers.
-	 * @param tokens one or more device tokens to push to.
+	 * @param devices a list or an array of tokens or devices: {@link java.lang.String String[]}, {@link java.util.List}<{@link java.lang.String}>, {@link javapns.devices.Device Device[]}, {@link java.util.List}<{@link javapns.devices.Device}>, {@link java.lang.String} or {@link javapns.devices.Device}
 	 * @return a list of pushed notifications, each with details on transmission results and error (if any)
 	 * @throws KeystoreException thrown if an error occurs when loading the keystore
 	 * @throws CommunicationException thrown if an unrecoverable error occurs while trying to communicate with Apple servers
 	 */
-	public static List<PushedNotification> combined(String message, int badge, String sound, Object keystore, String password, boolean production, String... tokens) throws CommunicationException, KeystoreException {
-		return payload(PushNotificationPayload.combined(message, badge, sound), keystore, password, production, tokens);
+	public static List<PushedNotification> combined(String message, int badge, String sound, Object keystore, String password, boolean production, Object devices) throws CommunicationException, KeystoreException {
+		return sendPayload(PushNotificationPayload.combined(message, badge, sound), keystore, password, production, devices);
 	}
 
 
 	/**
 	 * Push a content-available notification for Newsstand.
 	 * 
-	 * @param keystore a PKCS12 keystore provided by Apple (File, InputStream, byte[] or String for a file path)
+	 * @param keystore a keystore containing your private key and the certificate signed by Apple ({@link java.io.File}, {@link java.io.InputStream}, byte[], {@link java.security.KeyStore} or {@link java.lang.String} for a file path)
 	 * @param password the keystore's password.
 	 * @param production true to use Apple's production servers, false to use the sandbox servers.
-	 * @param tokens one or more device tokens to push to.
+	 * @param devices a list or an array of tokens or devices: {@link java.lang.String String[]}, {@link java.util.List}<{@link java.lang.String}>, {@link javapns.devices.Device Device[]}, {@link java.util.List}<{@link javapns.devices.Device}>, {@link java.lang.String} or {@link javapns.devices.Device}
 	 * @return a list of pushed notifications, each with details on transmission results and error (if any)
 	 * @throws KeystoreException thrown if an error occurs when loading the keystore
 	 * @throws CommunicationException thrown if an unrecoverable error occurs while trying to communicate with Apple servers
 	 */
-	public static List<PushedNotification> contentAvailable(Object keystore, String password, boolean production, String... tokens) throws CommunicationException, KeystoreException {
-		return payload(NewsstandNotificationPayload.contentAvailable(), keystore, password, production, tokens);
+	public static List<PushedNotification> contentAvailable(Object keystore, String password, boolean production, Object devices) throws CommunicationException, KeystoreException {
+		return sendPayload(NewsstandNotificationPayload.contentAvailable(), keystore, password, production, devices);
 	}
 
 
 	/**
 	 * Push a special test notification with an alert message containing useful debugging information.
 	 * 
-	 * @param keystore a PKCS12 keystore provided by Apple (File, InputStream, byte[] or String for a file path)
+	 * @param keystore a keystore containing your private key and the certificate signed by Apple ({@link java.io.File}, {@link java.io.InputStream}, byte[], {@link java.security.KeyStore} or {@link java.lang.String} for a file path)
 	 * @param password the keystore's password.
 	 * @param production true to use Apple's production servers, false to use the sandbox servers.
-	 * @param tokens one or more device tokens to push to.
+	 * @param devices a list or an array of tokens or devices: {@link java.lang.String String[]}, {@link java.util.List}<{@link java.lang.String}>, {@link javapns.devices.Device Device[]}, {@link java.util.List}<{@link javapns.devices.Device}>, {@link java.lang.String} or {@link javapns.devices.Device}
 	 * @return a list of pushed notifications, each with details on transmission results and error (if any)
 	 * @throws KeystoreException thrown if an error occurs when loading the keystore
 	 * @throws CommunicationException thrown if an unrecoverable error occurs while trying to communicate with Apple servers
 	 */
-	public static List<PushedNotification> test(Object keystore, String password, boolean production, String... tokens) throws CommunicationException, KeystoreException {
-		return payload(PushNotificationPayload.test(), keystore, password, production, tokens);
+	public static List<PushedNotification> test(Object keystore, String password, boolean production, Object devices) throws CommunicationException, KeystoreException {
+		return sendPayload(PushNotificationPayload.test(), keystore, password, production, devices);
 	}
 
 
 	/**
-	 * Push a preformatted payload.
-	 * This is a convenience method for passing a List of tokens instead of an array.
+	 * Push a preformatted payload to a list of devices.
 	 * 
 	 * @param payload a simple or complex payload to push.
-	 * @param keystore a PKCS12 keystore provided by Apple (File, InputStream, byte[] or String for a file path)
+	 * @param keystore a keystore containing your private key and the certificate signed by Apple ({@link java.io.File}, {@link java.io.InputStream}, byte[], {@link java.security.KeyStore} or {@link java.lang.String} for a file path)
 	 * @param password the keystore's password.
 	 * @param production true to use Apple's production servers, false to use the sandbox servers.
-	 * @param tokens one or more device tokens to push to.
+	 * @param devices a list or an array of tokens or devices: {@link java.lang.String String[]}, {@link java.util.List}<{@link java.lang.String}>, {@link javapns.devices.Device Device[]}, {@link java.util.List}<{@link javapns.devices.Device}>, {@link java.lang.String} or {@link javapns.devices.Device}
 	 * @return a list of pushed notifications, each with details on transmission results and error (if any)
 	 * @throws KeystoreException thrown if an error occurs when loading the keystore
 	 * @throws CommunicationException thrown if an unrecoverable error occurs while trying to communicate with Apple servers
 	 */
-	public static List<PushedNotification> payload(Payload payload, Object keystore, String password, boolean production, List<String> tokens) throws CommunicationException, KeystoreException {
-		return payload(payload, keystore, password, production, tokens.toArray(new String[0]));
+	public static List<PushedNotification> payload(Payload payload, Object keystore, String password, boolean production, Object devices) throws CommunicationException, KeystoreException {
+		return sendPayload(payload, keystore, password, production, devices);
 	}
 
 
 	/**
-	 * Push a preformatted payload.
+	 * Push a preformatted payload to a list of devices.
 	 * 
 	 * @param payload a simple or complex payload to push.
-	 * @param keystore a PKCS12 keystore provided by Apple (File, InputStream, byte[] or String for a file path)
+	 * @param keystore a keystore containing your private key and the certificate signed by Apple ({@link java.io.File}, {@link java.io.InputStream}, byte[], {@link java.security.KeyStore} or {@link java.lang.String} for a file path)
 	 * @param password the keystore's password.
 	 * @param production true to use Apple's production servers, false to use the sandbox servers.
-	 * @param tokens one or more device tokens to push to.
+	 * @param devices a list or an array of tokens or devices: {@link java.lang.String String[]}, {@link java.util.List}<{@link java.lang.String}>, {@link javapns.devices.Device Device[]}, {@link java.util.List}<{@link javapns.devices.Device}>, {@link java.lang.String} or {@link javapns.devices.Device}
 	 * @return a list of pushed notifications, each with details on transmission results and error (if any)
 	 * @throws KeystoreException thrown if an error occurs when loading the keystore
 	 * @throws CommunicationException thrown if an unrecoverable error occurs while trying to communicate with Apple servers
 	 */
-	public static List<PushedNotification> payload(Payload payload, Object keystore, String password, boolean production, String... tokens) throws CommunicationException, KeystoreException {
-		List<PushedNotification> devices = new Vector<PushedNotification>();
-		if (payload == null) return devices;
+	private static List<PushedNotification> sendPayload(Payload payload, Object keystore, String password, boolean production, Object devices) throws CommunicationException, KeystoreException {
+		List<PushedNotification> notifications = new Vector<PushedNotification>();
+		if (payload == null) return notifications;
 		PushNotificationManager pushManager = new PushNotificationManager();
 		try {
 			AppleNotificationServer server = new AppleNotificationServerBasicImpl(keystore, password, production);
 			pushManager.initializeConnection(server);
-			for (String token : tokens) {
-				BasicDevice device = new BasicDevice();
-				device.setToken(token);
+			List<Device> deviceList = Devices.asDevices(devices);
+			for (Device device : deviceList) {
 				try {
-					device.validateTokenFormat();
+					BasicDevice.validateTokenFormat(device.getToken());
 					PushedNotification notification = pushManager.sendNotification(device, payload, false);
-					devices.add(notification);
+					notifications.add(notification);
 				} catch (InvalidDeviceTokenFormatException e) {
-					devices.add(new PushedNotification(device, payload, e));
+					notifications.add(new PushedNotification(device, payload, e));
 				}
 			}
 		} finally {
@@ -180,46 +185,72 @@ public class Push {
 			} catch (Exception e) {
 			}
 		}
-		return devices;
+		return notifications;
+	}
+
+
+	/**
+	 * Push a preformatted payload to a list of devices using multiple simulatenous threads (and connections).
+	 * 
+	 * @param payload a simple or complex payload to push.
+	 * @param keystore a keystore containing your private key and the certificate signed by Apple ({@link java.io.File}, {@link java.io.InputStream}, byte[], {@link java.security.KeyStore} or {@link java.lang.String} for a file path)
+	 * @param password the keystore's password.
+	 * @param production true to use Apple's production servers, false to use the sandbox servers.
+	 * @param numberOfThreads the number of parallel threads to use to push the notifications
+	 * @param devices a list or an array of tokens or devices: {@link java.lang.String String[]}, {@link java.util.List}<{@link java.lang.String}>, {@link javapns.devices.Device Device[]}, {@link java.util.List}<{@link javapns.devices.Device}>, {@link java.lang.String} or {@link javapns.devices.Device}
+	 * @return a list of pushed notifications, each with details on transmission results and error (if any)
+	 * @throws Exception thrown if any critical exception occurs
+	 */
+	public static List<PushedNotification> payload(Payload payload, Object keystore, String password, boolean production, int numberOfThreads, Object devices) throws Exception {
+		if (numberOfThreads <= 0) return sendPayload(payload, keystore, password, production, devices);
+		AppleNotificationServer server = new AppleNotificationServerBasicImpl(keystore, password, production);
+		List<Device> deviceList = Devices.asDevices(devices);
+		NotificationThreads threads = new NotificationThreads(server, payload, deviceList, numberOfThreads);
+		threads.start();
+		try {
+			threads.waitForAllThreads(true);
+		} catch (InterruptedException e) {
+		}
+		return threads.getPushedNotifications();
 	}
 
 
 	/**
 	 * Push a different preformatted payload for each device.
-	 * This is a convenience method for passing a List of PayloadPerDevice instead of an array.
 	 * 
-	 * @param keystore a PKCS12 keystore provided by Apple (File, InputStream, byte[] or String for a file path)
+	 * @param keystore a keystore containing your private key and the certificate signed by Apple ({@link java.io.File}, {@link java.io.InputStream}, byte[], {@link java.security.KeyStore} or {@link java.lang.String} for a file path)
 	 * @param password the keystore's password.
 	 * @param production true to use Apple's production servers, false to use the sandbox servers.
-	 * @param payloadDevicePairs a list of joint payloads and devices to push
+	 * @param payloadDevicePairs a list or an array of PayloadPerDevice: {@link java.util.List}<{@link javapns.notification.PayloadPerDevice}>, {@link javapns.notification.PayloadPerDevice PayloadPerDevice[]} or {@link javapns.notification.PayloadPerDevice}
 	 * @return a list of pushed notifications, each with details on transmission results and error (if any)
 	 * @throws KeystoreException thrown if an error occurs when loading the keystore
 	 * @throws CommunicationException thrown if an unrecoverable error occurs while trying to communicate with Apple servers
 	 */
-	public static List<PushedNotification> payloads(Object keystore, String password, boolean production, List<PayloadPerDevice> payloadDevicePairs) throws CommunicationException, KeystoreException {
-		return payloads(keystore, password, production, payloadDevicePairs.toArray(new PayloadPerDevice[0]));
+	public static List<PushedNotification> payloads(Object keystore, String password, boolean production, Object payloadDevicePairs) throws CommunicationException, KeystoreException {
+		return sendPayloads(keystore, password, production, payloadDevicePairs);
 	}
 
 
 	/**
 	 * Push a different preformatted payload for each device.
 	 * 
-	 * @param keystore a PKCS12 keystore provided by Apple (File, InputStream, byte[] or String for a file path)
+	 * @param keystore a keystore containing your private key and the certificate signed by Apple ({@link java.io.File}, {@link java.io.InputStream}, byte[], {@link java.security.KeyStore} or {@link java.lang.String} for a file path)
 	 * @param password the keystore's password.
 	 * @param production true to use Apple's production servers, false to use the sandbox servers.
-	 * @param payloadDevicePairs a list of joint payloads and devices to push
+	 * @param payloadDevicePairs a list or an array of PayloadPerDevice: {@link java.util.List}<{@link javapns.notification.PayloadPerDevice}>, {@link javapns.notification.PayloadPerDevice PayloadPerDevice[]} or {@link javapns.notification.PayloadPerDevice}
 	 * @return a list of pushed notifications, each with details on transmission results and error (if any)
 	 * @throws KeystoreException thrown if an error occurs when loading the keystore
 	 * @throws CommunicationException thrown if an unrecoverable error occurs while trying to communicate with Apple servers
 	 */
-	public static List<PushedNotification> payloads(Object keystore, String password, boolean production, PayloadPerDevice... payloadDevicePairs) throws CommunicationException, KeystoreException {
+	private static List<PushedNotification> sendPayloads(Object keystore, String password, boolean production, Object payloadDevicePairs) throws CommunicationException, KeystoreException {
 		List<PushedNotification> devices = new Vector<PushedNotification>();
 		if (payloadDevicePairs == null) return devices;
 		PushNotificationManager pushManager = new PushNotificationManager();
 		try {
 			AppleNotificationServer server = new AppleNotificationServerBasicImpl(keystore, password, production);
 			pushManager.initializeConnection(server);
-			for (PayloadPerDevice ppd : payloadDevicePairs) {
+			List<PayloadPerDevice> pairs = Devices.asPayloadsPerDevices(payloadDevicePairs);
+			for (PayloadPerDevice ppd : pairs) {
 				Device device = ppd.getDevice();
 				Payload payload = ppd.getPayload();
 				try {
@@ -261,7 +292,7 @@ public class Push {
 	 * on your device that was configured to receive notifications from the sandbox.
 	 * See the library's wiki for more information.</p>
 	 * 
-	 * @param keystore a PKCS12 keystore provided by Apple (File, InputStream, byte[] or String for a file path)
+	 * @param keystore a keystore containing your private key and the certificate signed by Apple ({@link java.io.File}, {@link java.io.InputStream}, byte[], {@link java.security.KeyStore} or {@link java.lang.String} for a file path)
 	 * @param password the keystore's password.
 	 * @param production true to use Apple's production servers, false to use the sandbox servers.
 	 * @return a list of devices that are inactive.

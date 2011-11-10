@@ -46,12 +46,24 @@ public abstract class ConnectionToAppleServer {
 	/**
 	 * Builds a connection to an Apple server.
 	 * 
-	 * @param server
+	 * @param server connection details
 	 * @throws KeystoreException
 	 */
 	public ConnectionToAppleServer(AppleServer server) throws KeystoreException {
 		this.server = server;
 		this.keyStore = KeystoreManager.loadKeystore(server);
+	}
+
+
+	/**
+	 * Builds a connection to an Apple server.
+	 * 
+	 * @param server connection details
+	 * @param keystore
+	 */
+	public ConnectionToAppleServer(AppleServer server, KeyStore keystore) {
+		this.server = server;
+		this.keyStore = keystore;
 	}
 
 

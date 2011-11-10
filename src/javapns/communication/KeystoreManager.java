@@ -2,6 +2,9 @@ package javapns.communication;
 
 import java.io.*;
 import java.security.*;
+import java.security.cert.*;
+import java.security.cert.Certificate;
+import java.util.*;
 
 import javapns.communication.exceptions.*;
 
@@ -10,7 +13,10 @@ import javapns.communication.exceptions.*;
  * 
  * @author Sylvain Pedneault
  */
-class KeystoreManager {
+public class KeystoreManager {
+
+	private static final String REVIEW_MESSAGE = " Please review the procedure for generating a keystore for JavaPNS.";
+
 
 	/**
 	 * Loads a keystore.
@@ -19,7 +25,7 @@ class KeystoreManager {
 	 * @return A loaded keystore
 	 * @throws KeystoreException
 	 */
-	public static KeyStore loadKeystore(AppleServer server) throws KeystoreException {
+	static KeyStore loadKeystore(AppleServer server) throws KeystoreException {
 		return loadKeystore(server, server.getKeystoreStream());
 	}
 
@@ -27,15 +33,30 @@ class KeystoreManager {
 	/**
 	 * Loads a keystore.
 	 * 
-	 * @param server The server the keystore is intended for
-	 * @param keystore The keystore to load (can be a File, an InputStream, a String for a file path, or a byte[] array)
-	 * @return A loaded keystore
+	 * @param server the server the keystore is intended for
+	 * @param keystore a keystore containing your private key and the certificate signed by Apple (File, InputStream, byte[], KeyStore or String for a file path)
+	 * @return a loaded keystore
 	 * @throws KeystoreException
 	 */
-	public static KeyStore loadKeystore(AppleServer server, Object keystore) throws KeystoreException {
+	static KeyStore loadKeystore(AppleServer server, Object keystore) throws KeystoreException {
+		return loadKeystore(server, keystore, false);
+	}
+
+
+	/**
+	 * Loads a keystore.
+	 * 
+	 * @param server the server the keystore is intended for
+	 * @param keystore a keystore containing your private key and the certificate signed by Apple (File, InputStream, byte[], KeyStore or String for a file path)
+	 * @param verifyKeystore whether or not to perform basic verifications on the keystore to detect common mistakes.
+	 * @return a loaded keystore
+	 * @throws KeystoreException
+	 */
+	public static KeyStore loadKeystore(AppleServer server, Object keystore, boolean verifyKeystore) throws KeystoreException {
+		if (keystore instanceof KeyStore) return (KeyStore) keystore;
 		synchronized (server) {
 			InputStream keystoreStream = streamKeystore(keystore);
-			//System.out.println("Loading keystore from "+keystore+" synchronized on "+server);
+			if (keystoreStream instanceof WrappedKeystore) return ((WrappedKeystore) keystoreStream).getKeystore();
 			KeyStore keyStore;
 			try {
 				keyStore = KeyStore.getInstance(server.getKeystoreType());
@@ -50,6 +71,70 @@ class KeystoreManager {
 				}
 			}
 			return keyStore;
+		}
+	}
+
+
+	/**
+	 * Perform basic tests on a keystore to detect common user mistakes.
+	 * If a problem is found, a KeystoreException is thrown.
+	 * If no problem is found, this method simply returns without exceptions.
+	 * 
+	 * @param server the server the keystore is intended for
+	 * @param keystore a keystore containing your private key and the certificate signed by Apple (File, InputStream, byte[], KeyStore or String for a file path)
+	 * @throws KeystoreException
+	 */
+	public static void verifyKeystoreContent(AppleServer server, Object keystore) throws KeystoreException {
+		KeyStore keystoreToValidate = null;
+		if (keystore instanceof KeyStore) keystoreToValidate = (KeyStore) keystore;
+		else keystoreToValidate = loadKeystore(server, keystore);
+		verifyKeystoreContent(keystoreToValidate);
+	}
+
+
+	/**
+	 * Perform basic tests on a keystore to detect common user mistakes (experimental).
+	 * If a problem is found, a KeystoreException is thrown.
+	 * If no problem is found, this method simply returns without exceptions.
+	 * 
+	 * @param keystore a keystore to verify
+	 * @throws KeystoreException thrown if a problem was detected
+	 */
+	public static void verifyKeystoreContent(KeyStore keystore) throws KeystoreException {
+		try {
+			int numberOfCertificates = 0;
+			Enumeration<String> aliases = keystore.aliases();
+			while (aliases.hasMoreElements()) {
+				String alias = aliases.nextElement();
+				Certificate certificate = keystore.getCertificate(alias);
+				if (certificate instanceof X509Certificate) {
+					X509Certificate xcert = (X509Certificate) certificate;
+					numberOfCertificates++;
+
+					/* Check validity dates */
+					xcert.checkValidity();
+
+					/* Check issuer */
+					boolean issuerIsApple = xcert.getIssuerDN().toString().contains("Apple");
+					if (!issuerIsApple) throw new KeystoreException("Certificate was not issued by Apple." + REVIEW_MESSAGE);
+
+					/* Check certificate key usage */
+					boolean[] keyUsage = xcert.getKeyUsage();
+					if (!keyUsage[0]) throw new KeystoreException("Certificate usage is incorrect." + REVIEW_MESSAGE);
+
+				}
+			}
+			if (numberOfCertificates == 0) throw new KeystoreException("Keystore does not contain any valid certificate." + REVIEW_MESSAGE);
+			if (numberOfCertificates > 1) throw new KeystoreException("Keystore contains too many certificates." + REVIEW_MESSAGE);
+
+		} catch (KeystoreException e) {
+			throw e;
+		} catch (CertificateExpiredException e) {
+			throw new KeystoreException("Certificate is expired. A new one must be issued.", e);
+		} catch (CertificateNotYetValidException e) {
+			throw new KeystoreException("Certificate is not yet valid. Wait until the validity period is reached or issue a new certificate.", e);
+		} catch (Exception e) {
+			/* We ignore any other exception, as we do not want to interrupt the process because of an error we did not expect. */
 		}
 	}
 
@@ -85,15 +170,15 @@ class KeystoreManager {
 	 * Allows you to provide an actual keystore as an InputStream or a byte[] array,
 	 * or a reference to a keystore file as a File object or a String path.
 	 * 
-	 * 
-	 * @param keystore InputStream, File, byte[] or String (as a file path)
+	 * @param keystore a keystore containing your private key and the certificate signed by Apple (File, InputStream, byte[], KeyStore or String for a file path)
 	 * @return A stream to the keystore.
 	 * @throws FileNotFoundException
 	 */
-	public static InputStream streamKeystore(Object keystore) throws InvalidKeystoreReferenceException {
-		validateKeystore(keystore);
+	static InputStream streamKeystore(Object keystore) throws InvalidKeystoreReferenceException {
+		validateKeystoreParameter(keystore);
 		try {
 			if (keystore instanceof InputStream) return (InputStream) keystore;
+			else if (keystore instanceof KeyStore) return new WrappedKeystore((KeyStore) keystore);
 			else if (keystore instanceof File) return new BufferedInputStream(new FileInputStream((File) keystore));
 			else if (keystore instanceof String) return new BufferedInputStream(new FileInputStream((String) keystore));
 			else if (keystore instanceof byte[]) return new ByteArrayInputStream((byte[]) keystore);
@@ -104,8 +189,15 @@ class KeystoreManager {
 	}
 
 
-	public static void validateKeystore(Object keystore) throws InvalidKeystoreReferenceException {
+	/**
+	 * Ensures that a keystore parameter is actually supported by the KeystoreManager.
+	 * 
+	 * @param keystore a keystore containing your private key and the certificate signed by Apple (File, InputStream, byte[], KeyStore or String for a file path)
+	 * @throws InvalidKeystoreReferenceException thrown if the provided keystore parameter is not supported
+	 */
+	public static void validateKeystoreParameter(Object keystore) throws InvalidKeystoreReferenceException {
 		if (keystore == null) throw new InvalidKeystoreReferenceException((Object) null);
+		if (keystore instanceof KeyStore) return;
 		if (keystore instanceof InputStream) return;
 		if (keystore instanceof String) keystore = new File((String) keystore);
 		if (keystore instanceof File) {

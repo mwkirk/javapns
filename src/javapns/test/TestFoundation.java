@@ -1,5 +1,8 @@
 package javapns.test;
 
+import javapns.communication.*;
+import javapns.notification.*;
+
 import org.apache.log4j.*;
 
 class TestFoundation {
@@ -53,6 +56,34 @@ class TestFoundation {
 		try {
 			BasicConfigurator.configure();
 		} catch (Exception e) {
+		}
+	}
+
+
+	/**
+	 * Validate a keystore reference and print the results to the console.
+	 * 
+	 * @param keystoreReference a reference to or an actual keystore
+	 * @param password password for the keystore
+	 * @param production service to use
+	 */
+	public static void verifyKeystore(Object keystoreReference, String password, boolean production) {
+		try {
+			System.out.print("Validating keystore reference: ");
+			KeystoreManager.validateKeystoreParameter(keystoreReference);
+			System.out.println("VALID  (keystore was found)");
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		if (password != null) {
+			try {
+				System.out.print("Verifying keystore content: ");
+				AppleNotificationServer server = new AppleNotificationServerBasicImpl(keystoreReference, password, production);
+				KeystoreManager.verifyKeystoreContent(server, keystoreReference);
+				System.out.println("VERIFIED  (no common mistakes detected)");
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
 		}
 	}
 

@@ -8,7 +8,9 @@ import javapns.devices.exceptions.*;
  * implementations of DeviceFactory (in-memory, JPA-backed, etc.)
  * 
  * @author Sylvain Pedneault
+ * @deprecated Phasing out DeviceFactory because it has become irrelevant in the new library architecture 
  */
+@Deprecated
 public interface DeviceFactory {
 
 	/**

@@ -75,6 +75,8 @@ public class NotificationTest extends TestFoundation {
 		int threadThreads = args.length >= 7 ? Integer.parseInt(args[6]) : 10;
 		boolean simple = !complex && !threads;
 
+		verifyKeystore(keystore, password, production);
+
 		if (simple) {
 
 			/* Push a test alert */

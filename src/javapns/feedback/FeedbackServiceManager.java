@@ -26,12 +26,15 @@ public class FeedbackServiceManager {
 
 	private boolean proxySet = false;
 
+	@Deprecated
 	private DeviceFactory deviceFactory;
 
 
 	/**
 	 * Constructs a FeedbackServiceManager with a supplied DeviceFactory.
+	 * @deprecated The DeviceFactory-based architecture is deprecated. 
 	 */
+	@Deprecated
 	public FeedbackServiceManager(DeviceFactory deviceFactory) {
 		this.setDeviceFactory(deviceFactory);
 	}
@@ -40,6 +43,7 @@ public class FeedbackServiceManager {
 	/**
 	 * Constructs a FeedbackServiceManager with a default basic DeviceFactory.
 	 */
+	@SuppressWarnings("deprecation")
 	public FeedbackServiceManager() {
 		this.setDeviceFactory(new BasicDeviceFactory());
 	}
@@ -167,11 +171,23 @@ public class FeedbackServiceManager {
 	}
 
 
+	/**
+	 * 
+	 * @param deviceFactory
+	 * @deprecated The DeviceFactory-based architecture is deprecated. 
+	 */
+	@Deprecated
 	public void setDeviceFactory(DeviceFactory deviceFactory) {
 		this.deviceFactory = deviceFactory;
 	}
 
 
+	/**
+	 * 
+	 * @return a device factory
+	 * @deprecated The DeviceFactory-based architecture is deprecated. 
+	 */
+	@Deprecated
 	public DeviceFactory getDeviceFactory() {
 		return deviceFactory;
 	}

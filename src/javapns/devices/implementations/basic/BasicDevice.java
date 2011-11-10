@@ -48,7 +48,8 @@ public class BasicDevice implements Device {
 		}
 		if (validate) validateTokenFormat(token);
 	}
-	
+
+
 	public BasicDevice() {
 	}
 

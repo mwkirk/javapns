@@ -21,8 +21,10 @@ import javapns.notification.*;
  * 
  * <p>Usage (LIST): once a NotificationThread is created using any LIST-mode constructor, invoke {@code start()} to push the payload to all devices in a separate thread.</p>
  * 
- * <p>Usage (QUEUE): once a NotificationThread is created using any QUEUE-mode constructor, invoke {@code start()} to push the payload to all devices in a separate thread.</p>
+ * <p>Usage (QUEUE): once a NotificationThread is created using any QUEUE-mode constructor, invoke {@code start()} to open a connection and wait for notifications to be queued.</p>
  * 
+ * @see NotificationThread.MODE
+ * @see NotificationThreads
  * @author Sylvain Pedneault
  */
 public class NotificationThread extends Thread {
@@ -32,11 +34,17 @@ public class NotificationThread extends Thread {
 	 */
 	public static enum MODE {
 		/**
-		 * In LIST mode, the thread is given a predefined list of devices and pushes all notifications as soon as it is started.  Its work is complete and the thread ends as soon as all notifications have been sent.
+		 * In LIST mode, the thread is given a predefined list of devices and pushes all notifications as soon as it is started.  
+		 * Its work is complete, the connection is closed and the thread ends as soon as all notifications have been sent.
+		 * This mode is appropriate when you have a large amount of notifications to send in one batch.
 		 */
 		LIST,
+
 		/**
-		 * In QUEUE mode, the thread is started with no notification to send.  It opens a connection and waits for messages to be added to its queue using the addMessageToQueue(..) method.  This lifecyle is useful for creating connection pools.
+		 * In QUEUE mode, the thread is started with an open connection and no notification to send, and waits for notifications to be queued.  
+		 * It opens a connection and waits for messages to be added to its queue using a queue(..) method.  
+		 * This mode is appropriate when you need to periodically send random individual notifications and you do not wish to open and close connections to Apple all the time (which is something Apple warns against in their documentation).
+		 * Unless your software is constantly generating large amounts of random notifications and that you absolutely need to stream them over multiple threaded connections, you should not need to create more than one NotificationThread in QUEUE mode.
 		 */
 		QUEUE
 	};
@@ -72,29 +80,14 @@ public class NotificationThread extends Thread {
 	 * @param notificationManager the notification manager to use
 	 * @param server the server to communicate with
 	 * @param payload a payload to push
-	 * @param devices a list of devices to push to
+	 * @param devices a list or an array of tokens or devices: {@link java.lang.String String[]}, {@link java.util.List}<{@link java.lang.String}>, {@link javapns.devices.Device Device[]}, {@link java.util.List}<{@link javapns.devices.Device}>, {@link java.lang.String} or {@link javapns.devices.Device}
 	 */
-	public NotificationThread(NotificationThreads threads, PushNotificationManager notificationManager, AppleNotificationServer server, Payload payload, List<Device> devices) {
-		super(threads, "javapns notification thread (" + devices.size() + ")");
+	public NotificationThread(NotificationThreads threads, PushNotificationManager notificationManager, AppleNotificationServer server, Payload payload, Object devices) {
+		super("JavaPNS " + (threads != null ? " grouped" : "standalone") + " notification thread in LIST mode");
 		this.notificationManager = notificationManager == null ? new PushNotificationManager() : notificationManager;
 		this.server = server;
 		this.payload = payload;
-		this.devices = devices;
-	}
-
-
-	/**
-	 * Create a grouped thread in LIST mode for pushing a single payload to an array of devices
-	 * and coordinating with a parent NotificationThreads object.
-	 * 
-	 * @param threads the parent NotificationThreads object that is coordinating multiple threads
-	 * @param notificationManager the notification manager to use
-	 * @param server the server to communicate with
-	 * @param payload a payload to push
-	 * @param devices a list of devices to push to
-	 */
-	public NotificationThread(NotificationThreads threads, PushNotificationManager notificationManager, AppleNotificationServer server, Payload payload, Device... devices) {
-		this(threads, notificationManager, server, payload, Arrays.asList(devices));
+		this.devices = Devices.asDevices(devices);
 	}
 
 
@@ -105,27 +98,13 @@ public class NotificationThread extends Thread {
 	 * @param threads the parent NotificationThreads object that is coordinating multiple threads
 	 * @param notificationManager the notification manager to use
 	 * @param server the server to communicate with
-	 * @param messages the messages (payload/device pairs) to push
+	 * @param messages a list or an array of PayloadPerDevice: {@link java.util.List}<{@link javapns.notification.PayloadPerDevice}>, {@link javapns.notification.PayloadPerDevice PayloadPerDevice[]} or {@link javapns.notification.PayloadPerDevice}
 	 */
-	public NotificationThread(NotificationThreads threads, PushNotificationManager notificationManager, AppleNotificationServer server, List<PayloadPerDevice> messages) {
-		super(threads, "javapns notification thread (" + messages.size() + ")");
+	public NotificationThread(NotificationThreads threads, PushNotificationManager notificationManager, AppleNotificationServer server, Object messages) {
+		super("JavaPNS " + (threads != null ? " grouped" : "standalone") + " notification thread in LIST mode");
 		this.notificationManager = notificationManager == null ? new PushNotificationManager() : notificationManager;
 		this.server = server;
-		this.messages = messages;
-	}
-
-
-	/**
-	 * Create a grouped thread in LIST mode for pushing individual payloads to an array of devices
-	 * and coordinating with a parent NotificationThreads object.
-	 * 
-	 * @param threads the parent NotificationThreads object that is coordinating multiple threads
-	 * @param notificationManager the notification manager to use
-	 * @param server the server to communicate with
-	 * @param messages the messages (payload/device pairs) to push
-	 */
-	public NotificationThread(NotificationThreads threads, PushNotificationManager notificationManager, AppleNotificationServer server, PayloadPerDevice... messages) {
-		this(threads, notificationManager, server, Arrays.asList(messages));
+		this.messages = Devices.asPayloadsPerDevices(messages);
 	}
 
 
@@ -135,23 +114,10 @@ public class NotificationThread extends Thread {
 	 * @param notificationManager the notification manager to use
 	 * @param server the server to communicate with
 	 * @param payload a payload to push
-	 * @param devices a list of devices to push to
+	 * @param devices a list or an array of tokens or devices: {@link java.lang.String String[]}, {@link java.util.List}<{@link java.lang.String}>, {@link javapns.devices.Device Device[]}, {@link java.util.List}<{@link javapns.devices.Device}>, {@link java.lang.String} or {@link javapns.devices.Device}
 	 */
-	public NotificationThread(PushNotificationManager notificationManager, AppleNotificationServer server, Payload payload, List<Device> devices) {
+	public NotificationThread(PushNotificationManager notificationManager, AppleNotificationServer server, Payload payload, Object devices) {
 		this(null, notificationManager, server, payload, devices);
-	}
-
-
-	/**
-	 * Create a standalone thread in LIST mode for pushing a single payload to an array of devices.
-	 * 
-	 * @param notificationManager the notification manager to use
-	 * @param server the server to communicate with
-	 * @param payload a payload to push
-	 * @param devices a list of devices to push to
-	 */
-	public NotificationThread(PushNotificationManager notificationManager, AppleNotificationServer server, Payload payload, Device... devices) {
-		this(notificationManager, server, payload, Arrays.asList(devices));
 	}
 
 
@@ -160,13 +126,10 @@ public class NotificationThread extends Thread {
 	 * 
 	 * @param notificationManager the notification manager to use
 	 * @param server the server to communicate with
-	 * @param messages the messages (payload/device pairs) to push
+	 * @param messages a list or an array of PayloadPerDevice: {@link java.util.List}<{@link javapns.notification.PayloadPerDevice}>, {@link javapns.notification.PayloadPerDevice PayloadPerDevice[]} or {@link javapns.notification.PayloadPerDevice}
 	 */
-	public NotificationThread(PushNotificationManager notificationManager, AppleNotificationServer server, List<PayloadPerDevice> messages) {
-		super("javapns notification thread (" + messages.size() + ")");
-		this.notificationManager = notificationManager == null ? new PushNotificationManager() : notificationManager;
-		this.server = server;
-		this.messages = messages;
+	public NotificationThread(PushNotificationManager notificationManager, AppleNotificationServer server, Object messages) {
+		this(null, notificationManager, server, messages);
 	}
 
 
@@ -178,7 +141,7 @@ public class NotificationThread extends Thread {
 	 * @param server the server to communicate with
 	 */
 	public NotificationThread(NotificationThreads threads, PushNotificationManager notificationManager, AppleNotificationServer server) {
-		super(threads, "javapns notification thread pool");
+		super("JavaPNS " + (threads != null ? " grouped" : "standalone") + " notification thread in QUEUE mode");
 		this.notificationManager = notificationManager == null ? new PushNotificationManager() : notificationManager;
 		this.server = server;
 		this.mode = MODE.QUEUE;
@@ -193,11 +156,7 @@ public class NotificationThread extends Thread {
 	 * @param server the server to communicate with
 	 */
 	public NotificationThread(PushNotificationManager notificationManager, AppleNotificationServer server) {
-		super("javapns notification thread");
-		this.notificationManager = notificationManager == null ? new PushNotificationManager() : notificationManager;
-		this.server = server;
-		this.mode = MODE.QUEUE;
-		setDaemon(true);
+		this(null, notificationManager, server);
 	}
 
 

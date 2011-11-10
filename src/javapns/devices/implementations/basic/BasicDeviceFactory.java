@@ -5,9 +5,6 @@ import java.util.*;
 
 import javapns.devices.*;
 import javapns.devices.exceptions.*;
-import javapns.notification.*;
-
-import org.apache.log4j.*;
 
 /**
  * This class implements an in-memory DeviceFactory (backed by a Map).
@@ -21,9 +18,8 @@ import org.apache.log4j.*;
  * @author Maxime Peron
  *
  */
+@Deprecated
 public class BasicDeviceFactory implements DeviceFactory {
-
-	protected static final Logger logger = PushNotificationManager.logger;
 
 	/* A map containing all the devices, identified with their id */
 	private Map<String, BasicDevice> devices;

@@ -51,8 +51,16 @@ public class ResponsePacket {
 
 
 	/**
+	 * Determine if this packet is an error-response packet.
+	 * @return true if command number is 8, false otherwise
+	 */
+	public boolean isErrorResponsePacket() {
+		return command == 8;
+	}
+
+
+	/**
 	 * Returns the response's status code <i>(see getMessage() for a human-friendly status message instead)</i>.
-	 * 
 	 * @return the response's status code
 	 */
 	public int getStatus() {
@@ -62,6 +70,17 @@ public class ResponsePacket {
 
 	protected void setStatus(int status) {
 		this.status = status;
+	}
+
+
+	/**
+	 * Determine if this packet is a valid error-response packet.
+	 * To be valid, it must be an error-response packet (command number 8) and it must have a non-zero status code.
+	 * @return true if command number is 8 and status code is not 0, false otherwise
+	 */
+	public boolean isValidErrorMessage() {
+		if (!isValidErrorMessage()) return false;
+		return status != 0;
 	}
 
 

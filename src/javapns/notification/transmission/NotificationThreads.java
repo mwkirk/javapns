@@ -14,6 +14,8 @@ import javapns.notification.*;
  * <p>You can provide a {@link javapns.notification.transmission.NotificationProgressListener} to receive events about the work being done.</p>
 
  * @author Sylvain Pedneault
+ * @see NotificationThread.MODE
+ * @see NotificationThread
  */
 public class NotificationThreads extends ThreadGroup {
 

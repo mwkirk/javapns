@@ -27,7 +27,7 @@ public abstract class AppleServerBasicImpl implements AppleServer {
 	 * @throws FileNotFoundException
 	 */
 	public AppleServerBasicImpl(Object keystore, String password, String type) throws InvalidKeystoreReferenceException {
-		KeystoreManager.validateKeystore(keystore);
+		KeystoreManager.validateKeystoreParameter(keystore);
 		this.keystore = keystore;
 		this.password = password;
 		this.type = type;

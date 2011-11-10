@@ -1,7 +1,5 @@
 package javapns.notification;
 
-import java.io.*;
-
 import javapns.communication.*;
 import javapns.communication.exceptions.*;
 
@@ -21,13 +19,12 @@ public class AppleNotificationServerBasicImpl extends AppleServerBasicImpl imple
 	 * Communication settings for interacting with Apple's default production or sandbox notification server.
 	 * This constructor uses the recommended keystore type "PCKS12".
 	 * 
-	 * @param keystore The keystore to use (can be a File, an InputStream, a String for a file path, or a byte[] array)
-	 * @param password The keystore's password
+	 * @param keystore a keystore containing your private key and the certificate signed by Apple (File, InputStream, byte[], KeyStore or String for a file path)
+	 * @param password the keystore's password
 	 * @param production true to use Apple's production servers, false to use the sandbox
 	 * @throws InvalidKeystoreReferenceException 
-	 * @throws FileNotFoundException
 	 */
-	public AppleNotificationServerBasicImpl(Object keystore, String password, boolean production) throws InvalidKeystoreReferenceException  {
+	public AppleNotificationServerBasicImpl(Object keystore, String password, boolean production) throws InvalidKeystoreReferenceException {
 		this(keystore, password, ConnectionToAppleServer.KEYSTORE_TYPE_PKCS12, production);
 	}
 
@@ -35,14 +32,13 @@ public class AppleNotificationServerBasicImpl extends AppleServerBasicImpl imple
 	/**
 	 * Communication settings for interacting with Apple's default production or sandbox notification server.
 	 * 
-	 * @param keystore The keystore to use (can be a File, an InputStream, a String for a file path, or a byte[] array)
-	 * @param password The keystore's password
-	 * @param type The keystore's type
+	 * @param keystore a keystore containing your private key and the certificate signed by Apple (File, InputStream, byte[], KeyStore or String for a file path)
+	 * @param password the keystore's password
+	 * @param type the keystore's type
 	 * @param production true to use Apple's production servers, false to use the sandbox
 	 * @throws InvalidKeystoreReferenceException 
-	 * @throws FileNotFoundException
 	 */
-	public AppleNotificationServerBasicImpl(Object keystore, String password, String type, boolean production) throws InvalidKeystoreReferenceException  {
+	public AppleNotificationServerBasicImpl(Object keystore, String password, String type, boolean production) throws InvalidKeystoreReferenceException {
 		this(keystore, password, type, production ? PRODUCTION_HOST : DEVELOPMENT_HOST, production ? PRODUCTION_PORT : DEVELOPMENT_PORT);
 	}
 
@@ -50,15 +46,14 @@ public class AppleNotificationServerBasicImpl extends AppleServerBasicImpl imple
 	/**
 	 * Communication settings for interacting with a specific Apple Push Notification Server.
 	 * 
-	 * @param keystore The keystore to use (can be a File, an InputStream, a String for a file path, or a byte[] array)
-	 * @param password The keystore's password
-	 * @param type The keystore's type
-	 * @param host A specific APNS host
-	 * @param port A specific APNS port
+	 * @param keystore a keystore containing your private key and the certificate signed by Apple (File, InputStream, byte[], KeyStore or String for a file path)
+	 * @param password the keystore's password
+	 * @param type the keystore's type
+	 * @param host a specific APNS host
+	 * @param port a specific APNS port
 	 * @throws InvalidKeystoreReferenceException 
-	 * @throws FileNotFoundException
 	 */
-	public AppleNotificationServerBasicImpl(Object keystore, String password, String type, String host, int port) throws InvalidKeystoreReferenceException  {
+	public AppleNotificationServerBasicImpl(Object keystore, String password, String type, String host, int port) throws InvalidKeystoreReferenceException {
 		super(keystore, password, type);
 		this.host = host;
 		this.port = port;

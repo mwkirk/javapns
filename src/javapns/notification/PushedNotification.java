@@ -41,6 +41,7 @@ public class PushedNotification {
 		this.identifier = identifier;
 	}
 
+
 	public PushedNotification(Device device, Payload payload, Exception exception) {
 		this.device = device;
 		this.payload = payload;
@@ -202,8 +203,7 @@ public class PushedNotification {
 	public boolean isSuccessful() {
 		if (!transmissionCompleted) return false;
 		if (response == null) return true;
-		if (response.getCommand() != 8) return true;
-		if (response.getStatus() == 0) return true;
+		if (!response.isValidErrorMessage()) return true;
 		return false;
 	}
 
