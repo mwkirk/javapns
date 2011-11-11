@@ -11,7 +11,7 @@
 	<property name="javapns.name" value="JavaPNS" />
 	<property name="javapns.level" value="2.1" />
 	<property name="javapns.status" value="_Beta_2" />
-	<property name="javapns.revision" value=" r002" />
+	<property name="javapns.revision" value=" r003" />
 	<property name="javapns.version" value="${javapns.level}${javapns.status}" />
 
 	<property name="src" location="src" />

@@ -3,6 +3,7 @@ package javapns.notification.transmission;
 import java.util.*;
 
 import javapns.devices.*;
+import javapns.devices.exceptions.*;
 import javapns.notification.*;
 
 /**
@@ -17,10 +18,11 @@ import javapns.notification.*;
  * @see NotificationThread.MODE
  * @see NotificationThread
  */
-public class NotificationThreads extends ThreadGroup {
+public class NotificationThreads extends ThreadGroup implements PushQueue {
 
 	private List<NotificationThread> threads = new Vector<NotificationThread>();
 	private NotificationProgressListener listener;
+	private boolean started = false;
 	private int threadsRunning = 0;
 	private int nextThread = 0;
 	private Object finishPoint = new Object();
@@ -135,42 +137,20 @@ public class NotificationThreads extends ThreadGroup {
 	}
 
 
-	/**
-	 * Add a message to the next available thread's queue.
-	 * 
-	 * This method has no effect if the thread is not in QUEUE mode.
-	 * 
-	 * @param payload a payload
-	 * @param token a device token
-	 * @return the thread to which the message queued
-	 * @throws Exception 
-	 */
-	public NotificationThread queue(Payload payload, String token) throws Exception {
-		return queue(new PayloadPerDevice(payload, token));
+	public PushQueue add(Payload payload, String token) throws InvalidDeviceTokenFormatException {
+		return add(new PayloadPerDevice(payload, token));
 	}
 
 
-	/**
-	 * Add a message to the next available thread's queue.
-	 * 
-	 * @param payload a payload
-	 * @param device a device
-	 * @return the thread to which the message queued
-	 */
-	public NotificationThread queue(Payload payload, Device device) {
-		return queue(new PayloadPerDevice(payload, device));
+	public PushQueue add(Payload payload, Device device) {
+		return add(new PayloadPerDevice(payload, device));
 	}
 
 
-	/**
-	 * Add a message to the next available thread's queue.
-	 * 
-	 * @param message the message to queue
-	 * @return the thread to which the message queued
-	 */
-	public NotificationThread queue(PayloadPerDevice message) {
+	public PushQueue add(PayloadPerDevice message) {
+		start(); // just in case start() was not invoked before
 		NotificationThread targetThread = getNextAvailableThread();
-		targetThread.queue(message);
+		targetThread.add(message);
 		return targetThread;
 	}
 
@@ -235,7 +215,9 @@ public class NotificationThreads extends ThreadGroup {
 	 * This method returns immediately, as all threads start working on their own.
 	 * To wait until all threads are finished, use the waitForAllThreads() method.
 	 */
-	public final synchronized NotificationThreads start() {
+	public synchronized NotificationThreads start() {
+		if (started) return this;
+		started = true;
 		if (threadsRunning > 0) throw new IllegalStateException("NotificationThreads already started (" + threadsRunning + " still running)");
 		assignThreadsNumbers();
 		for (NotificationThread thread : threads) {

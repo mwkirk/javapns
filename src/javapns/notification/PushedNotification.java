@@ -252,6 +252,9 @@ public class PushedNotification {
 		if (response != null) {
 			msg.append("  " + response.getMessage());
 		}
+		if (exception != null) {
+			msg.append("  " + exception);
+		}
 		return msg.toString();
 	}
 

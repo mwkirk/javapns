@@ -12,6 +12,7 @@ import javapns.communication.exceptions.*;
 import javapns.devices.*;
 import javapns.devices.exceptions.*;
 import javapns.devices.implementations.basic.*;
+import javapns.notification.exceptions.*;
 
 import javax.net.ssl.*;
 import javax.security.cert.X509Certificate;
@@ -364,6 +365,13 @@ public class PushNotificationManager {
 		try {
 			Device device = notification.getDevice();
 			Payload payload = notification.getPayload();
+			try {
+				payload.verifyPayloadIsNotEmpty();
+			} catch (IllegalArgumentException e) {
+				throw new PayloadIsEmptyException();
+			} catch (Exception e) {
+			}
+
 			if (notification.getIdentifier() <= 0) notification.setIdentifier(newMessageIdentifier());
 			if (!pushedNotifications.containsKey(notification.getIdentifier())) pushedNotifications.put(notification.getIdentifier(), notification);
 			int identifier = notification.getIdentifier();
@@ -441,7 +449,8 @@ public class PushNotificationManager {
 		} catch (Exception ex) {
 
 			notification.setException(ex);
-			logger.error("Delivery error", ex);
+			logger.error("Delivery error: " + ex);
+//			logger.error("Delivery error", ex);
 			try {
 				if (closeAfter) {
 					logger.error("Closing connection after error");

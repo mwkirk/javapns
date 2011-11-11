@@ -27,7 +27,7 @@ import javapns.notification.*;
  * @see NotificationThreads
  * @author Sylvain Pedneault
  */
-public class NotificationThread extends Thread {
+public class NotificationThread implements Runnable, PushQueue {
 
 	/**
 	 * Working modes supported by Notification Threads.
@@ -51,6 +51,8 @@ public class NotificationThread extends Thread {
 
 	private static final int DEFAULT_MAXNOTIFICATIONSPERCONNECTION = 200;
 
+	private Thread thread;
+	private boolean started = false;
 	private PushNotificationManager notificationManager;
 	private AppleNotificationServer server;
 	private int maxNotificationsPerConnection = DEFAULT_MAXNOTIFICATIONSPERCONNECTION;
@@ -83,7 +85,7 @@ public class NotificationThread extends Thread {
 	 * @param devices a list or an array of tokens or devices: {@link java.lang.String String[]}, {@link java.util.List}<{@link java.lang.String}>, {@link javapns.devices.Device Device[]}, {@link java.util.List}<{@link javapns.devices.Device}>, {@link java.lang.String} or {@link javapns.devices.Device}
 	 */
 	public NotificationThread(NotificationThreads threads, PushNotificationManager notificationManager, AppleNotificationServer server, Payload payload, Object devices) {
-		super("JavaPNS " + (threads != null ? " grouped" : "standalone") + " notification thread in LIST mode");
+		this.thread = new Thread(this, "JavaPNS " + (threads != null ? " grouped" : "standalone") + " notification thread in LIST mode");
 		this.notificationManager = notificationManager == null ? new PushNotificationManager() : notificationManager;
 		this.server = server;
 		this.payload = payload;
@@ -101,7 +103,7 @@ public class NotificationThread extends Thread {
 	 * @param messages a list or an array of PayloadPerDevice: {@link java.util.List}<{@link javapns.notification.PayloadPerDevice}>, {@link javapns.notification.PayloadPerDevice PayloadPerDevice[]} or {@link javapns.notification.PayloadPerDevice}
 	 */
 	public NotificationThread(NotificationThreads threads, PushNotificationManager notificationManager, AppleNotificationServer server, Object messages) {
-		super("JavaPNS " + (threads != null ? " grouped" : "standalone") + " notification thread in LIST mode");
+		this.thread = new Thread(this, "JavaPNS " + (threads != null ? " grouped" : "standalone") + " notification thread in LIST mode");
 		this.notificationManager = notificationManager == null ? new PushNotificationManager() : notificationManager;
 		this.server = server;
 		this.messages = Devices.asPayloadsPerDevices(messages);
@@ -141,11 +143,11 @@ public class NotificationThread extends Thread {
 	 * @param server the server to communicate with
 	 */
 	public NotificationThread(NotificationThreads threads, PushNotificationManager notificationManager, AppleNotificationServer server) {
-		super("JavaPNS " + (threads != null ? " grouped" : "standalone") + " notification thread in QUEUE mode");
+		this.thread = new Thread(this, "JavaPNS " + (threads != null ? " grouped" : "standalone") + " notification thread in QUEUE mode");
 		this.notificationManager = notificationManager == null ? new PushNotificationManager() : notificationManager;
 		this.server = server;
 		this.mode = MODE.QUEUE;
-		setDaemon(true);
+		this.thread.setDaemon(true);
 	}
 
 
@@ -160,6 +162,35 @@ public class NotificationThread extends Thread {
 	}
 
 
+	/**
+	 * Create a standalone thread in QUEUE mode, awaiting messages to push.
+	 * 
+	 * @param server the server to communicate with
+	 */
+	public NotificationThread(AppleNotificationServer server) {
+		this(null, new PushNotificationManager(), server);
+	}
+
+
+	/**
+	 * Start the transmission thread.
+	 * 
+	 * This method returns immediately, as the thread starts working on its own.
+	 */
+	public synchronized NotificationThread start() {
+		if (started) return this;
+		started = true;
+		try {
+			this.thread.start();
+		} catch (IllegalStateException e) {
+		}
+		return this;
+	}
+
+
+	/**
+	 * Run method for the thread; do not call this method directly.
+	 */
 	public void run() {
 		switch (mode) {
 			case LIST:
@@ -175,10 +206,10 @@ public class NotificationThread extends Thread {
 
 
 	private void runList() {
-		int total = size();
 		if (listener != null) listener.eventThreadStarted(this);
 		busy = true;
 		try {
+			int total = size();
 			notificationManager.initializeConnection(server);
 			for (int i = 0; i < total; i++) {
 				Device device;
@@ -195,7 +226,7 @@ public class NotificationThread extends Thread {
 				PushedNotification notification = notificationManager.sendNotification(device, payload, false, message);
 				notifications.add(notification);
 				try {
-					if (sleepBetweenNotifications > 0) sleep(sleepBetweenNotifications);
+					if (sleepBetweenNotifications > 0) Thread.sleep(sleepBetweenNotifications);
 				} catch (InterruptedException e) {
 				}
 				if (i != 0 && i % maxNotificationsPerConnection == 0) {
@@ -214,7 +245,7 @@ public class NotificationThread extends Thread {
 		busy = false;
 		if (listener != null) listener.eventThreadFinished(this);
 		/* Also notify the parent NotificationThreads, so that it can determine when all threads have finished working */
-		if (getThreadGroup() instanceof NotificationThreads) ((NotificationThreads) getThreadGroup()).threadFinished(this);
+		if (this.thread.getThreadGroup() instanceof NotificationThreads) ((NotificationThreads) this.thread.getThreadGroup()).threadFinished(this);
 	}
 
 
@@ -233,7 +264,7 @@ public class NotificationThread extends Thread {
 					PushedNotification notification = notificationManager.sendNotification(message.getDevice(), message.getPayload(), false, messageId);
 					notifications.add(notification);
 					try {
-						if (sleepBetweenNotifications > 0) sleep(sleepBetweenNotifications);
+						if (sleepBetweenNotifications > 0) Thread.sleep(sleepBetweenNotifications);
 					} catch (InterruptedException e) {
 					}
 					if (notificationsPushed != 0 && notificationsPushed % maxNotificationsPerConnection == 0) {
@@ -243,7 +274,7 @@ public class NotificationThread extends Thread {
 					busy = false;
 				}
 				try {
-					sleep(10 * 1000);
+					Thread.sleep(10 * 1000);
 				} catch (Exception e) {
 				}
 			}
@@ -257,51 +288,28 @@ public class NotificationThread extends Thread {
 		}
 		if (listener != null) listener.eventThreadFinished(this);
 		/* Also notify the parent NotificationThreads, so that it can determine when all threads have finished working */
-		if (getThreadGroup() instanceof NotificationThreads) ((NotificationThreads) getThreadGroup()).threadFinished(this);
+		if (this.thread.getThreadGroup() instanceof NotificationThreads) ((NotificationThreads) this.thread.getThreadGroup()).threadFinished(this);
 	}
 
 
-	/**
-	 * Add a message to this thread's queue.  The thread will pick it up and push it asynchroneously.
-	 * 
-	 * This method has no effect if the thread is not in QUEUE mode.
-	 * 
-	 * @param payload a payload
-	 * @param token a device token
-	 * @throws InvalidDeviceTokenFormatException 
-	 */
-	public void queue(Payload payload, String token) throws InvalidDeviceTokenFormatException {
-		queue(new PayloadPerDevice(payload, token));
+	public PushQueue add(Payload payload, String token) throws InvalidDeviceTokenFormatException {
+		return add(new PayloadPerDevice(payload, token));
 	}
 
 
-	/**
-	 * Add a message to this thread's queue.  The thread will pick it up and push it asynchroneously.
-	 * 
-	 * This method has no effect if the thread is not in QUEUE mode.
-	 * 
-	 * @param payload a payload
-	 * @param device a device
-	 */
-	public void queue(Payload payload, Device device) {
-		queue(new PayloadPerDevice(payload, device));
+	public PushQueue add(Payload payload, Device device) {
+		return add(new PayloadPerDevice(payload, device));
 	}
 
 
-	/**
-	 * Add a message to this thread's queue.  The thread will pick it up and push it asynchroneously.
-	 * 
-	 * This method has no effect if the thread is not in QUEUE mode.
-	 * 
-	 * @param message a payload/device pair
-	 */
-	public void queue(PayloadPerDevice message) {
-		if (mode != MODE.QUEUE) return;
+	public PushQueue add(PayloadPerDevice message) {
+		if (mode != MODE.QUEUE) return this;
 		try {
 			messages.add(message);
-			this.interrupt();
+			this.thread.interrupt();
 		} catch (Exception e) {
 		}
+		return this;
 	}
 
 
@@ -498,6 +506,18 @@ public class NotificationThread extends Thread {
 	 */
 	public Exception getCriticalException() {
 		return exception;
+	}
+
+
+	/**
+	 * Wrap a critical exception (if any occurred) into a List to satisfy the NotificationQueue interface contract.
+	 * 
+	 * @return a list containing a critical exception, if any occurred
+	 */
+	public List<Exception> getCriticalExceptions() {
+		List<Exception> exceptions = new Vector<Exception>(exception == null ? 0 : 1);
+		if (exception != null) exceptions.add(exception);
+		return exceptions;
 	}
 
 }

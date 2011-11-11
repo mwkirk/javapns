@@ -25,6 +25,7 @@ public class PushNotificationPayload extends Payload {
 	 * @return a ready-to-send payload
 	 */
 	public static Payload alert(String message) {
+		if (message == null) throw new IllegalArgumentException("Alert cannot be null");
 		PushNotificationPayload payload = complex();
 		try {
 			payload.addAlert(message);
@@ -57,6 +58,7 @@ public class PushNotificationPayload extends Payload {
 	 * @return a ready-to-send payload
 	 */
 	public static Payload sound(String sound) {
+		if (sound == null) throw new IllegalArgumentException("Sound name cannot be null");
 		PushNotificationPayload payload = complex();
 		try {
 			payload.addSound(sound);
@@ -75,6 +77,7 @@ public class PushNotificationPayload extends Payload {
 	 * @return a ready-to-send payload
 	 */
 	public static Payload combined(String message, int badge, String sound) {
+		if (message == null && badge < 0 && sound == null) throw new IllegalArgumentException("Must provide at least one non-null argument");
 		PushNotificationPayload payload = complex();
 		try {
 			if (message != null) payload.addAlert(message);
@@ -309,4 +312,8 @@ public class PushNotificationPayload extends Payload {
 		return MAXIMUM_PAYLOAD_LENGTH;
 	}
 
+
+	void verifyPayloadIsNotEmpty() {
+		if (toString().equals("{\"aps\":{}}")) throw new IllegalArgumentException("Payload cannot be empty");
+	}
 }

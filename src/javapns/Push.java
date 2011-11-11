@@ -216,6 +216,26 @@ public class Push {
 
 
 	/**
+	 * Build and start an asynchronous queue for sending notifications later without opening and closing connections.
+	 * The returned queue is not started, meaning that underlying threads and connections are not initialized.
+	 * The queue will start if you invoke its start() method or one of the add() methods.
+	 * Once the queue is started, its underlying thread(s) and connection(s) will remain active until the program ends.
+	 * 
+	 * @param keystore a keystore containing your private key and the certificate signed by Apple ({@link java.io.File}, {@link java.io.InputStream}, byte[], {@link java.security.KeyStore} or {@link java.lang.String} for a file path)
+	 * @param password the keystore's password.
+	 * @param production true to use Apple's production servers, false to use the sandbox servers.
+	 * @param numberOfThreads the number of parallel threads to use to push the notifications
+	 * @return a live queue to which you can add notifications to be sent asynchronously
+	 * @throws InvalidKeystoreReferenceException thrown if the keystore reference is not valid
+	 */
+	public static PushQueue queue(Object keystore, String password, boolean production, int numberOfThreads) throws InvalidKeystoreReferenceException {
+		AppleNotificationServer server = new AppleNotificationServerBasicImpl(keystore, password, production);
+		PushQueue queue = numberOfThreads <= 1 ? new NotificationThread(server) : new NotificationThreads(server, numberOfThreads);
+		return queue;
+	}
+
+
+	/**
 	 * Push a different preformatted payload for each device.
 	 * 
 	 * @param keystore a keystore containing your private key and the certificate signed by Apple ({@link java.io.File}, {@link java.io.InputStream}, byte[], {@link java.security.KeyStore} or {@link java.lang.String} for a file path)
