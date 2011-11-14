@@ -79,7 +79,7 @@ public class ResponsePacket {
 	 * @return true if command number is 8 and status code is not 0, false otherwise
 	 */
 	public boolean isValidErrorMessage() {
-		if (!isValidErrorMessage()) return false;
+		if (!isErrorResponsePacket()) return false;
 		return status != 0;
 	}
 
