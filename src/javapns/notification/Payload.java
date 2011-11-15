@@ -101,6 +101,7 @@ public abstract class Payload {
 
 
 	void verifyPayloadIsNotEmpty() {
+		if (getPreSendConfiguration()!=0) return;
 		if (toString().equals("{}")) throw new IllegalArgumentException("Payload cannot be empty");
 	}
 

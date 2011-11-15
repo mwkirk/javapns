@@ -114,6 +114,29 @@ public class SpecificNotificationTests extends TestFoundation {
 	}
 
 
+	private static void test_Issue82(String keystore, String password, String token, boolean production) {
+		try {
+			System.out.println("");
+			Payload payload = PushNotificationPayload.test();
+
+			System.out.println("TESTING ISSUE #82 PART 1");
+			List<PushedNotification> notifications = Push.payload(payload, keystore, password, production, 1, token);
+			NotificationTest.printPushedNotifications(notifications);
+			System.out.println("ISSUE #82 PART 1 TESTED");
+
+			System.out.println("TESTING ISSUE #82 PART2");
+			AppleNotificationServer server = new AppleNotificationServerBasicImpl(keystore, password, production);
+			NotificationThread thread = new NotificationThread(new PushNotificationManager(), server, payload, token);
+			thread.setListener(NotificationTest.DEBUGGING_PROGRESS_LISTENER);
+			thread.start();
+			System.out.println("ISSUE #82 PART 2 TESTED");
+
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+
+
 	private static void test_ThreadPoolFeature(String keystore, String password, String token, boolean production) throws Exception {
 		try {
 			System.out.println("");
