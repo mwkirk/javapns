@@ -252,6 +252,31 @@ public class Push {
 
 
 	/**
+	 * Push a different preformatted payload for each device using multiple simulatenous threads (and connections).
+	 * 
+	 * @param keystore a keystore containing your private key and the certificate signed by Apple ({@link java.io.File}, {@link java.io.InputStream}, byte[], {@link java.security.KeyStore} or {@link java.lang.String} for a file path)
+	 * @param password the keystore's password.
+	 * @param production true to use Apple's production servers, false to use the sandbox servers.
+	 * @param numberOfThreads the number of parallel threads to use to push the notifications
+	 * @param payloadDevicePairs a list or an array of PayloadPerDevice: {@link java.util.List}<{@link javapns.notification.PayloadPerDevice}>, {@link javapns.notification.PayloadPerDevice PayloadPerDevice[]} or {@link javapns.notification.PayloadPerDevice}
+	 * @return a list of pushed notifications, each with details on transmission results and error (if any)
+	 * @throws Exception thrown if any critical exception occurs
+	 */
+	public static List<PushedNotification> payloads(Object keystore, String password, boolean production, int numberOfThreads, Object payloadDevicePairs) throws Exception {
+		if (numberOfThreads <= 0) return sendPayloads(keystore, password, production, payloadDevicePairs);
+		AppleNotificationServer server = new AppleNotificationServerBasicImpl(keystore, password, production);
+		List<PayloadPerDevice> payloadPerDevicePairs = Devices.asPayloadsPerDevices(payloadDevicePairs);
+		NotificationThreads threads = new NotificationThreads(server, payloadPerDevicePairs, numberOfThreads);
+		threads.start();
+		try {
+			threads.waitForAllThreads(true);
+		} catch (InterruptedException e) {
+		}
+		return threads.getPushedNotifications();
+	}
+
+
+	/**
 	 * Push a different preformatted payload for each device.
 	 * 
 	 * @param keystore a keystore containing your private key and the certificate signed by Apple ({@link java.io.File}, {@link java.io.InputStream}, byte[], {@link java.security.KeyStore} or {@link java.lang.String} for a file path)

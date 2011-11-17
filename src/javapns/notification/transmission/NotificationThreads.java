@@ -38,8 +38,22 @@ public class NotificationThreads extends ThreadGroup implements PushQueue {
 	 */
 	public NotificationThreads(AppleNotificationServer server, Payload payload, List<Device> devices, int numberOfThreads) {
 		super("javapns notification threads (" + numberOfThreads + " threads)");
-		for (List<Device> deviceGroup : groupDevices(devices, numberOfThreads))
+		for (List deviceGroup : makeGroups(devices, numberOfThreads))
 			threads.add(new NotificationThread(this, new PushNotificationManager(), server, payload, deviceGroup));
+	}
+
+
+	/**
+	 * Create the specified number of notification threads and spread the messages evenly between the threads.
+	 * 
+	 * @param server the server to push to
+	 * @param messages a very large list of payload/device pairs
+	 * @param numberOfThreads the number of threads to create to share the work
+	 */
+	public NotificationThreads(AppleNotificationServer server, List<PayloadPerDevice> messages, int numberOfThreads) {
+		super("javapns notification threads (" + numberOfThreads + " threads)");
+		for (List deviceGroup : makeGroups(messages, numberOfThreads))
+			threads.add(new NotificationThread(this, new PushNotificationManager(), server, deviceGroup));
 	}
 
 
@@ -68,10 +82,11 @@ public class NotificationThreads extends ThreadGroup implements PushQueue {
 	 * @param devices a very large list of devices
 	 * @param threads a list of pre-built threads
 	 */
+	@SuppressWarnings("unchecked")
 	public NotificationThreads(AppleNotificationServer server, Payload payload, List<Device> devices, List<NotificationThread> threads) {
 		super("javapns notification threads (" + threads.size() + " threads)");
 		this.threads = threads;
-		List<List<Device>> groups = groupDevices(devices, threads.size());
+		List<List> groups = makeGroups(devices, threads.size());
 		for (int i = 0; i < groups.size(); i++)
 			threads.get(i).setDevices(groups.get(i));
 	}
@@ -175,7 +190,7 @@ public class NotificationThreads extends ThreadGroup implements PushQueue {
 	 * 
 	 * @return a thread
 	 */
-	protected NotificationThread getNextThread() {
+	protected synchronized NotificationThread getNextThread() {
 		NotificationThread thread = threads.get(nextThread++);
 		if (nextThread >= threads.size()) nextThread = 0;
 		return thread;
@@ -183,27 +198,27 @@ public class NotificationThreads extends ThreadGroup implements PushQueue {
 
 
 	/**
-	 * Create group of devices ready to be dispatched to worker threads.
+	 * Create groups of devices or payload/device pairs ready to be dispatched to worker threads.
 	 * 
 	 * @param devices a large list of devices
 	 * @param threads the number of threads to group devices for
 	 * @return
 	 */
-	private static List<List<Device>> groupDevices(List<Device> devices, int threads) {
-		List<List<Device>> groups = new Vector<List<Device>>(threads);
-		int total = devices.size();
+	private static List<List> makeGroups(List objects, int threads) {
+		List<List> groups = new Vector<List>(threads);
+		int total = objects.size();
 		int devicesPerThread = (total / threads);
 		if (total % threads > 0) devicesPerThread++;
 		//System.out.println("Making "+threads+" groups of "+devicesPerThread+" devices out of "+total+" devices in total");
 		for (int i = 0; i < threads; i++) {
-			int firstDevice = i * devicesPerThread;
-			if (firstDevice >= total) break;
-			int lastDevice = firstDevice + devicesPerThread - 1;
-			if (lastDevice >= total) lastDevice = total - 1;
-			lastDevice++;
+			int firstObject = i * devicesPerThread;
+			if (firstObject >= total) break;
+			int lastObject = firstObject + devicesPerThread - 1;
+			if (lastObject >= total) lastObject = total - 1;
+			lastObject++;
 			//System.out.println("Grouping together "+(lastDevice-firstDevice)+" devices (#"+firstDevice+" to "+lastDevice+")");
-			List<Device> threadDevices = devices.subList(firstDevice, lastDevice);
-			groups.add(threadDevices);
+			List threadObjects = objects.subList(firstObject, lastObject);
+			groups.add(threadObjects);
 		}
 		return groups;
 	}
