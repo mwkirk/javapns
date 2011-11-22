@@ -3,6 +3,7 @@ package javapns.test;
 import java.util.*;
 
 import javapns.*;
+import javapns.communication.exceptions.*;
 import javapns.devices.*;
 
 /**
@@ -46,10 +47,16 @@ public class FeedbackTest extends TestFoundation {
 		String keystore = args[0];
 		String password = args[1];
 		boolean production = args.length >= 3 ? args[2].equalsIgnoreCase("production") : false;
-		List<Device> devices = Push.feedback(keystore, password, production);
+		try {
+			List<Device> devices = Push.feedback(keystore, password, production);
 
-		for (Device device : devices) {
-			System.out.println("Inactive device: " + device.getToken());
+			for (Device device : devices) {
+				System.out.println("Inactive device: " + device.getToken());
+			}
+		} catch (CommunicationException e) {
+			e.printStackTrace();
+		} catch (KeystoreException e) {
+			e.printStackTrace();
 		}
 	}
 

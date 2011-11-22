@@ -181,7 +181,7 @@ public class NotificationThreads extends ThreadGroup implements PushQueue {
 			boolean busy = thread.isBusy();
 			if (!busy) return thread;
 		}
-		return threads.get(++nextThread); /* All threads are busy, return the next one regardless of its busy status */
+		return getNextThread(); /* All threads are busy, return the next one regardless of its busy status */
 	}
 
 
@@ -191,8 +191,8 @@ public class NotificationThreads extends ThreadGroup implements PushQueue {
 	 * @return a thread
 	 */
 	protected synchronized NotificationThread getNextThread() {
-		NotificationThread thread = threads.get(nextThread++);
 		if (nextThread >= threads.size()) nextThread = 0;
+		NotificationThread thread = threads.get(nextThread++);
 		return thread;
 	}
 

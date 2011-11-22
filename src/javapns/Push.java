@@ -341,17 +341,14 @@ public class Push {
 	 * @param password the keystore's password.
 	 * @param production true to use Apple's production servers, false to use the sandbox servers.
 	 * @return a list of devices that are inactive.
+	 * @throws KeystoreException thrown if an error occurs when loading the keystore
+	 * @throws CommunicationException thrown if an unrecoverable error occurs while trying to communicate with Apple servers
 	 */
-	public static List<Device> feedback(Object keystore, String password, boolean production) {
+	public static List<Device> feedback(Object keystore, String password, boolean production) throws CommunicationException, KeystoreException {
 		List<Device> devices = new Vector<Device>();
-		try {
-			FeedbackServiceManager feedbackManager = new FeedbackServiceManager();
-			AppleFeedbackServer server = new AppleFeedbackServerBasicImpl(keystore, password, production);
-			devices.addAll(feedbackManager.getDevices(server));
-		} catch (Exception e) {
-			System.out.println("Error pushing notification(s):");
-			e.printStackTrace();
-		}
+		FeedbackServiceManager feedbackManager = new FeedbackServiceManager();
+		AppleFeedbackServer server = new AppleFeedbackServerBasicImpl(keystore, password, production);
+		devices.addAll(feedbackManager.getDevices(server));
 		return devices;
 	}
 
