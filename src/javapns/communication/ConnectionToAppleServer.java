@@ -47,7 +47,7 @@ public abstract class ConnectionToAppleServer {
 	 * Builds a connection to an Apple server.
 	 * 
 	 * @param server connection details
-	 * @throws KeystoreException
+	 * @throws KeystoreException thrown if an error occurs when loading the keystore
 	 */
 	public ConnectionToAppleServer(AppleServer server) throws KeystoreException {
 		this.server = server;

@@ -64,4 +64,19 @@ public interface PushQueue {
 
 	public List<Exception> getCriticalExceptions();
 
+
+	/**
+	 * Get a list of all notifications pushed through this queue.
+	 * 
+	 * @return a list of pushed notifications
+	 */
+	public List<PushedNotification> getPushedNotifications();
+
+
+	/**
+	 * Clear the internal lists of PushedNotification objects maintained by this queue.
+	 * You should invoke this method once you no longer need the list of PushedNotification objects so that memory can be reclaimed.
+	 */
+	public void clearPushedNotifications();
+
 }

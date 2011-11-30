@@ -76,6 +76,20 @@ public class KeystoreManager {
 
 
 	/**
+	 * Make sure that the provided keystore will be reusable.
+	 * 
+	 * @param server the server the keystore is intended for
+	 * @param keystore a keystore containing your private key and the certificate signed by Apple (File, InputStream, byte[], KeyStore or String for a file path)
+	 * @return a reusable keystore
+	 * @throws KeystoreException
+	 */
+	static Object ensureReusableKeystore(AppleServer server, Object keystore) throws KeystoreException {
+		if (keystore instanceof InputStream) keystore = loadKeystore(server, keystore, false);
+		return keystore;
+	}
+
+
+	/**
 	 * Perform basic tests on a keystore to detect common user mistakes.
 	 * If a problem is found, a KeystoreException is thrown.
 	 * If no problem is found, this method simply returns without exceptions.

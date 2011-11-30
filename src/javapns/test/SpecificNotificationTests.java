@@ -1,5 +1,6 @@
 package javapns.test;
 
+import java.io.*;
 import java.util.*;
 
 import javapns.*;
@@ -130,6 +131,41 @@ public class SpecificNotificationTests extends TestFoundation {
 			thread.setListener(NotificationTest.DEBUGGING_PROGRESS_LISTENER);
 			thread.start();
 			System.out.println("ISSUE #82 PART 2 TESTED");
+
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+
+
+	private static void test_Issue87(String keystore, String password, String token, boolean production) {
+		try {
+			System.out.println("TESTING ISSUES #87 AND #88");
+
+			InputStream ks = new BufferedInputStream(new FileInputStream(keystore));
+			PushQueue queue = Push.queue(ks, password, false, 3);
+			queue.start();
+			queue.add(PushNotificationPayload.test(), token);
+			queue.add(PushNotificationPayload.test(), token);
+			queue.add(PushNotificationPayload.test(), token);
+			queue.add(PushNotificationPayload.test(), token);
+			Thread.sleep(10000);
+			List<Exception> criticalExceptions = queue.getCriticalExceptions();
+			for (Exception exception : criticalExceptions) {
+				exception.printStackTrace();
+			}
+			Thread.sleep(10000);
+
+			List<PushedNotification> pushedNotifications = queue.getPushedNotifications();
+			NotificationTest.printPushedNotifications("BEFORE CLEAR:", pushedNotifications);
+
+			queue.clearPushedNotifications();
+
+			pushedNotifications = queue.getPushedNotifications();
+			NotificationTest.printPushedNotifications("AFTER CLEAR:", pushedNotifications);
+
+			Thread.sleep(50000);
+			System.out.println("ISSUES #87 AND #88 TESTED");
 
 		} catch (Exception e) {
 			e.printStackTrace();

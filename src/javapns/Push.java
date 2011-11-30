@@ -226,9 +226,9 @@ public class Push {
 	 * @param production true to use Apple's production servers, false to use the sandbox servers.
 	 * @param numberOfThreads the number of parallel threads to use to push the notifications
 	 * @return a live queue to which you can add notifications to be sent asynchronously
-	 * @throws InvalidKeystoreReferenceException thrown if the keystore reference is not valid
+	 * @throws KeystoreException thrown if an error occurs when loading the keystore
 	 */
-	public static PushQueue queue(Object keystore, String password, boolean production, int numberOfThreads) throws InvalidKeystoreReferenceException {
+	public static PushQueue queue(Object keystore, String password, boolean production, int numberOfThreads) throws KeystoreException {
 		AppleNotificationServer server = new AppleNotificationServerBasicImpl(keystore, password, production);
 		PushQueue queue = numberOfThreads <= 1 ? new NotificationThread(server) : new NotificationThreads(server, numberOfThreads);
 		return queue;

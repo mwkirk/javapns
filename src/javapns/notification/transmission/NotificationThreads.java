@@ -397,6 +397,16 @@ public class NotificationThreads extends ThreadGroup implements PushQueue {
 
 
 	/**
+	 * Clear the internal list of PushedNotification objects maintained in each thread.
+	 * You should invoke this method once you no longer need the list of PushedNotification objects so that memory can be reclaimed.
+	 */
+	public void clearPushedNotifications() {
+		for (NotificationThread thread : threads)
+			thread.clearPushedNotifications();
+	}
+
+
+	/**
 	 * Get a list of all notifications that all threads attempted to push but that failed.
 	 * 
 	 * @return a list of failed notifications

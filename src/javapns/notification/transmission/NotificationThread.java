@@ -453,6 +453,15 @@ public class NotificationThread implements Runnable, PushQueue {
 
 
 	/**
+	 * Clear the internal list of PushedNotification objects.
+	 * You should invoke this method once you no longer need the list of PushedNotification objects so that memory can be reclaimed.
+	 */
+	public void clearPushedNotifications() {
+		notifications.clear();
+	}
+
+
+	/**
 	 * Returns list of all notifications that this thread attempted to push but that failed.
 	 * 
 	 * @return a list of failed notifications

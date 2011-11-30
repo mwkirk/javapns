@@ -450,7 +450,6 @@ public class PushNotificationManager {
 
 			notification.setException(ex);
 			logger.error("Delivery error: " + ex);
-//			logger.error("Delivery error", ex);
 			try {
 				if (closeAfter) {
 					logger.error("Closing connection after error");

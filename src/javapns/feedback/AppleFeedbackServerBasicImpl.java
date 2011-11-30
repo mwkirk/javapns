@@ -22,9 +22,9 @@ public class AppleFeedbackServerBasicImpl extends AppleServerBasicImpl implement
 	 * @param keystore The keystore to use (can be a File, an InputStream, a String for a file path, or a byte[] array)
 	 * @param password The keystore's password
 	 * @param production true to use Apple's production servers, false to use the sandbox
-	 * @throws InvalidKeystoreReferenceException
+	 * @throws KeystoreException thrown if an error occurs when loading the keystore
 	 */
-	public AppleFeedbackServerBasicImpl(Object keystore, String password, boolean production) throws InvalidKeystoreReferenceException {
+	public AppleFeedbackServerBasicImpl(Object keystore, String password, boolean production) throws KeystoreException {
 		this(keystore, password, ConnectionToAppleServer.KEYSTORE_TYPE_PKCS12, production);
 	}
 
@@ -36,9 +36,9 @@ public class AppleFeedbackServerBasicImpl extends AppleServerBasicImpl implement
 	 * @param password The keystore's password
 	 * @param type The keystore's type
 	 * @param production true to use Apple's production servers, false to use the sandbox
-	 * @throws InvalidKeystoreReferenceException
+	 * @throws KeystoreException thrown if an error occurs when loading the keystore
 	 */
-	public AppleFeedbackServerBasicImpl(Object keystore, String password, String type, boolean production) throws InvalidKeystoreReferenceException {
+	public AppleFeedbackServerBasicImpl(Object keystore, String password, String type, boolean production) throws KeystoreException {
 		this(keystore, password, type, production ? PRODUCTION_HOST : DEVELOPMENT_HOST, production ? PRODUCTION_PORT : DEVELOPMENT_PORT);
 	}
 
@@ -51,9 +51,9 @@ public class AppleFeedbackServerBasicImpl extends AppleServerBasicImpl implement
 	 * @param type The keystore's type
 	 * @param host A specific APNS host
 	 * @param port A specific APNS port
-	 * @throws InvalidKeystoreReferenceException 
+	 * @throws KeystoreException thrown if an error occurs when loading the keystore
 	 */
-	public AppleFeedbackServerBasicImpl(Object keystore, String password, String type, String host, int port) throws InvalidKeystoreReferenceException {
+	public AppleFeedbackServerBasicImpl(Object keystore, String password, String type, String host, int port) throws KeystoreException {
 		super(keystore, password, type);
 		this.host = host;
 		this.port = port;

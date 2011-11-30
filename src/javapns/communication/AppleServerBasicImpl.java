@@ -12,7 +12,7 @@ import javapns.communication.exceptions.*;
  */
 public abstract class AppleServerBasicImpl implements AppleServer {
 
-	private final Object keystore;
+	private Object keystore;
 	private final String password;
 	private final String type;
 
@@ -23,14 +23,16 @@ public abstract class AppleServerBasicImpl implements AppleServer {
 	 * @param keystore The keystore to use (can be a File, an InputStream, a String for a file path, or a byte[] array)
 	 * @param password The keystore's password
 	 * @param type The keystore type (typically PKCS12)
-	 * @throws InvalidKeystoreReferenceException 
-	 * @throws FileNotFoundException
+	 * @throws KeystoreException thrown if an error occurs when loading the keystore
 	 */
-	public AppleServerBasicImpl(Object keystore, String password, String type) throws InvalidKeystoreReferenceException {
+	public AppleServerBasicImpl(Object keystore, String password, String type) throws KeystoreException {
 		KeystoreManager.validateKeystoreParameter(keystore);
 		this.keystore = keystore;
 		this.password = password;
 		this.type = type;
+
+		/* Make sure that the keystore reference is reusable. */
+		this.keystore = KeystoreManager.ensureReusableKeystore(this, this.keystore);
 	}
 
 
