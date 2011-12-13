@@ -25,10 +25,35 @@ public interface AppleServer {
 	 */
 	public String getKeystorePassword();
 
+
 	/**
 	 * Returns the format used to produce the keystore (typically PKCS12).
 	 * @return a valid keystore format identifier
 	 */
 	public String getKeystoreType();
+
+
+	/**
+	 * Get the proxy host address currently configured.
+	 * @return a proxy host, or null if none is configured
+	 */
+	public String getProxyHost();
+
+
+	/**
+	 * Get the proxy port currently configured.
+	 * @return a network port, or 0 if no proxy is configured
+	 */
+	public int getProxyPort();
+
+
+	/**
+	 * Configure a proxy to use
+	 * @param proxyHost proxy host address
+	 * @param proxyPort proxy host port
+	 */
+	public void setProxy(String proxyHost, int proxyPort);
+
+
 
 }

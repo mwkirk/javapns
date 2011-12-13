@@ -1,6 +1,7 @@
 package javapns.feedback;
 
 import java.io.*;
+import java.sql.*;
 import java.util.*;
 
 import javapns.communication.exceptions.*;
@@ -118,6 +119,7 @@ public class FeedbackServiceManager {
 				fourthByte = (0x000000FF & ((int) listOfDevices[offset + 3]));
 				index = index + 4;
 				anUnsignedInt = ((long) (firstByte << 24 | secondByte << 16 | thirdByte << 8 | fourthByte)) & 0xFFFFFFFFL;
+				Timestamp timestamp = new Timestamp(anUnsignedInt * 1000);
 
 				// Build device token length
 				int deviceTokenLength = listOfDevices[offset + 4] << 8 | listOfDevices[offset + 5];
@@ -134,8 +136,9 @@ public class FeedbackServiceManager {
 				/* Create a basic device, as we do not want to go through the factory and create a device in the actual database... */
 				Device device = new BasicDevice();
 				device.setToken(deviceToken);
+				device.setLastRegister(timestamp);
 				listDev.add(device);
-				logger.info("FeedbackManager retrieves one device :  " + new Date(anUnsignedInt * 1000) + ";" + deviceTokenLength + ";" + deviceToken + ".");
+				logger.info("FeedbackManager retrieves one device :  " + timestamp + ";" + deviceTokenLength + ";" + deviceToken + ".");
 			}
 
 			// Close the socket and return the list
@@ -159,6 +162,8 @@ public class FeedbackServiceManager {
 	 * Set the proxy if needed
 	 * @param host the proxyHost
 	 * @param port the proxyPort
+	 * @deprecated Configuring a proxy with this method affects overall JVM proxy settings.
+	 * Use AppleFeedbackServer.setProxy(..) to set a proxy for JavaPNS only.
 	 */
 	public void setProxy(String host, String port) {
 		this.proxySet = true;

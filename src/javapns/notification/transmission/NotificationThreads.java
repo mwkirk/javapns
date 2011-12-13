@@ -314,7 +314,7 @@ public class NotificationThreads extends ThreadGroup implements PushQueue {
 	 * 
 	 * @param notificationThread
 	 */
-	protected void threadFinished(NotificationThread notificationThread) {
+	protected synchronized void threadFinished(NotificationThread notificationThread) {
 		threadsRunning--;
 		if (threadsRunning == 0) {
 			if (listener != null) listener.eventAllThreadsFinished(this);

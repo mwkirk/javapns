@@ -510,6 +510,8 @@ public class PushNotificationManager {
 	 * Set the proxy if needed
 	 * @param host the proxyHost
 	 * @param port the proxyPort
+	 * @deprecated Configuring a proxy with this method affects overall JVM proxy settings.
+	 * Use AppleNotificationServer.setProxy(..) to set a proxy for JavaPNS only.
 	 */
 	public void setProxy(String host, String port) {
 		proxySet = true;

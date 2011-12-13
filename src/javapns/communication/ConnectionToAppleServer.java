@@ -161,9 +161,11 @@ public abstract class ConnectionToAppleServer {
 
 
 	private boolean isProxySet() {
-		String httpsHost = System.getProperty("https.proxyHost");
-		boolean isSet = httpsHost != null && httpsHost.length() > 0;
-		return isSet;
+		String libraryProxy = server.getProxyHost();
+		if (libraryProxy != null && libraryProxy.length() > 0) return true;
+		String jvmProxy = System.getProperty("https.proxyHost");
+		if (jvmProxy != null && jvmProxy.length() > 0) return true;
+		return false;
 	}
 
 
@@ -171,8 +173,12 @@ public abstract class ConnectionToAppleServer {
 		SSLSocket socket;
 
 		// If a proxy was set, tunnel through the proxy to create the connection
-		String tunnelHost = System.getProperty("https.proxyHost");
-		Integer tunnelPort = Integer.getInteger("https.proxyPort").intValue();
+		String tunnelHost = server.getProxyHost();
+		Integer tunnelPort = server.getProxyPort();
+		if (tunnelHost == null || tunnelHost.length() == 0) {
+			tunnelHost = System.getProperty("https.proxyHost");
+			tunnelPort = Integer.getInteger("https.proxyPort").intValue();
+		}
 
 		Socket tunnel = new Socket(tunnelHost, tunnelPort);
 		doTunnelHandshake(tunnel, getServerHost(), getServerPort());

@@ -15,6 +15,8 @@ public abstract class AppleServerBasicImpl implements AppleServer {
 	private Object keystore;
 	private final String password;
 	private final String type;
+	private String proxyHost;
+	private int proxyPort;
 
 
 	/**
@@ -48,6 +50,22 @@ public abstract class AppleServerBasicImpl implements AppleServer {
 
 	public String getKeystoreType() {
 		return type;
+	}
+
+
+	public String getProxyHost() {
+		return proxyHost;
+	}
+
+
+	public int getProxyPort() {
+		return proxyPort;
+	}
+
+
+	public void setProxy(String proxyHost, int proxyPort) {
+		this.proxyHost = proxyHost;
+		this.proxyPort = proxyPort;
 	}
 
 }
