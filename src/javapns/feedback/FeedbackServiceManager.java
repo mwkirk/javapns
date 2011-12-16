@@ -25,8 +25,6 @@ public class FeedbackServiceManager {
 	/* Length of the tuple sent by Apple */
 	private static final int FEEDBACK_TUPLE_SIZE = 38;
 
-	private boolean proxySet = false;
-
 	@Deprecated
 	private DeviceFactory deviceFactory;
 
@@ -158,23 +156,22 @@ public class FeedbackServiceManager {
 	}
 
 
-	/**
-	 * Set the proxy if needed
-	 * @param host the proxyHost
-	 * @param port the proxyPort
-	 * @deprecated Configuring a proxy with this method affects overall JVM proxy settings.
-	 * Use AppleFeedbackServer.setProxy(..) to set a proxy for JavaPNS only.
-	 */
-	public void setProxy(String host, String port) {
-		this.proxySet = true;
-
-		System.setProperty("http.proxyHost", host);
-		System.setProperty("http.proxyPort", port);
-
-		System.setProperty("https.proxyHost", host);
-		System.setProperty("https.proxyPort", port);
-	}
-
+	//	/**
+	//	 * Set the proxy if needed
+	//	 * @param host the proxyHost
+	//	 * @param port the proxyPort
+	//	 * @deprecated Configuring a proxy with this method affects overall JVM proxy settings.
+	//	 * Use AppleFeedbackServer.setProxy(..) to set a proxy for JavaPNS only.
+	//	 */
+	//	public void setProxy(String host, String port) {
+	//		this.proxySet = true;
+	//
+	//		System.setProperty("http.proxyHost", host);
+	//		System.setProperty("http.proxyPort", port);
+	//
+	//		System.setProperty("https.proxyHost", host);
+	//		System.setProperty("https.proxyPort", port);
+	//	}
 
 	/**
 	 * 

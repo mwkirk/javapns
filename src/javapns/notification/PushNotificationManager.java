@@ -67,8 +67,6 @@ public class PushNotificationManager {
 	 */
 	private boolean trustAllServerCertificates = true;
 
-	private boolean proxySet = false;
-
 	/* The DeviceFactory to use with this PushNotificationManager */
 	@Deprecated
 	private DeviceFactory deviceFactory;
@@ -506,29 +504,28 @@ public class PushNotificationManager {
 	}
 
 
-	/**
-	 * Set the proxy if needed
-	 * @param host the proxyHost
-	 * @param port the proxyPort
-	 * @deprecated Configuring a proxy with this method affects overall JVM proxy settings.
-	 * Use AppleNotificationServer.setProxy(..) to set a proxy for JavaPNS only.
-	 */
-	public void setProxy(String host, String port) {
-		proxySet = true;
-
-		System.setProperty("http.proxyHost", host);
-		System.setProperty("http.proxyPort", port);
-
-		System.setProperty("https.proxyHost", host);
-		System.setProperty("https.proxyPort", port);
-	}
-
+	//	/**
+	//	 * Set the proxy if needed
+	//	 * @param host the proxyHost
+	//	 * @param port the proxyPort
+	//	 * @deprecated Configuring a proxy with this method affects overall JVM proxy settings.
+	//	 * Use AppleNotificationServer.setProxy(..) to set a proxy for JavaPNS only.
+	//	 */
+	//	public void setProxy(String host, String port) {
+	//		proxySet = true;
+	//
+	//		System.setProperty("http.proxyHost", host);
+	//		System.setProperty("http.proxyPort", port);
+	//
+	//		System.setProperty("https.proxyHost", host);
+	//		System.setProperty("https.proxyPort", port);
+	//	}
 
 	/**
 	 * Compose the Raw Interface that will be sent through the SSLSocket
 	 * A notification message is
 	 * COMMAND | TOKENLENGTH | DEVICETOKEN | PAYLOADLENGTH | PAYLOAD
-	 * NEW!
+	 * or enhanced notification format:
 	 * COMMAND | !Identifier! | !Expiry! | TOKENLENGTH| DEVICETOKEN | PAYLOADLENGTH | PAYLOAD
 	 * See page 30 of Apple Push Notification Service Programming Guide
 	 * @param deviceToken the deviceToken

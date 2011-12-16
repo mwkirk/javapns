@@ -149,7 +149,7 @@ public abstract class ConnectionToAppleServer {
 		logger.debug("Creating SSLSocket to " + getServerHost() + ":" + getServerPort());
 
 		try {
-			if (isProxySet()) {
+			if (ProxyManager.isUsingProxy(server)) {
 				return tunnelThroughProxy(socketFactory);
 			} else {
 				return (SSLSocket) socketFactory.createSocket(getServerHost(), getServerPort());
@@ -160,25 +160,12 @@ public abstract class ConnectionToAppleServer {
 	}
 
 
-	private boolean isProxySet() {
-		String libraryProxy = server.getProxyHost();
-		if (libraryProxy != null && libraryProxy.length() > 0) return true;
-		String jvmProxy = System.getProperty("https.proxyHost");
-		if (jvmProxy != null && jvmProxy.length() > 0) return true;
-		return false;
-	}
-
-
 	private SSLSocket tunnelThroughProxy(SSLSocketFactory socketFactory) throws UnknownHostException, IOException {
 		SSLSocket socket;
 
 		// If a proxy was set, tunnel through the proxy to create the connection
-		String tunnelHost = server.getProxyHost();
-		Integer tunnelPort = server.getProxyPort();
-		if (tunnelHost == null || tunnelHost.length() == 0) {
-			tunnelHost = System.getProperty("https.proxyHost");
-			tunnelPort = Integer.getInteger("https.proxyPort").intValue();
-		}
+		String tunnelHost = ProxyManager.getProxyHost(server);
+		Integer tunnelPort = ProxyManager.getProxyPort(server);
 
 		Socket tunnel = new Socket(tunnelHost, tunnelPort);
 		doTunnelHandshake(tunnel, getServerHost(), getServerPort());

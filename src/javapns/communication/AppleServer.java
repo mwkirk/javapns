@@ -34,26 +34,29 @@ public interface AppleServer {
 
 
 	/**
-	 * Get the proxy host address currently configured.
+	 * Get the proxy host address currently configured for this specific server.
+	 * A proxy might still be configured at the library or JVM levels.
+	 * Refer to {@link javapns.communication.ProxyManager} for more information.
 	 * @return a proxy host, or null if none is configured
 	 */
 	public String getProxyHost();
 
 
 	/**
-	 * Get the proxy port currently configured.
+	 * Get the proxy port currently configured for this specific server.
+	 * A proxy might still be configured at the library or JVM levels.
+	 * Refer to {@link javapns.communication.ProxyManager} for more information.
 	 * @return a network port, or 0 if no proxy is configured
 	 */
 	public int getProxyPort();
 
 
 	/**
-	 * Configure a proxy to use
+	 * Configure a proxy to use for this specific server.
+	 * Use {@link javapns.communication.ProxyManager} to configure a proxy for the entire library instead.
 	 * @param proxyHost proxy host address
 	 * @param proxyPort proxy host port
 	 */
 	public void setProxy(String proxyHost, int proxyPort);
-
-
 
 }
