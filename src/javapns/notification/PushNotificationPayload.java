@@ -114,6 +114,18 @@ public class PushNotificationPayload extends Payload {
 		return payload;
 	}
 
+
+	/**
+	 * Create a PushNotificationPayload object from a preformatted JSON payload.
+	 * @param rawJSON a JSON-formatted string representing a payload (ex: {"aps":{"alert":"Hello World!"}} )
+	 * @return a ready-to-send payload
+	 * @throws JSONException if any exception occurs parsing the JSON string
+	 */
+	public static PushNotificationPayload fromJSON(String rawJSON) throws JSONException {
+		PushNotificationPayload payload = new PushNotificationPayload(rawJSON);
+		return payload;
+	}
+
 	/* The application Dictionnary */
 	private JSONObject apsDictionary;
 
@@ -127,6 +139,28 @@ public class PushNotificationPayload extends Payload {
 		try {
 			JSONObject payload = getPayload();
 			if (!payload.has("aps")) payload.put("aps", this.apsDictionary);
+		} catch (JSONException e) {
+			e.printStackTrace();
+		}
+	}
+
+
+	/**
+	 * Construct a Payload object from a JSON-formatted string.
+	 * If an aps dictionary is not included, one will be created automatically.
+	 * @param rawJSON a JSON-formatted string (ex: {"aps":{"alert":"Hello World!"}} )
+	 * @throws JSONException thrown if a exception occurs while parsing the JSON string
+	 */
+	public PushNotificationPayload(String rawJSON) throws JSONException {
+		super(rawJSON);
+		try {
+			JSONObject payload = getPayload();
+			this.apsDictionary = payload.getJSONObject("aps");
+			if (this.apsDictionary == null) {
+				this.apsDictionary = new JSONObject();
+				payload.put("aps", this.apsDictionary);
+			}
+
 		} catch (JSONException e) {
 			e.printStackTrace();
 		}

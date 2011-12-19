@@ -48,6 +48,17 @@ public abstract class Payload {
 
 
 	/**
+	 * Construct a Payload object from a JSON-formatted string
+	 * @param rawJSON a JSON-formatted string (ex: {"aps":{"alert":"Hello World!"}} )
+	 * @throws JSONException thrown if a exception occurs while parsing the JSON string
+	 */
+	public Payload(String rawJSON) throws JSONException {
+		super();
+		this.payload = new JSONObject(rawJSON);
+	}
+
+
+	/**
 	 * Get the actual JSON object backing this payload.
 	 * @return a JSONObject
 	 */
@@ -101,7 +112,7 @@ public abstract class Payload {
 
 
 	void verifyPayloadIsNotEmpty() {
-		if (getPreSendConfiguration()!=0) return;
+		if (getPreSendConfiguration() != 0) return;
 		if (toString().equals("{}")) throw new IllegalArgumentException("Payload cannot be empty");
 	}
 
