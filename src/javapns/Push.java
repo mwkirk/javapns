@@ -43,7 +43,7 @@ public class Push {
 	 * @throws KeystoreException thrown if an error occurs when loading the keystore
 	 * @throws CommunicationException thrown if an unrecoverable error occurs while trying to communicate with Apple servers
 	 */
-	public static List<PushedNotification> alert(String message, Object keystore, String password, boolean production, Object devices) throws CommunicationException, KeystoreException {
+	public static PushedNotifications alert(String message, Object keystore, String password, boolean production, Object devices) throws CommunicationException, KeystoreException {
 		return sendPayload(PushNotificationPayload.alert(message), keystore, password, production, devices);
 	}
 
@@ -60,7 +60,7 @@ public class Push {
 	 * @throws KeystoreException thrown if an error occurs when loading the keystore
 	 * @throws CommunicationException thrown if an unrecoverable error occurs while trying to communicate with Apple servers
 	 */
-	public static List<PushedNotification> badge(int badge, Object keystore, String password, boolean production, Object devices) throws CommunicationException, KeystoreException {
+	public static PushedNotifications badge(int badge, Object keystore, String password, boolean production, Object devices) throws CommunicationException, KeystoreException {
 		return sendPayload(PushNotificationPayload.badge(badge), keystore, password, production, devices);
 	}
 
@@ -77,7 +77,7 @@ public class Push {
 	 * @throws KeystoreException thrown if an error occurs when loading the keystore
 	 * @throws CommunicationException thrown if an unrecoverable error occurs while trying to communicate with Apple servers
 	 */
-	public static List<PushedNotification> sound(String sound, Object keystore, String password, boolean production, Object devices) throws CommunicationException, KeystoreException {
+	public static PushedNotifications sound(String sound, Object keystore, String password, boolean production, Object devices) throws CommunicationException, KeystoreException {
 		return sendPayload(PushNotificationPayload.sound(sound), keystore, password, production, devices);
 	}
 
@@ -96,7 +96,7 @@ public class Push {
 	 * @throws KeystoreException thrown if an error occurs when loading the keystore
 	 * @throws CommunicationException thrown if an unrecoverable error occurs while trying to communicate with Apple servers
 	 */
-	public static List<PushedNotification> combined(String message, int badge, String sound, Object keystore, String password, boolean production, Object devices) throws CommunicationException, KeystoreException {
+	public static PushedNotifications combined(String message, int badge, String sound, Object keystore, String password, boolean production, Object devices) throws CommunicationException, KeystoreException {
 		return sendPayload(PushNotificationPayload.combined(message, badge, sound), keystore, password, production, devices);
 	}
 
@@ -112,7 +112,7 @@ public class Push {
 	 * @throws KeystoreException thrown if an error occurs when loading the keystore
 	 * @throws CommunicationException thrown if an unrecoverable error occurs while trying to communicate with Apple servers
 	 */
-	public static List<PushedNotification> contentAvailable(Object keystore, String password, boolean production, Object devices) throws CommunicationException, KeystoreException {
+	public static PushedNotifications contentAvailable(Object keystore, String password, boolean production, Object devices) throws CommunicationException, KeystoreException {
 		return sendPayload(NewsstandNotificationPayload.contentAvailable(), keystore, password, production, devices);
 	}
 
@@ -128,7 +128,7 @@ public class Push {
 	 * @throws KeystoreException thrown if an error occurs when loading the keystore
 	 * @throws CommunicationException thrown if an unrecoverable error occurs while trying to communicate with Apple servers
 	 */
-	public static List<PushedNotification> test(Object keystore, String password, boolean production, Object devices) throws CommunicationException, KeystoreException {
+	public static PushedNotifications test(Object keystore, String password, boolean production, Object devices) throws CommunicationException, KeystoreException {
 		return sendPayload(PushNotificationPayload.test(), keystore, password, production, devices);
 	}
 
@@ -145,7 +145,7 @@ public class Push {
 	 * @throws KeystoreException thrown if an error occurs when loading the keystore
 	 * @throws CommunicationException thrown if an unrecoverable error occurs while trying to communicate with Apple servers
 	 */
-	public static List<PushedNotification> payload(Payload payload, Object keystore, String password, boolean production, Object devices) throws CommunicationException, KeystoreException {
+	public static PushedNotifications payload(Payload payload, Object keystore, String password, boolean production, Object devices) throws CommunicationException, KeystoreException {
 		return sendPayload(payload, keystore, password, production, devices);
 	}
 
@@ -162,14 +162,15 @@ public class Push {
 	 * @throws KeystoreException thrown if an error occurs when loading the keystore
 	 * @throws CommunicationException thrown if an unrecoverable error occurs while trying to communicate with Apple servers
 	 */
-	private static List<PushedNotification> sendPayload(Payload payload, Object keystore, String password, boolean production, Object devices) throws CommunicationException, KeystoreException {
-		List<PushedNotification> notifications = new Vector<PushedNotification>();
+	private static PushedNotifications sendPayload(Payload payload, Object keystore, String password, boolean production, Object devices) throws CommunicationException, KeystoreException {
+		PushedNotifications notifications = new PushedNotifications();
 		if (payload == null) return notifications;
 		PushNotificationManager pushManager = new PushNotificationManager();
 		try {
 			AppleNotificationServer server = new AppleNotificationServerBasicImpl(keystore, password, production);
 			pushManager.initializeConnection(server);
 			List<Device> deviceList = Devices.asDevices(devices);
+			notifications.setMaxRetained(deviceList.size());
 			for (Device device : deviceList) {
 				try {
 					BasicDevice.validateTokenFormat(device.getToken());
@@ -201,7 +202,7 @@ public class Push {
 	 * @return a list of pushed notifications, each with details on transmission results and error (if any)
 	 * @throws Exception thrown if any critical exception occurs
 	 */
-	public static List<PushedNotification> payload(Payload payload, Object keystore, String password, boolean production, int numberOfThreads, Object devices) throws Exception {
+	public static PushedNotifications payload(Payload payload, Object keystore, String password, boolean production, int numberOfThreads, Object devices) throws Exception {
 		if (numberOfThreads <= 0) return sendPayload(payload, keystore, password, production, devices);
 		AppleNotificationServer server = new AppleNotificationServerBasicImpl(keystore, password, production);
 		List<Device> deviceList = Devices.asDevices(devices);
@@ -246,7 +247,7 @@ public class Push {
 	 * @throws KeystoreException thrown if an error occurs when loading the keystore
 	 * @throws CommunicationException thrown if an unrecoverable error occurs while trying to communicate with Apple servers
 	 */
-	public static List<PushedNotification> payloads(Object keystore, String password, boolean production, Object payloadDevicePairs) throws CommunicationException, KeystoreException {
+	public static PushedNotifications payloads(Object keystore, String password, boolean production, Object payloadDevicePairs) throws CommunicationException, KeystoreException {
 		return sendPayloads(keystore, password, production, payloadDevicePairs);
 	}
 
@@ -262,7 +263,7 @@ public class Push {
 	 * @return a list of pushed notifications, each with details on transmission results and error (if any)
 	 * @throws Exception thrown if any critical exception occurs
 	 */
-	public static List<PushedNotification> payloads(Object keystore, String password, boolean production, int numberOfThreads, Object payloadDevicePairs) throws Exception {
+	public static PushedNotifications payloads(Object keystore, String password, boolean production, int numberOfThreads, Object payloadDevicePairs) throws Exception {
 		if (numberOfThreads <= 0) return sendPayloads(keystore, password, production, payloadDevicePairs);
 		AppleNotificationServer server = new AppleNotificationServerBasicImpl(keystore, password, production);
 		List<PayloadPerDevice> payloadPerDevicePairs = Devices.asPayloadsPerDevices(payloadDevicePairs);
@@ -287,22 +288,23 @@ public class Push {
 	 * @throws KeystoreException thrown if an error occurs when loading the keystore
 	 * @throws CommunicationException thrown if an unrecoverable error occurs while trying to communicate with Apple servers
 	 */
-	private static List<PushedNotification> sendPayloads(Object keystore, String password, boolean production, Object payloadDevicePairs) throws CommunicationException, KeystoreException {
-		List<PushedNotification> devices = new Vector<PushedNotification>();
-		if (payloadDevicePairs == null) return devices;
+	private static PushedNotifications sendPayloads(Object keystore, String password, boolean production, Object payloadDevicePairs) throws CommunicationException, KeystoreException {
+		PushedNotifications notifications = new PushedNotifications();
+		if (payloadDevicePairs == null) return notifications;
 		PushNotificationManager pushManager = new PushNotificationManager();
 		try {
 			AppleNotificationServer server = new AppleNotificationServerBasicImpl(keystore, password, production);
 			pushManager.initializeConnection(server);
 			List<PayloadPerDevice> pairs = Devices.asPayloadsPerDevices(payloadDevicePairs);
+			notifications.setMaxRetained(pairs.size());
 			for (PayloadPerDevice ppd : pairs) {
 				Device device = ppd.getDevice();
 				Payload payload = ppd.getPayload();
 				try {
 					PushedNotification notification = pushManager.sendNotification(device, payload, false);
-					devices.add(notification);
+					notifications.add(notification);
 				} catch (Exception e) {
-					devices.add(new PushedNotification(device, payload, e));
+					notifications.add(new PushedNotification(device, payload, e));
 				}
 			}
 		} finally {
@@ -311,7 +313,7 @@ public class Push {
 			} catch (Exception e) {
 			}
 		}
-		return devices;
+		return notifications;
 	}
 
 

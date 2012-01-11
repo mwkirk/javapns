@@ -173,6 +173,35 @@ public class SpecificNotificationTests extends TestFoundation {
 	}
 
 
+	private static void test_Issue88(String keystore, String password, String token, boolean production) {
+		try {
+			System.out.println("TESTING ISSUES #88");
+
+			//			List<String> devices = new Vector<String>();
+			//			for (int i = 0; i < 5; i++) {
+			//				devices.add(token);
+			//			}
+			//			PushedNotifications notifications = Push.payload(PushNotificationPayload.test(), keystore, password, false, devices);
+			PushQueue queue = Push.queue(keystore, password, false, 1);
+			queue.start();
+			queue.add(PushNotificationPayload.test(), token);
+			queue.add(PushNotificationPayload.test(), token);
+			queue.add(PushNotificationPayload.test(), token);
+			queue.add(PushNotificationPayload.test(), token);
+			Thread.sleep(10000);
+
+			PushedNotifications notifications = queue.getPushedNotifications();
+			NotificationTest.printPushedNotifications(notifications);
+
+			Thread.sleep(5000);
+			System.out.println("ISSUES #88 TESTED");
+
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+
+
 	private static void test_ThreadPoolFeature(String keystore, String password, String token, boolean production) throws Exception {
 		try {
 			System.out.println("");

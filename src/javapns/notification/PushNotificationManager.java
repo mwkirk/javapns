@@ -280,8 +280,8 @@ public class PushNotificationManager {
 	 * @throws CommunicationException thrown if a communication error occurs
 	 * @throws KeystoreException thrown if there is a problem with your keystore
 	 */
-	public List<PushedNotification> sendNotifications(Payload payload, List<Device> devices) throws CommunicationException, KeystoreException {
-		List<PushedNotification> notifications = new Vector<PushedNotification>();
+	public PushedNotifications sendNotifications(Payload payload, List<Device> devices) throws CommunicationException, KeystoreException {
+		PushedNotifications notifications = new PushedNotifications();
 		for (Device device : devices)
 			notifications.add(sendNotification(device, payload, false, SEQUENTIAL_IDENTIFIER));
 		stopConnection();
@@ -298,8 +298,8 @@ public class PushNotificationManager {
 	 * @throws CommunicationException thrown if a communication error occurs
 	 * @throws KeystoreException thrown if there is a problem with your keystore
 	 */
-	public List<PushedNotification> sendNotifications(Payload payload, Device... devices) throws CommunicationException, KeystoreException {
-		List<PushedNotification> notifications = new Vector<PushedNotification>();
+	public PushedNotifications sendNotifications(Payload payload, Device... devices) throws CommunicationException, KeystoreException {
+		PushedNotifications notifications = new PushedNotifications();
 		for (Device device : devices)
 			notifications.add(sendNotification(device, payload, false, SEQUENTIAL_IDENTIFIER));
 		stopConnection();

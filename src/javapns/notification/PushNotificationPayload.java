@@ -94,7 +94,7 @@ public class PushNotificationPayload extends Payload {
 	 * 
 	 * @return a ready-to-send payload
 	 */
-	public static Payload test() {
+	public static PushNotificationPayload test() {
 		PushNotificationPayload payload = complex();
 		payload.setPreSendConfiguration(1);
 		return payload;

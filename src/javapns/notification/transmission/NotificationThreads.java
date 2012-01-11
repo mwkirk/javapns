@@ -385,11 +385,11 @@ public class NotificationThreads extends ThreadGroup implements PushQueue {
 	 * 
 	 * @return a list of pushed notifications
 	 */
-	public List<PushedNotification> getPushedNotifications() {
+	public PushedNotifications getPushedNotifications() {
 		int capacity = 0;
 		for (NotificationThread thread : threads)
 			capacity += thread.getPushedNotifications().size();
-		List<PushedNotification> all = new Vector<PushedNotification>(capacity);
+		PushedNotifications all = new PushedNotifications(capacity);
 		for (NotificationThread thread : threads)
 			all.addAll(thread.getPushedNotifications());
 		return all;
@@ -411,8 +411,8 @@ public class NotificationThreads extends ThreadGroup implements PushQueue {
 	 * 
 	 * @return a list of failed notifications
 	 */
-	public List<PushedNotification> getFailedNotifications() {
-		return PushedNotification.findFailedNotifications(getPushedNotifications());
+	public PushedNotifications getFailedNotifications() {
+		return getPushedNotifications().getFailedNotifications();
 	}
 
 
@@ -421,8 +421,8 @@ public class NotificationThreads extends ThreadGroup implements PushQueue {
 	 * 
 	 * @return a list of successful notifications
 	 */
-	public List<PushedNotification> getSuccessfulNotifications() {
-		return PushedNotification.findSuccessfulNotifications(getPushedNotifications());
+	public PushedNotifications getSuccessfulNotifications() {
+		return getPushedNotifications().getSuccessfulNotifications();
 	}
 
 

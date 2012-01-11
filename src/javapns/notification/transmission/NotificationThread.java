@@ -60,7 +60,7 @@ public class NotificationThread implements Runnable, PushQueue {
 	private NotificationProgressListener listener;
 	private int threadNumber = 1;
 	private int nextMessageIdentifier = 1;
-	private List<PushedNotification> notifications = new Vector<PushedNotification>();
+	private PushedNotifications notifications = new PushedNotifications();
 	private MODE mode = MODE.LIST;
 	private boolean busy = false;
 
@@ -90,6 +90,7 @@ public class NotificationThread implements Runnable, PushQueue {
 		this.server = server;
 		this.payload = payload;
 		this.devices = Devices.asDevices(devices);
+		this.notifications.setMaxRetained(this.devices.size());
 	}
 
 
@@ -107,6 +108,7 @@ public class NotificationThread implements Runnable, PushQueue {
 		this.notificationManager = notificationManager == null ? new PushNotificationManager() : notificationManager;
 		this.server = server;
 		this.messages = Devices.asPayloadsPerDevices(messages);
+		this.notifications.setMaxRetained(this.messages.size());
 	}
 
 
@@ -447,7 +449,7 @@ public class NotificationThread implements Runnable, PushQueue {
 	 * 
 	 * @return a list of pushed notifications
 	 */
-	public List<PushedNotification> getPushedNotifications() {
+	public PushedNotifications getPushedNotifications() {
 		return notifications;
 	}
 
@@ -466,8 +468,8 @@ public class NotificationThread implements Runnable, PushQueue {
 	 * 
 	 * @return a list of failed notifications
 	 */
-	public List<PushedNotification> getFailedNotifications() {
-		return PushedNotification.findFailedNotifications(getPushedNotifications());
+	public PushedNotifications getFailedNotifications() {
+		return getPushedNotifications().getFailedNotifications();
 	}
 
 
@@ -476,8 +478,8 @@ public class NotificationThread implements Runnable, PushQueue {
 	 * 
 	 * @return a list of failed notifications
 	 */
-	public List<PushedNotification> getSuccessfulNotifications() {
-		return PushedNotification.findSuccessfulNotifications(getPushedNotifications());
+	public PushedNotifications getSuccessfulNotifications() {
+		return getPushedNotifications().getSuccessfulNotifications();
 	}
 
 

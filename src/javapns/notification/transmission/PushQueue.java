@@ -70,7 +70,7 @@ public interface PushQueue {
 	 * 
 	 * @return a list of pushed notifications
 	 */
-	public List<PushedNotification> getPushedNotifications();
+	public PushedNotifications getPushedNotifications();
 
 
 	/**
