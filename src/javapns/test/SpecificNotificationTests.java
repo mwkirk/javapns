@@ -202,6 +202,24 @@ public class SpecificNotificationTests extends TestFoundation {
 	}
 
 
+	private static void test_Issue99(String keystore, String password, String token, boolean production) {
+		try {
+			System.out.println("");
+			System.out.println("TESTING ISSUE #99");
+			PushNotificationPayload payload = PushNotificationPayload.complex();
+			payload.addCustomAlertBody("Hello World!");
+			payload.addCustomAlertActionLocKey(null);
+			debugPayload(payload);
+
+			List<PushedNotification> notifications = Push.payload(payload, keystore, password, production, token);
+			NotificationTest.printPushedNotifications(notifications);
+			System.out.println("ISSUE #99 TESTED");
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+
+
 	private static void test_ThreadPoolFeature(String keystore, String password, String token, boolean production) throws Exception {
 		try {
 			System.out.println("");

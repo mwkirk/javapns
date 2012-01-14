@@ -24,7 +24,7 @@ public class PushNotificationPayload extends Payload {
 	 * @param message the alert's message
 	 * @return a ready-to-send payload
 	 */
-	public static Payload alert(String message) {
+	public static PushNotificationPayload alert(String message) {
 		if (message == null) throw new IllegalArgumentException("Alert cannot be null");
 		PushNotificationPayload payload = complex();
 		try {
@@ -41,7 +41,7 @@ public class PushNotificationPayload extends Payload {
 	 * @param badge the badge
 	 * @return a ready-to-send payload
 	 */
-	public static Payload badge(int badge) {
+	public static PushNotificationPayload badge(int badge) {
 		PushNotificationPayload payload = complex();
 		try {
 			payload.addBadge(badge);
@@ -57,7 +57,7 @@ public class PushNotificationPayload extends Payload {
 	 * @param sound the name of the sound
 	 * @return a ready-to-send payload
 	 */
-	public static Payload sound(String sound) {
+	public static PushNotificationPayload sound(String sound) {
 		if (sound == null) throw new IllegalArgumentException("Sound name cannot be null");
 		PushNotificationPayload payload = complex();
 		try {
@@ -76,7 +76,7 @@ public class PushNotificationPayload extends Payload {
 	 * @param sound the name of the sound
 	 * @return a ready-to-send payload
 	 */
-	public static Payload combined(String message, int badge, String sound) {
+	public static PushNotificationPayload combined(String message, int badge, String sound) {
 		if (message == null && badge < 0 && sound == null) throw new IllegalArgumentException("Must provide at least one non-null argument");
 		PushNotificationPayload payload = complex();
 		try {
@@ -305,11 +305,12 @@ public class PushNotificationPayload extends Payload {
 	/**
 	 * Create a custom alert (if none exist) and add a custom text for the right button of the popup.
 	 * 
-	 * @param actionLocKey
+	 * @param actionLocKey the title of the alert's right button, or null to remove the button
 	 * @throws JSONException if the custom alert cannot be added because a simple alert already exists
 	 */
 	public void addCustomAlertActionLocKey(String actionLocKey) throws JSONException {
-		put("action-loc-key", actionLocKey, getOrAddCustomAlert(), false);
+		Object value = actionLocKey != null ? actionLocKey : new JSONNull();
+		put("action-loc-key", value, getOrAddCustomAlert(), false);
 	}
 
 
