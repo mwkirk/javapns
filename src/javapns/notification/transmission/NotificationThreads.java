@@ -390,6 +390,7 @@ public class NotificationThreads extends ThreadGroup implements PushQueue {
 		for (NotificationThread thread : threads)
 			capacity += thread.getPushedNotifications().size();
 		PushedNotifications all = new PushedNotifications(capacity);
+		all.setMaxRetained(capacity);
 		for (NotificationThread thread : threads)
 			all.addAll(thread.getPushedNotifications());
 		return all;
