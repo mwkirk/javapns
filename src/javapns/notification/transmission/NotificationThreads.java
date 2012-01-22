@@ -20,6 +20,7 @@ import javapns.notification.*;
  */
 public class NotificationThreads extends ThreadGroup implements PushQueue {
 
+	private static final long DELAY_BETWEEN_THREAD_STARTS = 500; // the number of milliseconds to wait between each thread startup
 	private List<NotificationThread> threads = new Vector<NotificationThread>();
 	private NotificationProgressListener listener;
 	private boolean started = false;
@@ -238,6 +239,11 @@ public class NotificationThreads extends ThreadGroup implements PushQueue {
 		for (NotificationThread thread : threads) {
 			threadsRunning++;
 			thread.start();
+			try {
+				/* Wait for a specific number of milliseconds to elapse so that not all threads start simultaenously. */
+				Thread.sleep(DELAY_BETWEEN_THREAD_STARTS);
+			} catch (InterruptedException e) {
+			}
 		}
 		if (listener != null) listener.eventAllThreadsStarted(this);
 		return this;

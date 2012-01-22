@@ -85,7 +85,7 @@ public class NotificationThread implements Runnable, PushQueue {
 	 * @param devices a list or an array of tokens or devices: {@link java.lang.String String[]}, {@link java.util.List}<{@link java.lang.String}>, {@link javapns.devices.Device Device[]}, {@link java.util.List}<{@link javapns.devices.Device}>, {@link java.lang.String} or {@link javapns.devices.Device}
 	 */
 	public NotificationThread(NotificationThreads threads, PushNotificationManager notificationManager, AppleNotificationServer server, Payload payload, Object devices) {
-		this.thread = new Thread(threads, this, "JavaPNS " + (threads != null ? " grouped" : "standalone") + " notification thread in LIST mode");
+		this.thread = new Thread(threads, this, "JavaPNS" + (threads != null ? " grouped" : " standalone") + " notification thread in LIST mode");
 		this.notificationManager = notificationManager == null ? new PushNotificationManager() : notificationManager;
 		this.server = server;
 		this.payload = payload;
@@ -104,7 +104,7 @@ public class NotificationThread implements Runnable, PushQueue {
 	 * @param messages a list or an array of PayloadPerDevice: {@link java.util.List}<{@link javapns.notification.PayloadPerDevice}>, {@link javapns.notification.PayloadPerDevice PayloadPerDevice[]} or {@link javapns.notification.PayloadPerDevice}
 	 */
 	public NotificationThread(NotificationThreads threads, PushNotificationManager notificationManager, AppleNotificationServer server, Object messages) {
-		this.thread = new Thread(threads, this, "JavaPNS " + (threads != null ? " grouped" : "standalone") + " notification thread in LIST mode");
+		this.thread = new Thread(threads, this, "JavaPNS" + (threads != null ? " grouped" : " standalone") + " notification thread in LIST mode");
 		this.notificationManager = notificationManager == null ? new PushNotificationManager() : notificationManager;
 		this.server = server;
 		this.messages = Devices.asPayloadsPerDevices(messages);
@@ -145,7 +145,7 @@ public class NotificationThread implements Runnable, PushQueue {
 	 * @param server the server to communicate with
 	 */
 	public NotificationThread(NotificationThreads threads, PushNotificationManager notificationManager, AppleNotificationServer server) {
-		this.thread = new Thread(threads, this, "JavaPNS " + (threads != null ? " grouped" : "standalone") + " notification thread in QUEUE mode");
+		this.thread = new Thread(threads, this, "JavaPNS" + (threads != null ? " grouped" : " standalone") + " notification thread in QUEUE mode");
 		this.notificationManager = notificationManager == null ? new PushNotificationManager() : notificationManager;
 		this.server = server;
 		this.mode = MODE.QUEUE;

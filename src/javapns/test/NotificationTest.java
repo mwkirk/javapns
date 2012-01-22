@@ -132,7 +132,7 @@ public class NotificationTest extends TestFoundation {
 	}
 
 
-	private static void pushSimplePayloadUsingThreads(String keystore, String password, boolean production, String token, boolean simulation, int devices, int threads) {
+	protected static void pushSimplePayloadUsingThreads(String keystore, String password, boolean production, String token, boolean simulation, int devices, int threads) {
 		try {
 
 			System.out.println("Creating PushNotificationManager and AppleNotificationServer");

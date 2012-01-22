@@ -220,6 +220,63 @@ public class SpecificNotificationTests extends TestFoundation {
 	}
 
 
+	private static void test_Issue102(String keystore, String password, String token, boolean production) {
+		try {
+			System.out.println("");
+			System.out.println("TESTING ISSUE #102");
+			int devices = 10000;
+			int threads = 20;
+			boolean simulation = false;
+			String realToken = token;
+			token = null;
+
+			try {
+
+				System.out.println("Creating PushNotificationManager and AppleNotificationServer");
+				AppleNotificationServer server = new AppleNotificationServerBasicImpl(keystore, password, production);
+				System.out.println("Creating payload (simulation mode)");
+				//Payload payload = PushNotificationPayload.alert("Hello World!");
+				Payload payload = PushNotificationPayload.test();
+
+				System.out.println("Generating " + devices + " fake devices");
+				List<Device> deviceList = new ArrayList<Device>(devices);
+				for (int i = 0; i < devices; i++) {
+					String tokenToUse = token;
+					if (tokenToUse == null || tokenToUse.length() != 64) {
+						tokenToUse = "123456789012345678901234567890123456789012345678901234567" + (1000000 + i);
+					}
+					deviceList.add(new BasicDevice(tokenToUse));
+				}
+				deviceList.add(new BasicDevice(realToken));
+				System.out.println("Creating " + threads + " notification threads");
+				NotificationThreads work = new NotificationThreads(server, simulation ? payload.asSimulationOnly() : payload, deviceList, threads);
+				//work.setMaxNotificationsPerConnection(10000);
+				//System.out.println("Linking notification work debugging listener");
+				//work.setListener(DEBUGGING_PROGRESS_LISTENER);
+
+				System.out.println("Starting all threads...");
+				long timestamp1 = System.currentTimeMillis();
+				work.start();
+				System.out.println("All threads started, waiting for them...");
+				work.waitForAllThreads();
+				long timestamp2 = System.currentTimeMillis();
+				System.out.println("All threads finished in " + (timestamp2 - timestamp1) + " milliseconds");
+
+				NotificationTest.printPushedNotifications(work.getSuccessfulNotifications());
+
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+
+			//			List<PushedNotification> notifications = Push.payload(payload, keystore, password, production, token);
+			//			NotificationTest.printPushedNotifications(notifications);
+			System.out.println("ISSUE #102 TESTED");
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+
+
 	private static void test_ThreadPoolFeature(String keystore, String password, String token, boolean production) throws Exception {
 		try {
 			System.out.println("");
