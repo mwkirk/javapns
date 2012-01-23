@@ -20,13 +20,14 @@ import javapns.notification.*;
  */
 public class NotificationThreads extends ThreadGroup implements PushQueue {
 
-	private static final long DELAY_BETWEEN_THREAD_STARTS = 500; // the number of milliseconds to wait between each thread startup
+	private static final long DEFAULT_DELAY_BETWEEN_THREADS = 500; // the number of milliseconds to wait between each thread startup
 	private List<NotificationThread> threads = new Vector<NotificationThread>();
 	private NotificationProgressListener listener;
 	private boolean started = false;
 	private int threadsRunning = 0;
 	private int nextThread = 0;
 	private Object finishPoint = new Object();
+	private long delayBetweenThreads = DEFAULT_DELAY_BETWEEN_THREADS;
 
 
 	/**
@@ -241,7 +242,7 @@ public class NotificationThreads extends ThreadGroup implements PushQueue {
 			thread.start();
 			try {
 				/* Wait for a specific number of milliseconds to elapse so that not all threads start simultaenously. */
-				Thread.sleep(DELAY_BETWEEN_THREAD_STARTS);
+				Thread.sleep(delayBetweenThreads);
 			} catch (InterruptedException e) {
 			}
 		}
@@ -448,6 +449,27 @@ public class NotificationThreads extends ThreadGroup implements PushQueue {
 			if (exception != null) exceptions.add(exception);
 		}
 		return exceptions;
+	}
+
+
+	/**
+	 * Set the amount of time that the library will wait after starting a thread and before starting the next one.
+	 * The default delay is 200 milliseconds.  This means that starting 10 threads will take 2 seconds to fully start.
+	 * As discussed in issue report #102, adding a delay improves reliability.
+	 * 
+	 * @param delayBetweenThreads a number of milliseconds
+	 */
+	public void setDelayBetweenThreads(long delayBetweenThreads) {
+		this.delayBetweenThreads = delayBetweenThreads;
+	}
+
+
+	/**
+	 * Get the amount of time that the library will wait after starting a thread and before starting the next one.
+	 * @return the number of milliseconds currently configured
+	 */
+	public long getDelayBetweenThreads() {
+		return delayBetweenThreads;
 	}
 
 }
