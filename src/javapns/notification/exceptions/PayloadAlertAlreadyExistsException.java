@@ -3,7 +3,16 @@ package javapns.notification.exceptions;
 import org.json.*;
 
 /**
- * Thrown when a payload exceeds the maximum size allowed.
+ * Specific exception indicating that the library detected an attempt to insert two alert messages
+ * or objects into the same payload.
+ * 
+ * Methods in the PushNotification class which cause an alert entry to be added to the payload
+ * (addAlert, addCustomAlert__, etc.) will throw this exception (upcasted as a JSONException) if
+ * the library detects that your action will cause two alert keys to be added to the payload.
+ * 
+ * You do not need to catch this exception specifically, as catching its parent JSONException will
+ * catch a variety of payload construction-related exeptions including this one.
+ * 
  * @author Sylvain Pedneault
  *
  */

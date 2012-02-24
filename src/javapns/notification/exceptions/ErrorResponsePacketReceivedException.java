@@ -3,7 +3,10 @@ package javapns.notification.exceptions;
 import javapns.notification.*;
 
 /**
- * Thrown when an error response packet was received from an APNS server.
+ * Specific exception indicating that the library received an error-response packet from Apple.
+ * 
+ * You do not need to catch this exception specifically, as it will be put in a 
+ * PushedNotification object as the exception that caused a push notification to having failed.
  * 
  * @author Sylvain Pedneault
  */

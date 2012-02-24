@@ -4,6 +4,7 @@ package javapns.devices.exceptions;
  * Thrown when a Device already exist and we try to add it a second time
  * @author Maxime Peron
  */
+@Deprecated
 @SuppressWarnings("serial")
 public class DuplicateDeviceException extends Exception{
 	

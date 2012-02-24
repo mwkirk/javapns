@@ -5,6 +5,7 @@ package javapns.devices.exceptions;
  * @author Maxime Peron
  *
  */
+@Deprecated
 @SuppressWarnings("serial")
 public class NullDeviceTokenException extends Exception{
 

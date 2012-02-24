@@ -3,8 +3,15 @@ package javapns.notification.exceptions;
 import org.json.*;
 
 /**
- * Thrown when a payload is expected to exceed the maximum size allowed after adding a given property.
- * Invoke payload.setPayloadSizeEstimatedWhenAdding(false) to disable this automatic checking.
+ * Specific exception indicating that a payload would probably exceed the maximum size allowed
+ * if the current property addition were to complete, but thrown only if you explicitely invoked
+ * payload.setPayloadSizeEstimatedWhenAdding(true) before calling that add___ method.
+ * 
+ * Since this feature is not enabled by default, you do not need to worry about this 
+ * exception unless you decide to enable it manually.
+ * 
+ * Further more, you do not need to catch this exception specifically, as catching its parent 
+ * JSONException will catch a variety of payload construction-related exeptions including this one.
  * 
  * @author Sylvain Pedneault
  */

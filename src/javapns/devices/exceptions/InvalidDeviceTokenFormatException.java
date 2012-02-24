@@ -1,7 +1,17 @@
 package javapns.devices.exceptions;
 
 /**
- * Thrown when a device token cannot be parsed (invalid format).
+ * Specific exception indicating that the library detected a malformed device token.
+ * 
+ * JavaPNS accepts 64-bytes device tokens in hexadecimal form.  
+ * The 32-bytes native form is NOT accepted.
+ * 
+ * The BasicDevice constructor throws this exception if you attempt to construct
+ * one using a malformed device token.
+ * 
+ * Otherwise, you do not typically need to catch this exception specifically, 
+ * as it will be put in a PushedNotification object as the exception that caused
+ * a push notification to having failed.
  * 
  * @author Sylvain Pedneault
  */
