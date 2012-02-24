@@ -191,7 +191,18 @@ public abstract class ConnectionToAppleServer {
 
 		OutputStream out = tunnel.getOutputStream();
 
-		String msg = "CONNECT " + host + ":" + port + " HTTP/1.0\n" + "User-Agent: BoardPad Server" + "\r\n\r\n";
+		StringBuilder header = new StringBuilder();
+		header.append("CONNECT " + host + ":" + port + " HTTP/1.0\n");
+		header.append("User-Agent: BoardPad Server\n");
+		String authorization = ProxyManager.getProxyAuthorization(server);
+		if (authorization != null && authorization.length() > 0) {
+			header.append("Proxy-Authorization: " + authorization + "\n");
+		}
+
+		header.deleteCharAt(header.lastIndexOf("\n"));
+		header.append("\r\n\r\n");
+
+		String msg = header.toString();//"CONNECT " + host + ":" + port + " HTTP/1.0\n" + "User-Agent: BoardPad Server" + "\r\n\r\n";
 		byte b[] = null;
 		try { //We really do want ASCII7 -- the http protocol doesn't change with locale.
 			b = msg.getBytes("ASCII7");

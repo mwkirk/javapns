@@ -9,9 +9,11 @@ public class ProxyManager {
 
 	private static final String LOCAL_PROXY_HOST_PROPERTY = "javapns.communication.proxyHost";
 	private static final String LOCAL_PROXY_PORT_PROPERTY = "javapns.communication.proxyPort";
+	private static final String LOCAL_PROXY_AUTHORIZATION_PROPERTY = "javapns.communication.proxyAuthorization";
 
 	private static final String JVM_PROXY_HOST_PROPERTY = "https.proxyHost";
 	private static final String JVM_PROXY_PORT_PROPERTY = "https.proxyPort";
+	private static final String JVM_PROXY_AUTHORIZATION_PROPERTY = "https.proxyAuthorization";
 
 
 	private ProxyManager() {
@@ -27,6 +29,36 @@ public class ProxyManager {
 	public static void setProxy(String host, String port) {
 		System.setProperty(LOCAL_PROXY_HOST_PROPERTY, host);
 		System.setProperty(LOCAL_PROXY_PORT_PROPERTY, port);
+	}
+
+
+	/**
+	 * Configure the authorization for the proxy configured through the setProxy method.
+	 * 
+	 * @param username the user name to use
+	 * @param password the password to use
+	 */
+	public static void setProxyBasicAuthorization(String username, String password) {
+		setProxyAuthorization(encodeProxyAuthorization(username, password));
+	}
+
+
+	/**
+	 * Configure the authorization for the proxy configured through the setProxy method.
+	 * 
+	 * @param authorization the pre-encoded value for the Proxy-Authorization header sent to the proxy
+	 */
+	public static void setProxyAuthorization(String authorization) {
+		System.setProperty(LOCAL_PROXY_AUTHORIZATION_PROPERTY, authorization);
+	}
+
+
+	public static String encodeProxyAuthorization(String username, String password) {
+		sun.misc.BASE64Encoder encoder = new sun.misc.BASE64Encoder();
+		String pwd = "USER" + ":" + "PASSWORD";
+		String encodedUserPwd = encoder.encode(pwd.getBytes());
+		String authorization = "Basic " + encodedUserPwd;
+		return authorization;
 	}
 
 
@@ -62,6 +94,34 @@ public class ProxyManager {
 				host = System.getProperty(JVM_PROXY_HOST_PROPERTY);
 				if (host != null && host.length() > 0) {
 					return host;
+				} else {
+					return null;
+				}
+			}
+		}
+	}
+
+
+	/**
+	 * Get the proxy authorization currently configured.
+	 * This method checks if a server-specific proxy has been configured,
+	 * then checks if a proxy has been configured for the entire library,
+	 * and finally checks if a JVM-wide proxy setting is available for HTTPS.
+	 * @param server a specific server to check for proxy settings (may be null)
+	 * @return a proxy authorization, or null if none is configured
+	 */
+	public static String getProxyAuthorization(AppleServer server) {
+		String authorization = server != null ? server.getProxyAuthorization() : null;
+		if (authorization != null && authorization.length() > 0) {
+			return authorization;
+		} else {
+			authorization = System.getProperty(LOCAL_PROXY_HOST_PROPERTY);
+			if (authorization != null && authorization.length() > 0) {
+				return authorization;
+			} else {
+				authorization = System.getProperty(JVM_PROXY_HOST_PROPERTY);
+				if (authorization != null && authorization.length() > 0) {
+					return authorization;
 				} else {
 					return null;
 				}

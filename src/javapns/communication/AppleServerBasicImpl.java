@@ -17,6 +17,7 @@ public abstract class AppleServerBasicImpl implements AppleServer {
 	private final String type;
 	private String proxyHost;
 	private int proxyPort;
+	private String proxyAuthorization;
 
 
 	/**
@@ -66,6 +67,16 @@ public abstract class AppleServerBasicImpl implements AppleServer {
 	public void setProxy(String proxyHost, int proxyPort) {
 		this.proxyHost = proxyHost;
 		this.proxyPort = proxyPort;
+	}
+
+
+	public void setProxyAuthorization(String proxyAuthorization) {
+		this.proxyAuthorization = proxyAuthorization;
+	}
+
+
+	public String getProxyAuthorization() {
+		return proxyAuthorization;
 	}
 
 }
