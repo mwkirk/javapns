@@ -447,9 +447,13 @@ public class NotificationThread implements Runnable, PushQueue {
 	/**
 	 * Returns list of all notifications pushed by this thread (successful or not).
 	 * 
+	 * IMPORTANT: Invoking this method on a QUEUE causes a connection restart to get an opportunity
+	 * to receive error-response packets (if any) which might affect the result of this method.
+	 * 
 	 * @return a list of pushed notifications
 	 */
 	public PushedNotifications getPushedNotifications() {
+		restartQueue();
 		return notifications;
 	}
 
@@ -513,9 +517,14 @@ public class NotificationThread implements Runnable, PushQueue {
 
 	/**
 	 * If this thread experienced a critical exception (communication error, keystore issue, etc.), this method returns the exception.
+	 * 
+	 * IMPORTANT: Invoking this method on a QUEUE causes a connection restart to get an opportunity
+	 * to receive error-response packets (if any) which might affect the result of this method.
+	 * 
 	 * @return a critical exception, if one occurred in this thread
 	 */
 	public Exception getCriticalException() {
+		restartQueue();
 		return exception;
 	}
 
@@ -526,9 +535,21 @@ public class NotificationThread implements Runnable, PushQueue {
 	 * @return a list containing a critical exception, if any occurred
 	 */
 	public List<Exception> getCriticalExceptions() {
-		List<Exception> exceptions = new Vector<Exception>(exception == null ? 0 : 1);
-		if (exception != null) exceptions.add(exception);
+		Exception theException = getCriticalException();
+		List<Exception> exceptions = new Vector<Exception>(theException == null ? 0 : 1);
+		if (theException != null) exceptions.add(theException);
 		return exceptions;
+	}
+
+
+	private void restartQueue() {
+		if (mode != MODE.LIST) return;
+		try {
+			if (listener != null) listener.eventConnectionRestarted(this);
+			notificationManager.restartConnection(server);
+		} catch (Exception e) {
+			if (exception == null) exception = e;
+		}
 	}
 
 }
