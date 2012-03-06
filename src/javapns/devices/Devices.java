@@ -2,10 +2,17 @@ package javapns.devices;
 
 import java.util.*;
 
+import org.apache.log4j.*;
+
 import javapns.devices.implementations.basic.*;
 import javapns.notification.*;
 
 public class Devices {
+
+	private static final int UNEFFICIENCY_THRESHOLD = 500;
+
+	public static final Logger logger = Logger.getLogger(Devices.class);
+
 
 	@SuppressWarnings("unchecked")
 	public static List<Device> asDevices(Object rawList) {
@@ -60,6 +67,14 @@ public class Devices {
 			list.add((PayloadPerDevice) rawList);
 		} else throw new IllegalArgumentException("PayloadPerDevice list type not supported. Supported types are: PayloadPerDevice[], List<PayloadPerDevice> and PayloadPerDevice");
 		return list;
+	}
+
+
+	public static <T> void evaluateEfficiency(List<T> list) {
+		int size = list.size();
+		if (size > UNEFFICIENCY_THRESHOLD) {
+			logger.warn("DEVICES WARNING: Pushing more than " + UNEFFICIENCY_THRESHOLD + " notifications (your attempt: " + size + ") is not recommended with this method.\n You should consider using javapns.notification.transmission.NotificationThreads for increased reliability and efficiency.");
+		}
 	}
 
 }

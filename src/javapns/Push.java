@@ -170,6 +170,7 @@ public class Push {
 			AppleNotificationServer server = new AppleNotificationServerBasicImpl(keystore, password, production);
 			pushManager.initializeConnection(server);
 			List<Device> deviceList = Devices.asDevices(devices);
+			Devices.evaluateEfficiency(deviceList);
 			notifications.setMaxRetained(deviceList.size());
 			for (Device device : deviceList) {
 				try {
@@ -296,6 +297,7 @@ public class Push {
 			AppleNotificationServer server = new AppleNotificationServerBasicImpl(keystore, password, production);
 			pushManager.initializeConnection(server);
 			List<PayloadPerDevice> pairs = Devices.asPayloadsPerDevices(payloadDevicePairs);
+			Devices.evaluateEfficiency(pairs);
 			notifications.setMaxRetained(pairs.size());
 			for (PayloadPerDevice ppd : pairs) {
 				Device device = ppd.getDevice();

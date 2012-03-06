@@ -40,6 +40,7 @@ public class NotificationThreads extends ThreadGroup implements PushQueue {
 	 */
 	public NotificationThreads(AppleNotificationServer server, Payload payload, List<Device> devices, int numberOfThreads) {
 		super("javapns notification threads (" + numberOfThreads + " threads)");
+		if (devices.size() < numberOfThreads) numberOfThreads = devices.size();
 		for (List deviceGroup : makeGroups(devices, numberOfThreads))
 			threads.add(new NotificationThread(this, new PushNotificationManager(), server, payload, deviceGroup));
 	}
@@ -54,6 +55,7 @@ public class NotificationThreads extends ThreadGroup implements PushQueue {
 	 */
 	public NotificationThreads(AppleNotificationServer server, List<PayloadPerDevice> messages, int numberOfThreads) {
 		super("javapns notification threads (" + numberOfThreads + " threads)");
+		if (messages.size() < numberOfThreads) numberOfThreads = messages.size();
 		for (List deviceGroup : makeGroups(messages, numberOfThreads))
 			threads.add(new NotificationThread(this, new PushNotificationManager(), server, deviceGroup));
 	}

@@ -276,6 +276,29 @@ public class SpecificNotificationTests extends TestFoundation {
 		}
 	}
 
+	private static void test_Issue109(String keystore, String password, String token, boolean production) {
+		try {
+			System.out.println("");
+			System.out.println("TESTING ISSUE #109");
+			
+			PushNotificationPayload payload = PushNotificationPayload.test();
+			List<String> devices = new Vector<String>();
+			devices.add(token);
+			devices.add(token);
+			devices.add(token);
+			
+			List<PushedNotification> notifications = Push.payload(payload, keystore, password, production, 30, devices);
+			NotificationTest.printPushedNotifications(notifications);
+			
+			System.out.println("Notifications sent: " + notifications.size());
+
+			
+			System.out.println("ISSUE #109 TESTED");
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+
 
 	private static void test_ThreadPoolFeature(String keystore, String password, String token, boolean production) throws Exception {
 		try {

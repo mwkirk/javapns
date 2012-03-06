@@ -543,7 +543,7 @@ public class NotificationThread implements Runnable, PushQueue {
 
 
 	private void restartQueue() {
-		if (mode != MODE.LIST) return;
+		if (mode != MODE.QUEUE) return;
 		try {
 			if (listener != null) listener.eventConnectionRestarted(this);
 			notificationManager.restartConnection(server);

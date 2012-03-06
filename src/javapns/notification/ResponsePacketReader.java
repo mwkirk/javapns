@@ -15,6 +15,56 @@ class ResponsePacketReader {
 	/* The number of seconds to wait for a response */
 	private static final int TIMEOUT = 5 * 1000;
 
+	private final PushNotificationManager notificationManager;
+
+	private int responsePacketsReceived = 0;
+
+
+	/**
+	 * NOT FULLY IMPLEMENTED, DO NOT USE
+	 * 
+	 * @param notificationManager
+	 * @param monitorContinously
+	 */
+	private ResponsePacketReader(PushNotificationManager notificationManager, boolean monitorContinously) {
+		this.notificationManager = notificationManager;
+
+		if (monitorContinously) {
+			runAsThread();
+		} else {
+			responsePacketsReceived = processResponses(notificationManager);
+		}
+	}
+
+
+	/**
+	 * NOT FULLY IMPLEMENTED, DO NOT USE
+	 */
+	private void runAsThread() {
+		Thread thread = new Thread() {
+			public void run() {
+				monitor();
+			};
+		};
+		thread.setDaemon(true);
+		thread.setPriority(Thread.MIN_PRIORITY);
+		thread.start();
+
+	}
+
+
+	private void monitor() {
+		while (notificationManager.getActiveSocket().isConnected()) {
+			responsePacketsReceived += processResponses(notificationManager);
+
+		}
+	}
+
+
+	public int getResponsePacketsReceived() {
+		return responsePacketsReceived;
+	}
+
 
 	/**
 	 * Read response packets from the current APNS connection and process them.
