@@ -213,7 +213,7 @@ public class Push {
 			threads.waitForAllThreads(true);
 		} catch (InterruptedException e) {
 		}
-		return threads.getPushedNotifications();
+		return threads.getPushedNotifications(true);
 	}
 
 
@@ -274,7 +274,7 @@ public class Push {
 			threads.waitForAllThreads(true);
 		} catch (InterruptedException e) {
 		}
-		return threads.getPushedNotifications();
+		return threads.getPushedNotifications(true);
 	}
 
 

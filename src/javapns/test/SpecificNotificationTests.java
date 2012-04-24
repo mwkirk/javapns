@@ -149,20 +149,20 @@ public class SpecificNotificationTests extends TestFoundation {
 			queue.add(PushNotificationPayload.test(), token);
 			queue.add(PushNotificationPayload.test(), token);
 			queue.add(PushNotificationPayload.test(), token);
-			Thread.sleep(10000);
-			List<Exception> criticalExceptions = queue.getCriticalExceptions();
-			for (Exception exception : criticalExceptions) {
-				exception.printStackTrace();
-			}
+//			Thread.sleep(10000);
+//			List<Exception> criticalExceptions = queue.getCriticalExceptions();
+//			for (Exception exception : criticalExceptions) {
+//				exception.printStackTrace();
+//			}
 			Thread.sleep(10000);
 
-			List<PushedNotification> pushedNotifications = queue.getPushedNotifications();
+			List<PushedNotification> pushedNotifications = queue.getPushedNotifications(true);
 			NotificationTest.printPushedNotifications("BEFORE CLEAR:", pushedNotifications);
-
-			queue.clearPushedNotifications();
-
-			pushedNotifications = queue.getPushedNotifications();
-			NotificationTest.printPushedNotifications("AFTER CLEAR:", pushedNotifications);
+//
+//			queue.clearPushedNotifications();
+//
+//			pushedNotifications = queue.getPushedNotifications();
+			NotificationTest.printPushedNotifications("AFTER CLEAR:", queue.getPushedNotifications(true));
 
 			Thread.sleep(50000);
 			System.out.println("ISSUES #87 AND #88 TESTED");
@@ -190,7 +190,7 @@ public class SpecificNotificationTests extends TestFoundation {
 			queue.add(PushNotificationPayload.test(), token);
 			Thread.sleep(10000);
 
-			PushedNotifications notifications = queue.getPushedNotifications();
+			PushedNotifications notifications = queue.getPushedNotifications(true);
 			NotificationTest.printPushedNotifications(notifications);
 
 			Thread.sleep(5000);
@@ -262,7 +262,7 @@ public class SpecificNotificationTests extends TestFoundation {
 				long timestamp2 = System.currentTimeMillis();
 				System.out.println("All threads finished in " + (timestamp2 - timestamp1) + " milliseconds");
 
-				NotificationTest.printPushedNotifications(work.getSuccessfulNotifications());
+				NotificationTest.printPushedNotifications(work.getPushedNotifications(true).getSuccessfulNotifications());
 
 			} catch (Exception e) {
 				e.printStackTrace();
@@ -294,6 +294,51 @@ public class SpecificNotificationTests extends TestFoundation {
 
 			
 			System.out.println("ISSUE #109 TESTED");
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+
+
+	private static void test_Issue116(String keystore, String password, String token, boolean production) {
+		try {
+			System.out.println("");
+			System.out.println("TESTING ISSUE #116");
+			
+	        PushNotificationPayload payload = PushNotificationPayload.test();
+	        List<String> devices = new Vector<String>(); // empty list of devices
+	        int threads = 30;
+
+	        List<PushedNotification> notifications = Push.payload(payload, keystore, password, production, 30, devices);
+			NotificationTest.printPushedNotifications(notifications);
+			
+			System.out.println("Notifications sent: " + notifications.size());
+
+			
+			System.out.println("ISSUE #109 TESTED");
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+
+
+	private static void test_Issue115(String keystore, String password, String token, boolean production) {
+		try {
+			System.out.println("TESTING ISSUES #115");
+			PushQueue queue = Push.queue(keystore, password, false, 10);
+			queue.start();
+			queue.add(PushNotificationPayload.test(), token);
+			queue.add(PushNotificationPayload.test(), token);
+			queue.add(PushNotificationPayload.test(), token);
+			queue.add(PushNotificationPayload.test(), token);
+			Thread.sleep(10000);
+
+//			PushedNotifications notifications = queue.getPushedNotifications();
+//			NotificationTest.printPushedNotifications(notifications);
+//
+			Thread.sleep(5000);
+			System.out.println("ISSUES #115 TESTED");
+
 		} catch (Exception e) {
 			e.printStackTrace();
 		}

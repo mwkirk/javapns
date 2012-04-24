@@ -70,13 +70,14 @@ public interface PushQueue {
 	 * 
 	 * @return a list of pushed notifications
 	 */
-	public PushedNotifications getPushedNotifications();
+	public PushedNotifications getPushedNotifications(boolean clearList);
 
 
 	/**
 	 * Clear the internal lists of PushedNotification objects maintained by this queue.
 	 * You should invoke this method once you no longer need the list of PushedNotification objects so that memory can be reclaimed.
 	 */
+	@Deprecated
 	public void clearPushedNotifications();
 
 }

@@ -209,6 +209,7 @@ public class NotificationThreads extends ThreadGroup implements PushQueue {
 	 * @return
 	 */
 	private static List<List> makeGroups(List objects, int threads) {
+		if (objects==null || objects.size() <= 0) throw new IllegalArgumentException("Device list is empty, resulting in no threads being created.");
 		List<List> groups = new Vector<List>(threads);
 		int total = objects.size();
 		int devicesPerThread = (total / threads);
@@ -394,14 +395,14 @@ public class NotificationThreads extends ThreadGroup implements PushQueue {
 	 * 
 	 * @return a list of pushed notifications
 	 */
-	public PushedNotifications getPushedNotifications() {
+	public PushedNotifications getPushedNotifications(boolean clearLists) {
 		int capacity = 0;
 		for (NotificationThread thread : threads)
-			capacity += thread.getPushedNotifications().size();
+			capacity += thread.getPushedNotifications(false).size();
 		PushedNotifications all = new PushedNotifications(capacity);
 		all.setMaxRetained(capacity);
 		for (NotificationThread thread : threads)
-			all.addAll(thread.getPushedNotifications());
+			all.addAll(thread.getPushedNotifications(clearLists));
 		return all;
 	}
 
@@ -409,7 +410,9 @@ public class NotificationThreads extends ThreadGroup implements PushQueue {
 	/**
 	 * Clear the internal list of PushedNotification objects maintained in each thread.
 	 * You should invoke this method once you no longer need the list of PushedNotification objects so that memory can be reclaimed.
+	 * @deprecated Not thead-safe.  use getPushedNotifications(true) instead.
 	 */
+	@Deprecated
 	public void clearPushedNotifications() {
 		for (NotificationThread thread : threads)
 			thread.clearPushedNotifications();
@@ -420,9 +423,11 @@ public class NotificationThreads extends ThreadGroup implements PushQueue {
 	 * Get a list of all notifications that all threads attempted to push but that failed.
 	 * 
 	 * @return a list of failed notifications
+	 * @deprecated Not thead-safe.  use getPushedNotifications(true).getFailedNotifications() instead.
 	 */
+	@Deprecated
 	public PushedNotifications getFailedNotifications() {
-		return getPushedNotifications().getFailedNotifications();
+		return getPushedNotifications(false).getFailedNotifications();
 	}
 
 
@@ -430,9 +435,11 @@ public class NotificationThreads extends ThreadGroup implements PushQueue {
 	 * Get a list of all notifications that all threads attempted to push and succeeded.
 	 * 
 	 * @return a list of successful notifications
+	 * @deprecated Not thead-safe.  use getPushedNotifications(true).getSuccessfulNotifications() instead.
 	 */
+	@Deprecated
 	public PushedNotifications getSuccessfulNotifications() {
-		return getPushedNotifications().getSuccessfulNotifications();
+		return getPushedNotifications(false).getSuccessfulNotifications();
 	}
 
 

@@ -165,7 +165,7 @@ public class NotificationTest extends TestFoundation {
 			long timestamp2 = System.currentTimeMillis();
 			System.out.println("All threads finished in " + (timestamp2 - timestamp1) + " milliseconds");
 
-			printPushedNotifications(work.getPushedNotifications());
+			printPushedNotifications(work.getPushedNotifications(true));
 
 		} catch (Exception e) {
 			e.printStackTrace();
