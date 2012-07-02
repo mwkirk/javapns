@@ -337,6 +337,17 @@ public class PushNotificationPayload extends Payload {
 
 
 	/**
+	 * Create a custom alert (if none exist) and add a launch-image parameter.
+	 * 
+	 * @param launchImage
+	 * @throws JSONException if the custom alert cannot be added because a simple alert already exists
+	 */
+	public void addCustomAlertLaunchImage(String launchImage) throws JSONException {
+		put("launch-image", launchImage, getOrAddCustomAlert(), false);
+	}
+
+
+	/**
 	 * Return the maximum payload size in bytes.
 	 * For APNS payloads, this method returns 256.
 	 * 
