@@ -1,6 +1,6 @@
 package javapns.notification;
 
-import org.json.*;
+import javapns.json.*;
 
 /**
  * A Newsstand-specific payload compatible with the Apple Push Notification Service.

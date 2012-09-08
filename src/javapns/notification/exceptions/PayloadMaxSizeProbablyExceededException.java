@@ -1,6 +1,6 @@
 package javapns.notification.exceptions;
 
-import org.json.*;
+import javapns.json.*;
 
 /**
  * Specific exception indicating that a payload would probably exceed the maximum size allowed

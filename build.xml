@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project name="javapns" default="dist">
+<project name="javapns" default="dist" basedir="." xmlns:artifact="antlib:org.apache.maven.artifact.ant">
 
 	<description>
     	A Java implementation of the Apple Push Notification Service.
@@ -10,15 +10,26 @@
 	<!-- javapns version id (no spaces allowed!) -->
 	<property name="javapns.name" value="JavaPNS" />
 	<property name="javapns.level" value="2.3" />
-	<property name="javapns.status" value="_Alpha_7" />
+	
+	<!-- status examples:  _Beta_1  _Alpha_1 -->
+	<property name="javapns.status" value="_Beta_1" />
 	<property name="javapns.revision" value=" r000" />
+	
 	<property name="javapns.version" value="${javapns.level}${javapns.status}" />
+
+	<!-- Maven stage is either SNAPSHOT or RELEASE -->
+	<property name="javapns.stage" value="SNAPSHOT" />
+	
 
 	<property name="src" location="src" />
 	<property name="build" location="build" />
 	<property name="doc" location="doc" />
+	<property name="javadoc" location="${doc}/javadoc" />
+	
 	<property name="dist.jar" location="${javapns.name}_${javapns.version}.jar" />
-	<property name="doc.zip" location="${javapns.name}_${javapns.version}_javadoc.zip" />
+	<property name="javadoc.jar" location="${javapns.name}_${javapns.version}_javadoc.jar" />
+	<property name="doc.zip" location="${javapns.name}_${javapns.version}_doc.zip" />
+	<property name="sources.jar" location="${javapns.name}_${javapns.version}_sources.jar" />
 	<property name="combined.zip" location="${javapns.name}_${javapns.version}_complete.zip" />
 
 
@@ -28,7 +39,19 @@
 		</fileset>
 	</path>
 
-	<target name="clean" description="Remove all generated files">
+    <!-- define Maven coordinates -->
+    <property name="groupId" value="com.google.code" />
+    <property name="artifactId" value="javapns" />
+    <property name="version" value="${javapns.level}-${javapns.stage}" />
+
+    <!-- defined maven snapshots and staging repository id and url -->
+    <property name="maven-snapshots-repository-id" value="sonatype-nexus-snapshots" />
+    <property name="maven-snapshots-repository-url" value="https://oss.sonatype.org/content/repositories/snapshots/" />
+    <property name="maven-staging-repository-id" value="sonatype-nexus-staging" />
+    <property name="maven-staging-repository-url" value="https://oss.sonatype.org/service/local/staging/deploy/maven2/" />
+
+
+    <target name="clean" description="Remove all generated files">
 		<delete dir="${build}" />
 	</target>
 
@@ -52,9 +75,24 @@
 	</target>
 
 	<target name="doc" description="Generate the javadocs">
-		<javadoc sourcepath="${src}" destdir="${doc}" classpathref="libpath" overview="src/javapns/overview.html" access="public" link="http://download.oracle.com/javase/1.5.0/docs/api" />
+		<javadoc sourcepath="${src}" destdir="${javadoc}" classpathref="libpath" overview="src/javapns/overview.html" access="public" link="http://download.oracle.com/javase/1.5.0/docs/api" />
 		<zip destfile="${doc.zip}" basedir="${doc}" comment="${javapns.name} ${javapns.version}${javapns.revision}" />
 	</target>
+
+    <target name="javadocpack" depends="doc" description="Package the javadoc for Maven">
+        <!-- build the sources artifact -->
+        <!-- build the javadoc artifact -->
+        <jar jarfile="${javadoc.jar}">
+            <fileset dir="${javadoc}" />
+        </jar>
+    </target>
+
+    <target name="source" depends="build" description="generate the source">
+        <!-- build the sources artifact -->
+        <jar jarfile="${sources.jar}">
+            <fileset dir="${src}" />
+        </jar>
+    </target>
 
 	<target name="combine" description="Generate the combined distribution">
 		<zip destfile="${combined.zip}" comment="${javapns.name} ${javapns.version}${javapns.revision}">
@@ -64,4 +102,54 @@
 	</target>
 
 	<target name="dist" depends="jar,doc,combine" />
+	
+	<target name="dist_maven" depends="dist,source,javadocpack" />
+	
+    <target name="deploy" depends="dist_maven" description="deploy snapshot version to Maven snapshot repository">
+        <artifact:mvn>
+            <arg value="org.apache.maven.plugins:maven-deploy-plugin:2.6:deploy-file" />
+            <arg value="-Durl=${maven-snapshots-repository-url}" />
+            <arg value="-DrepositoryId=${maven-snapshots-repository-id}" />
+            <arg value="-DpomFile=pom.xml" />
+            <arg value="-Dfile=${dist.jar}" />
+        </artifact:mvn>
+    </target>
+
+    <!-- before this, update project version (both build.xml and pom.xml) from SNAPSHOT to RELEASE -->
+    <target name="stage" depends="dist_maven" description="deploy release version to Maven staging repository">
+        <!-- sign and deploy the main artifact -->
+        <artifact:mvn>
+            <arg value="org.apache.maven.plugins:maven-gpg-plugin:1.3:sign-and-deploy-file" />
+            <arg value="-Durl=${maven-staging-repository-url}" />
+            <arg value="-DrepositoryId=${maven-staging-repository-id}" />
+            <arg value="-DpomFile=pom.xml" />
+            <arg value="-Dfile=${dist.jar}" />
+                        <arg value="-Pgpg" />
+        </artifact:mvn>
+
+        <!-- sign and deploy the sources artifact -->
+        <artifact:mvn>
+            <arg value="org.apache.maven.plugins:maven-gpg-plugin:1.3:sign-and-deploy-file" />
+            <arg value="-Durl=${maven-staging-repository-url}" />
+            <arg value="-DrepositoryId=${maven-staging-repository-id}" />
+            <arg value="-DpomFile=pom.xml" />
+            <arg value="-Dfile=${sources.jar}" />
+            <arg value="-Dclassifier=sources" />
+                        <arg value="-Pgpg" />
+        </artifact:mvn>
+
+        <!-- sign and deploy the javadoc artifact -->
+        <artifact:mvn>
+            <arg value="org.apache.maven.plugins:maven-gpg-plugin:1.3:sign-and-deploy-file" />
+            <arg value="-Durl=${maven-staging-repository-url}" />
+            <arg value="-DrepositoryId=${maven-staging-repository-id}" />
+            <arg value="-DpomFile=pom.xml" />
+            <arg value="-Dfile=${javadoc.jar}" />
+            <arg value="-Dclassifier=javadoc" />
+                        <arg value="-Pgpg" />
+        </artifact:mvn>
+    </target>
+
+
+	
 </project>

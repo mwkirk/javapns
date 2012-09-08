@@ -6,10 +6,10 @@ import javapns.*;
 import javapns.communication.exceptions.*;
 import javapns.devices.*;
 import javapns.devices.implementations.basic.*;
+import javapns.json.*;
 import javapns.notification.*;
 import javapns.notification.transmission.*;
 
-import org.json.*;
 
 /**
  * A command-line test facility for the Push Notification Service.

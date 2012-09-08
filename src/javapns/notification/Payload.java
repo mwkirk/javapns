@@ -2,10 +2,10 @@ package javapns.notification;
 
 import java.util.*;
 
+import javapns.json.*;
 import javapns.notification.exceptions.*;
 
 import org.apache.log4j.*;
-import org.json.*;
 
 /**
  * Abstract class representing a payload that can be transmitted to Apple.

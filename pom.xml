@@ -1,0 +1,94 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>com.google.code</groupId>
+    <artifactId>javapns</artifactId>
+    <packaging>jar</packaging>
+    <version>2.3</version>
+    <name>Javapns</name>
+    <url>http://code.google.com/p/javapns/</url>
+    <description>
+        A Java interface to the Apple Push Notification Service.
+    </description>
+
+    <scm>
+        <connection>scm:svn:http://javapns.googlecode.com/svn/trunk/</connection>
+        <developerConnection>scm:svn:https://javapns.googlecode.com/svn/trunk/</developerConnection>
+        <url>https://javapns.googlecode.com/svn/trunk/</url>
+    </scm>
+
+    <licenses>
+        <license>
+            <name>Lesser General Public License (LGPL)</name>
+            <url>http://www.gnu.org/copyleft/lesser.txt</url>
+            <distribution>repo</distribution>
+        </license>
+    </licenses>
+
+    <developers>
+        <developer>
+            <id>idbill</id>
+            <name>Bill Levering</name>
+            <organization>PlanX</organization>
+            <organizationUrl>http://www.planx.com</organizationUrl>
+            <roles>
+                <role>developer</role>
+            </roles>
+        </developer>
+        <developer>
+            <id>sypecom</id>
+            <name>Sylvain Pedneault</name>
+            <organization>SYPECom</organization>
+            <organizationUrl></organizationUrl>
+            <roles>
+                <role>developer</role>
+            </roles>
+        </developer>
+    </developers>
+
+    <properties>
+        <!-- Set Encoding to UTF8 - basically for OSX -->
+        <project.build.sourceEncoding>
+            UTF-8
+        </project.build.sourceEncoding>
+    </properties>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.bouncycastle</groupId>
+            <artifactId>bcprov-jdk16</artifactId>
+            <version>1.46</version>
+        </dependency>
+
+        <dependency>
+            <groupId>log4j</groupId>
+            <artifactId>log4j</artifactId>
+            <version>1.2.15</version>
++			<exclusions>
++				<exclusion>
++					<artifactId>jms</artifactId>
++					<groupId>javax.jms</groupId>
++				</exclusion>
++				<exclusion>
++					<artifactId>jmxtools</artifactId>
++					<groupId>com.sun.jdmk</groupId>
++				</exclusion>
++				<exclusion>
++					<artifactId>jmxri</artifactId>
++					<groupId>com.sun.jmx</groupId>
++				</exclusion>
++				<exclusion>
++					<artifactId>mail</artifactId>
++					<groupId>javax.mail</groupId>
++				</exclusion>
++			</exclusions>
+        </dependency>
+    </dependencies>
+
+    <parent>
+        <groupId>org.sonatype.oss</groupId>
+        <artifactId>oss-parent</artifactId>
+        <version>7</version>
+    </parent>
+</project>

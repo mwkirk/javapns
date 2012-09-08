@@ -1,6 +1,6 @@
 package javapns.notification.exceptions;
 
-import org.json.*;
+import javapns.json.*;
 
 /**
  * Specific exception indicating that the library detected an attempt to insert two alert messages

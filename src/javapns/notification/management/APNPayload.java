@@ -2,7 +2,8 @@ package javapns.notification.management;
 
 import java.util.*;
 
-import org.json.*;
+import javapns.json.*;
+
 
 /**
  * An MDM payload for APN (Access Point Name).

@@ -1,6 +1,6 @@
 package javapns.notification.management;
 
-import org.json.*;
+import javapns.json.*;
 
 /**
  * An MDM payload for LDAP.

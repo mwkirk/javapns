@@ -2,9 +2,9 @@ package javapns.notification;
 
 import java.util.*;
 
+import javapns.json.*;
 import javapns.notification.exceptions.*;
 
-import org.json.*;
 
 /**
  * A payload compatible with the Apple Push Notification Service.
