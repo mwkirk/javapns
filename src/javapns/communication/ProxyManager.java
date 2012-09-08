@@ -55,7 +55,7 @@ public class ProxyManager {
 
 	public static String encodeProxyAuthorization(String username, String password) {
 		sun.misc.BASE64Encoder encoder = new sun.misc.BASE64Encoder();
-		String pwd = "USER" + ":" + "PASSWORD";
+		String pwd = username + ":" + password;
 		String encodedUserPwd = encoder.encode(pwd.getBytes());
 		String authorization = "Basic " + encodedUserPwd;
 		return authorization;
@@ -115,11 +115,11 @@ public class ProxyManager {
 		if (authorization != null && authorization.length() > 0) {
 			return authorization;
 		} else {
-			authorization = System.getProperty(LOCAL_PROXY_HOST_PROPERTY);
+			authorization = System.getProperty(LOCAL_PROXY_AUTHORIZATION_PROPERTY);
 			if (authorization != null && authorization.length() > 0) {
 				return authorization;
 			} else {
-				authorization = System.getProperty(JVM_PROXY_HOST_PROPERTY);
+				authorization = System.getProperty(JVM_PROXY_AUTHORIZATION_PROPERTY);
 				if (authorization != null && authorization.length() > 0) {
 					return authorization;
 				} else {
