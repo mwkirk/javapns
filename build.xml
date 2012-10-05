@@ -12,7 +12,7 @@
 	<property name="javapns.level" value="2.3" />
 	
 	<!-- status examples:  _Beta_1  _Alpha_1 -->
-	<property name="javapns.status" value="_Beta_1" />
+	<property name="javapns.status" value="_Beta_2" />
 	<property name="javapns.revision" value=" r000" />
 	
 	<property name="javapns.version" value="${javapns.level}${javapns.status}" />
